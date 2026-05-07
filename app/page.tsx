@@ -1,126 +1,202 @@
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-const subjects = [
-  { label: 'History', slug: 'history', description: 'Ancient, Medieval & Modern questions' },
-  { label: 'Science', slug: 'science', description: 'Physics, Biology and more' },
-  { label: 'Polity', slug: 'polity', description: 'Constitution & governance' },
-  { label: 'Bihar Special', slug: 'bihar', description: 'State specific current affairs' },
-  { label: 'Current Affairs', slug: 'current-affairs', description: 'Latest exam-ready facts' },
-  { label: 'Economics', slug: 'economics', description: 'Budget, policy and data' },
-];
-
-const papers = [
-  { year: '2024', paper: 'BPSC Prelims', subject: 'History', path: '/questions/history' },
-  { year: '2023', paper: 'General Studies', subject: 'Science', path: '/questions/science' },
-  { year: '2022', paper: 'Bihar Special', subject: 'Polity', path: '/questions/polity' },
+const navLinks = [
+  { label: 'Home', href: '/' },
+  { label: 'Subjects', href: '/subjects' },
+  { label: 'Current Affairs', href: '/current-affairs', badge: 'New' },
+  { label: 'PYQ Series', href: '/pyq' },
+  { label: 'Our Vision', href: '/vision' },
+  { label: 'About Us', href: '/about' },
+  { label: 'Contact Us', href: '/contact' },
 ];
 
 export default function HomePage() {
+  const router = useRouter();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Lock body scroll when menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.height = '100vh';
+    } else {
+      document.body.style.overflow = 'unset';
+      document.body.style.height = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+      document.body.style.height = 'auto';
+    };
+  }, [mobileMenuOpen]);
+
+  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!searchQuery.trim()) return;
+    setMobileMenuOpen(false);
+    router.push(`/practice?search=${encodeURIComponent(searchQuery.trim())}`);
+  };
+
   return (
-    <main className="mx-auto max-w-7xl px-5 py-8 lg:px-10">
-      <header className="flex flex-col gap-8 lg:gap-0 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="flex items-center gap-3 text-accent">
-            <div className="h-11 w-11 rounded-2xl bg-white/10 ring-1 ring-accent/20 backdrop-blur-xl" />
-            <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-slate-400">Testwale</p>
-              <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Exam Practice Hub</h1>
-            </div>
-          </div>
-        </div>
-        <nav className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
-          <Link className="rounded-full px-4 py-2 transition hover:bg-hoverbg" href="/questions/history">History</Link>
-          <Link className="rounded-full px-4 py-2 transition hover:bg-hoverbg" href="/questions/science">Science</Link>
-          <Link className="rounded-full px-4 py-2 transition hover:bg-hoverbg" href="/questions/polity">Polity</Link>
-          <Link className="rounded-full px-4 py-2 transition hover:bg-hoverbg" href="/questions/bihar">Bihar Special</Link>
-        </nav>
-      </header>
+    <main className="min-h-screen bg-[#0a0a0a]">
+      {/* Navbar */}
+      <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0a]/80 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-5 py-5 lg:px-10">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 text-sm font-black text-slate-950">
+                T
+              </div>
+              <span className="text-xl font-bold text-white">Testwale</span>
+            </Link>
 
-      <section className="mt-12 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-        <div className="section-glass rounded-3xl border border-white/10 p-8 shadow-panel">
-          <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-accent">Search practice</p>
-              <h2 className="mt-2 text-3xl font-semibold text-white">Find questions by subject, topic or exam</h2>
+            {/* Desktop Nav */}
+            <div className="hidden items-center gap-8 lg:flex">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="relative flex items-center gap-2 text-sm font-medium text-slate-400 transition hover:text-white"
+                >
+                  {link.label}
+                  {link.badge && (
+                    <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-semibold text-blue-300">
+                      {link.badge}
+                    </span>
+                  )}
+                </Link>
+              ))}
             </div>
-            <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.32em] text-slate-300">Ready in seconds</span>
-          </div>
-          <div className="rounded-[32px] border border-white/10 bg-white/10 p-5 shadow-glow backdrop-blur-xl">
-            <label className="mb-3 block text-sm font-medium text-slate-300">Search questions</label>
-            <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-[#0f2645] px-4 py-3 shadow-inner">
-              <span className="text-xl text-slate-400">🔍</span>
-              <input
-                className="w-full bg-transparent text-white outline-none placeholder:text-slate-500"
-                placeholder="Type a topic or exam name"
-                aria-label="Search questions"
-              />
-            </div>
-          </div>
-        </div>
 
-        <div className="section-glass rounded-3xl border border-white/10 p-8 shadow-panel">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-accent">Fast access</p>
-              <h3 className="text-2xl font-semibold text-white">Popular subjects</h3>
-            </div>
-            <span className="text-sm text-slate-400">6 categories</span>
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden"
+              aria-label="Toggle menu"
+            >
+              <div className="flex flex-col gap-1">
+                <div className={`h-0.5 w-6 bg-white transition ${mobileMenuOpen ? 'translate-y-2 rotate-45' : ''}`} />
+                <div className={`h-0.5 w-6 bg-white transition ${mobileMenuOpen ? 'opacity-0' : ''}`} />
+                <div className={`h-0.5 w-6 bg-white transition ${mobileMenuOpen ? '-translate-y-2 -rotate-45' : ''}`} />
+              </div>
+            </button>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {subjects.map((subject) => (
+      {/* Mobile Menu Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 w-screen h-screen bg-[#030213] z-[9999] flex flex-col overflow-y-auto lg:hidden">
+          <div className="pt-28 px-8 flex flex-col items-start gap-y-10">
+            {navLinks.map((link) => (
               <Link
-                key={subject.slug}
-                href={`/questions/${subject.slug}`}
-                className="group rounded-3xl border border-white/10 bg-slate-950/70 p-6 transition hover:border-accent/50 hover:bg-hoverbg"
+                key={link.label}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 text-2xl font-semibold text-white transition hover:text-amber-300"
               >
-                <p className="text-xs uppercase tracking-[0.35em] text-accent">{subject.label}</p>
-                <h4 className="mt-4 text-xl font-semibold text-white">{subject.description}</h4>
-                <span className="mt-5 inline-flex items-center gap-2 text-sm text-slate-300 group-hover:text-white">
-                  Start Practice →
-                </span>
+                {link.label}
+                {link.badge && (
+                  <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-semibold text-blue-300">
+                    {link.badge}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
         </div>
-      </section>
+      )}
+        </div>
+      </nav>
 
-      <section className="mt-12 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-panel">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm uppercase tracking-[0.35em] text-accent">PYQ papers</p>
-            <h2 className="text-3xl font-semibold text-white">Practice from previous year papers</h2>
-          </div>
-          <Link href="/questions/history" className="btn-primary">Browse all papers</Link>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden px-5 py-20 lg:px-10 lg:py-32">
+        {/* Radial Glow Background */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="h-96 w-96 rounded-full bg-gradient-to-br from-purple-600/30 via-magenta-600/20 to-transparent blur-3xl" />
         </div>
 
-        <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#071623] shadow-inner">
-          <table className="min-w-full table-auto text-left text-sm text-slate-300">
-            <thead className="border-b border-white/10 bg-white/5 text-slate-400">
-              <tr>
-                <th className="px-6 py-4">Year</th>
-                <th className="px-6 py-4">Exam</th>
-                <th className="px-6 py-4">Subject</th>
-                <th className="px-6 py-4">Paper</th>
-                <th className="px-6 py-4" />
-              </tr>
-            </thead>
-            <tbody>
-              {papers.map((paper) => (
-                <tr key={paper.year} className="border-b border-white/10 transition hover:bg-white/5">
-                  <td className="px-6 py-4 font-medium text-white">{paper.year}</td>
-                  <td className="px-6 py-4">{paper.paper}</td>
-                  <td className="px-6 py-4">{paper.subject}</td>
-                  <td className="px-6 py-4">Full PYQ practice</td>
-                  <td className="px-6 py-4">
-                    <Link href={paper.path} className="rounded-full border border-accent/20 bg-accent/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-accent transition hover:bg-accent/15">
-                      View Paper
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="relative z-10 mx-auto max-w-4xl space-y-8 text-center">
+          {/* Heading */}
+          <div className="space-y-4">
+            <p className="inline-block rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-sm font-semibold text-amber-300">
+              Master Your Competitive Exams
+            </p>
+            <h1 className="text-5xl font-bold leading-tight tracking-tight text-white sm:text-6xl lg:text-7xl">
+              Practice with thousands of MCQs
+            </h1>
+            <p className="mx-auto max-w-2xl text-lg text-slate-400 sm:text-xl">
+              Analyze previous year questions, track your progress, and ace your competitive exams with Testwale.
+            </p>
+          </div>
+
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="mx-auto max-w-2xl">
+            <div className="group relative rounded-2xl border border-white/10 bg-white/5 p-2 shadow-[0_25px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl transition focus-within:border-blue-400/50 focus-within:bg-white/10 focus-within:shadow-[0_25px_80px_rgba(59,130,246,0.15)]">
+              <div className="flex items-center gap-3">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search topics, subjects, exams..."
+                  className="w-full border-0 bg-transparent px-5 py-4 text-white outline-none placeholder:text-slate-500"
+                />
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 px-6 py-3 text-sm font-semibold text-white transition hover:from-purple-600 hover:to-blue-600 active:scale-95"
+                >
+                  <span>Search</span>
+                  <span>→</span>
+                </button>
+              </div>
+            </div>
+          </form>
+
+          {/* CTA */}
+          <div className="flex flex-col justify-center gap-4 sm:flex-row">
+            <Link
+              href="/subjects"
+              className="rounded-full bg-amber-400 px-8 py-4 text-sm font-semibold text-slate-950 transition hover:bg-amber-300 active:scale-95"
+            >
+              Explore Subjects
+            </Link>
+            <Link
+              href="/about"
+              className="rounded-full border border-white/20 px-8 py-4 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/5"
+            >
+              Learn More
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="relative z-10 border-t border-white/5 bg-gradient-to-b from-[#0a0a0a] to-[#050505] px-5 py-20 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { label: 'Questions', value: '10K+' },
+              { label: 'Subjects', value: '6+' },
+              { label: 'Exams', value: '15+' },
+              { label: 'Students', value: '50K+' },
+            ].map((stat) => (
+              <div key={stat.label} className="rounded-2xl border border-white/5 bg-white/5 p-6 text-center">
+                <p className="text-3xl font-bold text-amber-300">{stat.value}</p>
+                <p className="mt-2 text-sm text-slate-400">{stat.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </main>

@@ -1,0 +1,120 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import type { QuestionItem } from '../actions/questions';
+
+const optionLabels = ['A', 'B', 'C', 'D'];
+
+type QuestionCardProps = {
+  question: QuestionItem;
+  index: number;
+};
+
+export default function QuestionCard({ question, index }: QuestionCardProps) {
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [showExplanation, setShowExplanation] = useState(false);
+
+  const optionEntries = useMemo(
+    () => Object.entries(question.options).filter(([key]) => optionLabels.includes(key)),
+    [question.options]
+  );
+
+  const isCorrect = selectedOption === question.answer;
+
+  return (
+    <article className="rounded-3xl border border-white/10 bg-[#081420] p-7 shadow-panel">
+      <div className="mb-5 flex items-center justify-between rounded-3xl bg-slate-200/10 px-5 py-4 text-sm font-semibold text-slate-200">
+        <span className="rounded-full bg-slate-100/90 px-3 py-1 text-slate-900">Q.{index + 1}</span>
+        <span className="rounded-full bg-slate-100/90 px-3 py-1 text-slate-900">Q.{index + 2}</span>
+      </div>
+
+      <div className="space-y-5">
+        <div className="space-y-3 rounded-3xl bg-slate-900/70 p-6">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-xs uppercase tracking-[0.35em] text-emerald-300">{question.subject}</p>
+            <span className="rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1 text-xs uppercase tracking-[0.35em] text-slate-300">
+              Category: {question.topic}
+            </span>
+          </div>
+          <p className="text-xl font-semibold leading-8 text-white sm:text-2xl">{question.question}</p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {optionEntries.map(([key, optionText]) => {
+            const isSelected = selectedOption === key;
+            const isAnswer = key === question.answer;
+            const showCorrectState = selectedOption !== null;
+
+            let optionClasses =
+              'rounded-3xl border px-5 py-5 text-left text-sm font-medium transition duration-200';
+
+            if (showCorrectState) {
+              if (isAnswer) {
+                optionClasses += ' border-emerald-400 bg-emerald-400/10 text-emerald-100';
+              } else if (isSelected) {
+                optionClasses += ' border-rose-400 bg-rose-400/10 text-rose-100';
+              } else {
+                optionClasses += ' border-white/10 bg-white/5 text-slate-200';
+              }
+            } else {
+              optionClasses +=
+                isSelected
+                  ? ' border-emerald-400 bg-emerald-400/10 text-emerald-100'
+                  : ' border-white/10 bg-white/5 text-slate-200 hover:border-emerald-400/30 hover:bg-white/10';
+            }
+
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setSelectedOption(key)}
+                className={optionClasses}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-lg font-semibold text-white">
+                    {key}
+                  </div>
+                  <div>
+                    <p className="text-sm leading-6 text-white">{optionText}</p>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-slate-950/60 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Answer state</p>
+            <p className="text-base font-semibold text-white">
+              {selectedOption
+                ? isCorrect
+                  ? 'Correct answer selected'
+                  : 'Wrong option selected'
+                : 'Please choose an option to check your answer'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowExplanation((current) => !current)}
+            disabled={!selectedOption}
+            className={`rounded-full px-6 py-3 text-sm font-semibold transition ${
+              selectedOption
+                ? 'bg-emerald-400 text-slate-950 hover:bg-emerald-300'
+                : 'cursor-not-allowed bg-white/5 text-slate-500'
+            }`}
+          >
+            {showExplanation ? 'Hide Explain' : 'Explain'}
+          </button>
+        </div>
+
+        {showExplanation && selectedOption && (
+          <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 text-slate-200">
+            <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Explanation</p>
+            <p className="mt-4 text-base leading-7 text-slate-300">{question.explanation}</p>
+          </div>
+        )}
+      </div>
+    </article>
+  );
+}
