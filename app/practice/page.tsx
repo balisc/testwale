@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import QuestionCard from '../components/QuestionCard';
 import type { QuestionItem } from '../actions/questions';
 
 export const dynamic = 'force-dynamic';
 
-export default function PracticePage() {
+function PracticePage() {
   const searchParams = useSearchParams();
   const subject = searchParams.get('subject')?.trim() ?? '';
   const search = searchParams.get('search')?.trim() ?? '';
@@ -96,5 +97,13 @@ export default function PracticePage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function Practice() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-7xl px-5 py-10 text-center text-slate-400">Loading Practice...</div>}>
+      <PracticePage />
+    </Suspense>
   );
 }
