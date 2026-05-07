@@ -9,7 +9,7 @@ import type { QuestionItem } from '../actions/questions';
 
 export const dynamic = 'force-dynamic';
 
-function PracticePage() {
+function PracticeContent() {
   const searchParams = useSearchParams();
   const subject = searchParams.get('subject')?.trim() ?? '';
   const search = searchParams.get('search')?.trim() ?? '';
@@ -103,7 +103,7 @@ function PracticePage() {
 export default function Practice() {
   return (
     <Suspense fallback={<div className="mx-auto max-w-7xl px-5 py-10 text-center text-slate-400">Loading Practice...</div>}>
-      <PracticePage />
+      <PracticeContent />
     </Suspense>
   );
 }
