@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import QuestionCard from 'app/components/QuestionCard';
-import type { QuestionItem } from 'app/actions/questions';
+import QuestionCard from '../components/QuestionCard';
+import type { QuestionItem } from '../actions/questions';
+
+export const dynamic = 'force-dynamic';
 
 export default function PracticePage() {
   const searchParams = useSearchParams();

@@ -61,8 +61,7 @@ async function buildDirectFallbackUri(srvUri: string): Promise<string | undefine
     const queryString = params.toString();
 
     return `mongodb://${encodedAuth}@${directHosts}/${db}${queryString ? `?${queryString}` : ''}`;
-  } catch (error) {
-    console.warn('Could not build direct fallback URI:', error);
+  } catch {
     return undefined;
   }
 }
@@ -95,7 +94,7 @@ async function createClient(): Promise<MongoClient> {
       throw error;
     }
 
-    console.warn('Primary MongoDB SRV connection failed. Trying direct host fallback.');
+
     const fallbackClient = new MongoClient(fallbackUri, connectionOptions);
     await fallbackClient.connect();
     return fallbackClient;
