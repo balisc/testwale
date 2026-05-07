@@ -181,6 +181,103 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Choose Your Subject Section */}
+      <section className="border-t border-white/5 bg-[#050505] px-5 py-20 lg:px-10">
+        <div className="mx-auto max-w-6xl text-center">
+          <p className="text-sm uppercase tracking-[0.35em] text-amber-300">Choose Your Subject</p>
+          <h2 className="mt-4 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+            Start practicing with curated MCQs for each subject
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400 sm:text-lg">
+            Pick a subject below and begin your exam preparation with the right practice set.
+          </p>
+        </div>
+
+        <div className="mx-auto mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {[
+            {
+              name: 'History',
+              icon: '📜',
+              count: '2,450 Questions Available',
+              iconBg: 'bg-red-500/10',
+              hoverBorder: 'hover:border-red-400/40',
+              buttonGradient: 'from-red-500 to-red-600',
+              buttonShadow: 'shadow-[0_20px_60px_rgba(239,68,68,0.25)]',
+            },
+            {
+              name: 'Science',
+              icon: '🧪',
+              count: '2,120 Questions Available',
+              iconBg: 'bg-emerald-500/10',
+              hoverBorder: 'hover:border-emerald-400/40',
+              buttonGradient: 'from-emerald-500 to-emerald-600',
+              buttonShadow: 'shadow-[0_20px_60px_rgba(16,185,129,0.25)]',
+            },
+            {
+              name: 'Polity',
+              icon: '⚖️',
+              count: '1,980 Questions Available',
+              iconBg: 'bg-sky-500/10',
+              hoverBorder: 'hover:border-sky-400/40',
+              buttonGradient: 'from-sky-500 to-blue-600',
+              buttonShadow: 'shadow-[0_20px_60px_rgba(59,130,246,0.25)]',
+            },
+            {
+              name: 'Economics',
+              icon: '💰',
+              count: '1,720 Questions Available',
+              iconBg: 'bg-orange-500/10',
+              hoverBorder: 'hover:border-orange-400/40',
+              buttonGradient: 'from-orange-500 to-amber-500',
+              buttonShadow: 'shadow-[0_20px_60px_rgba(249,115,22,0.25)]',
+            },
+            {
+              name: 'Geography',
+              icon: '🗺️',
+              count: '1,835 Questions Available',
+              iconBg: 'bg-cyan-500/10',
+              hoverBorder: 'hover:border-cyan-400/40',
+              buttonGradient: 'from-cyan-500 to-sky-500',
+              buttonShadow: 'shadow-[0_20px_60px_rgba(6,182,212,0.25)]',
+            },
+            {
+              name: 'General Knowledge',
+              icon: '🧠',
+              count: '2,050 Questions Available',
+              iconBg: 'bg-fuchsia-500/10',
+              hoverBorder: 'hover:border-fuchsia-400/40',
+              buttonGradient: 'from-fuchsia-500 to-pink-500',
+              buttonShadow: 'shadow-[0_20px_60px_rgba(236,72,153,0.25)]',
+            },
+          ].map((subject) => (
+            <Link
+              key={subject.name}
+              href={`/practice?subject=${encodeURIComponent(subject.name)}`}
+              className={`group rounded-[1.75rem] border border-white/10 bg-[#050505] p-6 transition duration-300 ${subject.hoverBorder} hover:bg-[#06060a]`}
+            >
+              <div className="flex items-center justify-between">
+                <div className={`flex h-14 w-14 items-center justify-center rounded-2xl text-2xl text-white ${subject.iconBg}`}>{subject.icon}</div>
+                <div className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">
+                  {subject.name}
+                </div>
+              </div>
+              <div className="mt-8 space-y-4">
+                <div>
+                  <h3 className="text-xl font-semibold text-white">{subject.name}</h3>
+                  <p className="mt-3 text-sm text-slate-400">{subject.count}</p>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm font-semibold text-slate-200">Start Practice</span>
+                  <span className={`rounded-full border border-white/10 bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition duration-300 group-hover:bg-gradient-to-r group-hover:text-white group-hover:shadow-xl ${subject.buttonGradient} ${subject.buttonShadow}`}>
+                    →
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* Stats Section */}
       <section className="relative z-10 border-t border-white/5 bg-gradient-to-b from-[#0a0a0a] to-[#050505] px-5 py-20 lg:px-10">
         <div className="mx-auto max-w-7xl">
