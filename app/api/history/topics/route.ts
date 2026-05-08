@@ -1,16 +1,12 @@
 import { NextResponse } from 'next/server';
-import clientPromise from '../../../lib/mongodb';
+import HistoryQuestion from '../../../lib/models/HistoryQuestion';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const client = await clientPromise;
-    const db = client.db('testwale_db');
-    const collection = db.collection('history_questions');
-
     // Get unique topics
-    const topics = await collection.distinct('topic');
+    const topics = await HistoryQuestion.distinct('topic');
 
     return NextResponse.json({ topics });
   } catch (error) {
