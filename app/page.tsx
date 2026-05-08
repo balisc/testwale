@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useLanguage } from './components/LanguageContext';
+import { useLanguage } from './lib/LanguageContext';
 
 const navLinks = [
   { label: 'Home', href: '/' },

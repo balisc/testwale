@@ -3,6 +3,8 @@
 import clientPromise from '../../lib/mongodb';
 import type { QuestionItem } from '../../lib/models/Question';
 
+export type { QuestionItem };
+
 export async function getUPPCS2025Questions(): Promise<QuestionItem[]> {
   const client = await clientPromise;
   const db = client.db('testwale_db');

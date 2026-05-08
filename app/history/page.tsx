@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useLanguage } from '../../components/LanguageContext';
+import { useLanguage } from '../../../lib/LanguageContext';
 
 type BilingualText = {
   en: string;

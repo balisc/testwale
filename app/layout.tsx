@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Lora, Inter } from 'next/font/google';
-import { LanguageProvider } from './components/LanguageContext';
+import { LanguageProvider } from './lib/LanguageContext';
 import './globals.css';
 
 const lora = Lora({ subsets: ['latin'], variable: '--font-lora', display: 'swap' });

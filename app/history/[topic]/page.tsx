@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Suspense } from 'react';
 import QuestionCard from '../../components/QuestionCard';
 import type { QuestionItem } from '../../actions/questions';
-import { useLanguage } from '../../components/LanguageContext';
+import { useLanguage } from '../../../../lib/LanguageContext';
 
 function HistoryQuizContent() {
   const params = useParams();
