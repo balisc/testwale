@@ -80,7 +80,7 @@ export default function HistoryPage() {
             {topics.map((topic, index) => (
               <Link
                 key={index}
-                href={`/history/${encodeURIComponent(getText(topic))}`}
+                href={`/history/${encodeURIComponent(topic.en)}`}
                 className="group rounded-3xl border border-white/10 bg-[#081420] p-6 shadow-panel transition hover:border-amber-400/30 hover:bg-[#0a1a2a]"
               >
                 <div className="flex items-center justify-between">

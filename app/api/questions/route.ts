@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import clientPromise from '../../../lib/mongodb';
+import dbConnect from '@/lib/dbConnect';
+import Question from '@/models/Question';
+import HistoryQuestion from '@/models/HistoryQuestion';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,34 +16,37 @@ export async function GET(request: Request) {
   const search = url.searchParams.get('search')?.trim();
 
   try {
-    const client = await clientPromise;
-    const db = client.db('testwale_db');
-    const collectionName = subject === 'history' ? 'history_questions' : 'questions';
-    const collection = db.collection(collectionName);
+    await dbConnect();
 
-    let filter: Record<string, unknown> = {};
-
+    const normalizedSubject = subject?.toLowerCase() ?? '';
     const queryFilters: Record<string, unknown>[] = [];
 
-    if (subject) {
-      queryFilters.push({ subject: { $regex: new RegExp(`^${escapeRegex(subject)}$`, 'i') } });
+    if (normalizedSubject) {
+      queryFilters.push({ subject: { $regex: new RegExp(`^${escapeRegex(normalizedSubject)}$`, 'i') } });
     }
 
     if (topic) {
-      queryFilters.push({ topic: { $regex: new RegExp(`^${escapeRegex(topic)}$`, 'i') } });
+      if (normalizedSubject === 'history') {
+        queryFilters.push({ 'topic.en': { $regex: new RegExp(`^${escapeRegex(topic)}$`, 'i') } });
+      } else {
+        queryFilters.push({ topic: { $regex: new RegExp(`^${escapeRegex(topic)}$`, 'i') } });
+      }
     }
 
     const searchFilter = search
       ? {
           $or: [
-            { question: { $regex: new RegExp(escapeRegex(search), 'i') } },
+            { 'question.en': { $regex: new RegExp(escapeRegex(search), 'i') } },
+            { 'question.hi': { $regex: new RegExp(escapeRegex(search), 'i') } },
             { subject: { $regex: new RegExp(escapeRegex(search), 'i') } },
-            { topic: { $regex: new RegExp(escapeRegex(search), 'i') } },
+            { 'topic.en': { $regex: new RegExp(escapeRegex(search), 'i') } },
+            { 'topic.hi': { $regex: new RegExp(escapeRegex(search), 'i') } },
             { askedIn: { $regex: new RegExp(escapeRegex(search), 'i') } },
           ],
         }
       : null;
 
+    let filter: Record<string, unknown> = {};
     if (queryFilters.length && searchFilter) {
       filter = { $and: [...queryFilters, searchFilter] };
     } else if (queryFilters.length) {
@@ -50,7 +55,9 @@ export async function GET(request: Request) {
       filter = searchFilter;
     }
 
-    const questions = await collection.find(filter).project({ _id: 0 }).toArray();
+    const collection = normalizedSubject === 'history' ? HistoryQuestion : Question;
+    const questions = await collection.find(filter).select('-_id').lean();
+
     return NextResponse.json({ questions });
   } catch (error) {
     return NextResponse.json(

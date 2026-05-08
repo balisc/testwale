@@ -16,7 +16,7 @@ function HistoryQuizContent() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
 
-  const topic = params.topic as string;
+  const topic = params.topic ? String(params.topic) : '';
 
   useEffect(() => {
     async function loadQuestions() {
@@ -26,11 +26,7 @@ function HistoryQuizContent() {
       try {
         setShowExplanation(false);
 
-        const params = new URLSearchParams();
-        params.set('subject', 'history');
-        params.set('topic', decodeURIComponent(topic));
-
-        const response = await fetch(`/api/questions?${params.toString()}`);
+        const response = await fetch(`/api/history/questions?topic=${encodeURIComponent(topic)}`);
         const payload = await response.json();
 
         if (!response.ok) {
@@ -49,7 +45,11 @@ function HistoryQuizContent() {
     loadQuestions();
   }, [topic]);
 
-  const headingText = decodeURIComponent(topic);
+  const headingText = questions.length > 0 ? questionToHeading(questions[0]) : topic ? decodeURIComponent(topic) : 'History Quiz';
+
+  function questionToHeading(question: QuestionItem) {
+    return typeof question.topic === 'string' ? question.topic : question.topic[language] || question.topic.en;
+  }
 
   function handleAnswerSelection() {
     setShowExplanation(true);
