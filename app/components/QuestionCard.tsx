@@ -42,7 +42,7 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
             <p className="text-xs uppercase tracking-[0.35em] text-emerald-300">{question.subject}</p>
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1 text-xs uppercase tracking-[0.35em] text-slate-300">
-                Category: {question.topic}
+                Category: {getText(question.topic)}
               </span>
               <span className="rounded-full border border-amber-400 bg-amber-400/10 px-3 py-1 text-xs uppercase tracking-[0.35em] text-amber-200">
                 Asked in: {askedInLabel}

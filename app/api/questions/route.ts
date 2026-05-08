@@ -16,7 +16,8 @@ export async function GET(request: Request) {
   try {
     const client = await clientPromise;
     const db = client.db('testwale_db');
-    const collection = db.collection('questions');
+    const collectionName = subject === 'history' ? 'history_questions' : 'questions';
+    const collection = db.collection(collectionName);
 
     let filter: Record<string, unknown> = {};
 

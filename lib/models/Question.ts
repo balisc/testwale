@@ -10,7 +10,7 @@ export type QuestionItem = {
   exam?: string;
   askedIn: string;
   subject: string;
-  topic: string;
+  topic: BilingualText;
   question: BilingualText;
   options: Record<string, BilingualText>;
   answer: string;
@@ -33,7 +33,7 @@ const questionSchema = new Schema<QuestionDocument>(
     exam: { type: String },
     askedIn: { type: String, required: true },
     subject: { type: String, required: true },
-    topic: { type: String, required: true },
+    topic: { type: bilingualTextSchema, required: true },
     question: { type: bilingualTextSchema, required: true },
     options: { type: Schema.Types.Mixed, required: true },
     answer: { type: String, required: true },
