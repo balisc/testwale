@@ -1,21 +1,39 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import QuestionCard from '../components/QuestionCard';
+import TopicSelector from '../components/TopicSelector';
+import questionsData from '../../data/questions.json';
 import type { QuestionItem } from '../actions/questions';
 
 export const dynamic = 'force-dynamic';
 
 function PracticeContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const subject = searchParams.get('subject')?.trim() ?? '';
+  const topic = searchParams.get('topic')?.trim() ?? '';
   const search = searchParams.get('search')?.trim() ?? '';
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const availableTopics = useMemo(() => {
+    if (!subject) {
+      return [];
+    }
+
+    return Array.from(
+      new Set(
+        questionsData
+          .filter((item) => item.subject.toLowerCase() === subject.toLowerCase())
+          .map((item) => item.topic)
+      )
+    );
+  }, [subject]);
 
   useEffect(() => {
     async function loadQuestions() {
@@ -32,6 +50,7 @@ function PracticeContent() {
       try {
         const params = new URLSearchParams();
         if (subject) params.set('subject', subject);
+        if (topic) params.set('topic', topic);
         if (!subject && search) params.set('search', search);
 
         const response = await fetch(`/api/questions?${params.toString()}`);
@@ -51,9 +70,16 @@ function PracticeContent() {
     }
 
     loadQuestions();
-  }, [subject, search]);
+  }, [subject, search, topic]);
 
-  const headingText = subject ? subject : search ? `Search results for "${search}"` : 'Practice';
+  const headingText = topic ? `${subject} - ${topic}` : subject ? subject : search ? `Search results for "${search}"` : 'Practice';
+
+  function handleTopicChange(nextTopic: string) {
+    const params = new URLSearchParams();
+    if (subject) params.set('subject', subject);
+    if (nextTopic) params.set('topic', nextTopic);
+    router.push(`/practice?${params.toString()}`);
+  }
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10 lg:px-10">
@@ -74,6 +100,13 @@ function PracticeContent() {
           </Link>
         </div>
       </div>
+
+      <TopicSelector
+        subject={subject}
+        topics={availableTopics}
+        selectedTopic={topic}
+        onTopicChange={handleTopicChange}
+      />
 
       <div className="space-y-6">
         {isLoading ? (

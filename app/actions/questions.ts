@@ -1,17 +1,7 @@
 'use server';
 
 import clientPromise from '../../lib/mongodb';
-
-export type QuestionItem = {
-  id: string;
-  exam?: string;
-  subject: string;
-  topic: string;
-  question: string;
-  options: Record<string, string>;
-  answer: string;
-  explanation: string;
-};
+import type { QuestionItem } from '../../lib/models/Question';
 
 export async function getUPPCS2025Questions(): Promise<QuestionItem[]> {
   const client = await clientPromise;
