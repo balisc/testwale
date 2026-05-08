@@ -20,29 +20,33 @@ export async function GET(request: Request) {
 
     let filter: Record<string, unknown> = {};
 
-    const filters: Record<string, unknown>[] = [];
+    const queryFilters: Record<string, unknown>[] = [];
 
     if (subject) {
-      filters.push({ subject: { $regex: new RegExp(`^${escapeRegex(subject)}$`, 'i') } });
+      queryFilters.push({ subject: { $regex: new RegExp(`^${escapeRegex(subject)}$`, 'i') } });
     }
 
     if (topic) {
-      filters.push({ topic: { $regex: new RegExp(`^${escapeRegex(topic)}$`, 'i') } });
+      queryFilters.push({ topic: { $regex: new RegExp(`^${escapeRegex(topic)}$`, 'i') } });
     }
 
-    if (filters.length === 1) {
-      filter = filters[0];
-    } else if (filters.length > 1) {
-      filter = { $and: filters };
-    } else if (search) {
-      const term = escapeRegex(search);
-      filter = {
-        $or: [
-          { question: { $regex: new RegExp(term, 'i') } },
-          { subject: { $regex: new RegExp(term, 'i') } },
-          { topic: { $regex: new RegExp(term, 'i') } },
-        ],
-      };
+    const searchFilter = search
+      ? {
+          $or: [
+            { question: { $regex: new RegExp(escapeRegex(search), 'i') } },
+            { subject: { $regex: new RegExp(escapeRegex(search), 'i') } },
+            { topic: { $regex: new RegExp(escapeRegex(search), 'i') } },
+            { askedIn: { $regex: new RegExp(escapeRegex(search), 'i') } },
+          ],
+        }
+      : null;
+
+    if (queryFilters.length && searchFilter) {
+      filter = { $and: [...queryFilters, searchFilter] };
+    } else if (queryFilters.length) {
+      filter = queryFilters.length === 1 ? queryFilters[0] : { $and: queryFilters };
+    } else if (searchFilter) {
+      filter = searchFilter;
     }
 
     const questions = await collection.find(filter).project({ _id: 0 }).toArray();

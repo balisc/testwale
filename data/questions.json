@@ -2,6 +2,7 @@
   {
     "id": "1",
     "exam": "BPSC 67th 2022",
+    "askedIn": "BPSC 67th 2022",
     "subject": "history",
     "topic": "Ancient History",
     "question": "Which Mauryan emperor visited Hellenistic courts and is mentioned by Greek writers?",
@@ -18,6 +19,7 @@
   {
     "id": "2",
     "exam": "BPSC 68th 2023",
+    "askedIn": "BPSC 68th 2023",
     "subject": "science",
     "topic": "Physics",
     "question": "What is the primary reason for the blue color of the sky?",
@@ -34,6 +36,7 @@
   {
     "id": "3",
     "exam": "BPSC 69th 2024",
+    "askedIn": "BPSC 69th 2024",
     "subject": "polity",
     "topic": "Constitution",
     "question": "Which article of the Indian Constitution guarantees the right to equality before law?",
@@ -50,6 +53,7 @@
   {
     "id": "4",
     "exam": "Bihar Special 2024",
+    "askedIn": "Bihar Special 2024",
     "subject": "bihar",
     "topic": "Culture",
     "question": "Which festival is famously associated with the city of Gaya in Bihar?",
@@ -66,6 +70,7 @@
   {
     "id": "5",
     "exam": "BPSC 70th 2025",
+    "askedIn": "BPSC 70th 2025",
     "subject": "history",
     "topic": "Modern History",
     "question": "Who founded the Indian National Congress in 1885?",

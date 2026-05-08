@@ -8,11 +8,12 @@ const optionLabels = ['A', 'B', 'C', 'D'];
 type QuestionCardProps = {
   question: QuestionItem;
   index: number;
+  showExplanation: boolean;
+  onAnswerSelect: () => void;
 };
 
-export default function QuestionCard({ question, index }: QuestionCardProps) {
+export default function QuestionCard({ question, index, showExplanation, onAnswerSelect }: QuestionCardProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [showExplanation, setShowExplanation] = useState(false);
 
   const optionEntries = useMemo(
     () => Object.entries(question.options).filter(([key]) => optionLabels.includes(key)),
@@ -20,6 +21,7 @@ export default function QuestionCard({ question, index }: QuestionCardProps) {
   );
 
   const isCorrect = selectedOption === question.answer;
+  const askedInLabel = question.askedIn || question.exam || 'Unknown';
 
   return (
     <article className="rounded-3xl border border-white/10 bg-[#081420] p-7 shadow-panel">
@@ -30,11 +32,16 @@ export default function QuestionCard({ question, index }: QuestionCardProps) {
 
       <div className="space-y-5">
         <div className="space-y-3 rounded-3xl bg-slate-900/70 p-6">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs uppercase tracking-[0.35em] text-emerald-300">{question.subject}</p>
-            <span className="rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1 text-xs uppercase tracking-[0.35em] text-slate-300">
-              Category: {question.topic}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1 text-xs uppercase tracking-[0.35em] text-slate-300">
+                Category: {question.topic}
+              </span>
+              <span className="rounded-full border border-amber-400 bg-amber-400/10 px-3 py-1 text-xs uppercase tracking-[0.35em] text-amber-200">
+                Asked in: {askedInLabel}
+              </span>
+            </div>
           </div>
           <p className="text-xl font-semibold leading-8 text-white sm:text-2xl">{question.question}</p>
         </div>
@@ -67,7 +74,10 @@ export default function QuestionCard({ question, index }: QuestionCardProps) {
               <button
                 key={key}
                 type="button"
-                onClick={() => setSelectedOption(key)}
+                onClick={() => {
+                  setSelectedOption(key);
+                  onAnswerSelect();
+                }}
                 className={optionClasses}
               >
                 <div className="flex items-start gap-4">
@@ -83,35 +93,21 @@ export default function QuestionCard({ question, index }: QuestionCardProps) {
           })}
         </div>
 
-        <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-slate-950/60 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Answer state</p>
-            <p className="text-base font-semibold text-white">
-              {selectedOption
-                ? isCorrect
-                  ? 'Correct answer selected'
-                  : 'Wrong option selected'
-                : 'Please choose an option to check your answer'}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowExplanation((current) => !current)}
-            disabled={!selectedOption}
-            className={`rounded-full px-6 py-3 text-sm font-semibold transition ${
-              selectedOption
-                ? 'bg-emerald-400 text-slate-950 hover:bg-emerald-300'
-                : 'cursor-not-allowed bg-white/5 text-slate-500'
-            }`}
-          >
-            {showExplanation ? 'Hide Explain' : 'Explain'}
-          </button>
+        <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-5">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Answer state</p>
+          <p className="mt-2 text-base font-semibold text-white">
+            {selectedOption
+              ? isCorrect
+                ? 'Correct answer selected'
+                : 'Wrong option selected'
+              : 'Please choose an option to review the explanation'}
+          </p>
         </div>
 
-        {showExplanation && selectedOption && (
-          <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 text-slate-200">
+        {selectedOption && showExplanation && (
+          <div className="rounded-3xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-slate-100 shadow-sm">
             <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Explanation</p>
-            <p className="mt-4 text-base leading-7 text-slate-300">{question.explanation}</p>
+            <p className="mt-4 text-base leading-7 text-slate-200">{question.explanation}</p>
           </div>
         )}
       </div>

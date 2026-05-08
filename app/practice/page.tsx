@@ -20,6 +20,7 @@ function PracticeContent() {
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showExplanation, setShowExplanation] = useState(false);
 
   const availableTopics = useMemo(() => {
     if (!subject) {
@@ -48,6 +49,8 @@ function PracticeContent() {
       setErrorMessage(null);
 
       try {
+        setShowExplanation(false);
+
         const params = new URLSearchParams();
         if (subject) params.set('subject', subject);
         if (topic) params.set('topic', topic);
@@ -79,6 +82,10 @@ function PracticeContent() {
     if (subject) params.set('subject', subject);
     if (nextTopic) params.set('topic', nextTopic);
     router.push(`/practice?${params.toString()}`);
+  }
+
+  function handleAnswerSelection() {
+    setShowExplanation(true);
   }
 
   return (
@@ -124,7 +131,13 @@ function PracticeContent() {
         ) : (
           <div className="grid gap-6">
             {questions.map((question, index) => (
-              <QuestionCard key={question.id} question={question} index={index} />
+              <QuestionCard
+                key={question.id}
+                question={question}
+                index={index}
+                showExplanation={showExplanation}
+                onAnswerSelect={handleAnswerSelection}
+              />
             ))}
           </div>
         )}

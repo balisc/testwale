@@ -3,6 +3,7 @@ import mongoose, { Document, Model, Schema } from 'mongoose';
 export type QuestionItem = {
   id: string;
   exam?: string;
+  askedIn: string;
   subject: string;
   topic: string;
   question: string;
@@ -17,6 +18,7 @@ const questionSchema = new Schema<QuestionDocument>(
   {
     id: { type: String, required: true, unique: true },
     exam: { type: String },
+    askedIn: { type: String, required: true },
     subject: { type: String, required: true },
     topic: { type: String, required: true },
     question: { type: String, required: true },
