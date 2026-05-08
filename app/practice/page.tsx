@@ -8,7 +8,7 @@ import QuestionCard from '../components/QuestionCard';
 import TopicSelector from '../components/TopicSelector';
 import questionsData from '../../data/questions.json';
 import type { QuestionItem } from '../actions/questions';
-import { useLanguage } from '../../lib/LanguageContext';
+import { useLanguage } from '../lib/LanguageContext';
 
 export const dynamic = 'force-dynamic';
 

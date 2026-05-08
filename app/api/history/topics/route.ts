@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import HistoryQuestion from '../../../lib/models/HistoryQuestion';
+import HistoryQuestion from '../../lib/models/HistoryQuestion';
 
 export const dynamic = 'force-dynamic';
 

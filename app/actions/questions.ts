@@ -1,7 +1,7 @@
 'use server';
 
 import clientPromise from '../../lib/mongodb';
-import type { QuestionItem } from '../../lib/models/Question';
+import type { QuestionItem } from '../lib/models/Question';
 
 export type { QuestionItem };
 
