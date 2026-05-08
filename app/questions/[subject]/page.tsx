@@ -3,8 +3,15 @@ import questionsData from '../../../data/questions.json';
 
 const topicList = ['Ancient History', 'Medieval History', 'Modern History'];
 
-export default function SubjectPage({ params }: { params: { subject: string } }) {
-  const subjectKey = params.subject.toLowerCase();
+type LocalizedText = string | { en: string; hi: string };
+
+function getText(value: LocalizedText, locale: 'en' | 'hi' = 'en') {
+  if (typeof value === 'string') return value;
+  return value[locale] || value.en;
+}
+
+export default function SubjectPage({ params }: { params: any }) {
+  const subjectKey = String(params.subject).toLowerCase();
   const questions = questionsData.filter((item) => item.subject.toLowerCase() === subjectKey);
   const header = subjectKey.replace('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -42,9 +49,9 @@ export default function SubjectPage({ params }: { params: { subject: string } })
               <article key={question.id} className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-panel transition hover:border-accent/50 hover:bg-hoverbg">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <span className="rounded-full bg-accent/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-accent">{question.exam}</span>
-                  <span className="text-xs uppercase tracking-[0.3em] text-slate-400">{question.topic}</span>
+                  <span className="text-xs uppercase tracking-[0.3em] text-slate-400">{getText(question.topic)}</span>
                 </div>
-                <h2 className="text-xl font-semibold text-white">{question.question}</h2>
+                <h2 className="text-xl font-semibold text-white">{getText(question.question)}</h2>
                 <div className="mt-6 flex flex-wrap items-center gap-3">
                   <Link href={`/quiz/${question.id}`} className="rounded-full border border-accent/20 bg-accent/10 px-4 py-2 text-sm font-semibold uppercase tracking-[0.3em] text-accent transition hover:bg-accent/15">
                     Start Practice

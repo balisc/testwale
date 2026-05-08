@@ -6,16 +6,23 @@ import questionsData from '../../../data/questions.json';
 
 type OptionKey = 'A' | 'B' | 'C' | 'D' | 'E';
 
+type LocalizedText = string | { en: string; hi: string };
+
 type QuestionItem = {
   id: string;
   exam: string;
   subject: string;
   topic: string;
-  question: string;
-  options: Record<OptionKey, string>;
+  question: LocalizedText;
+  options: Record<OptionKey, LocalizedText>;
   answer: OptionKey;
-  explanation: string;
+  explanation: LocalizedText;
 };
+
+function getText(value: LocalizedText, locale: 'en' | 'hi' = 'en') {
+  if (typeof value === 'string') return value;
+  return value[locale] || value.en;
+}
 
 export default function QuizPage({ params }: { params: { id: string } }) {
   const question = useMemo(() => questionsData.find((item) => item.id === params.id), [params.id]);
@@ -45,7 +52,7 @@ export default function QuizPage({ params }: { params: { id: string } }) {
   const totalSeconds = 150;
   const progress = Math.round(((totalSeconds - secondsLeft) / totalSeconds) * 100);
 
-  const optionEntries = Object.entries(question.options) as [OptionKey, string][];
+  const optionEntries = Object.entries(question.options) as [OptionKey, LocalizedText][];
   const selectedCorrect = selected === question.answer;
 
   return (
@@ -72,7 +79,7 @@ export default function QuizPage({ params }: { params: { id: string } }) {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm uppercase tracking-[0.35em] text-accent">Question</p>
-              <h2 className="mt-3 text-2xl font-semibold text-white">{question.question}</h2>
+              <h2 className="mt-3 text-2xl font-semibold text-white">{getText(question.question)}</h2>
             </div>
             <Link href={`/questions/${question.subject}`} className="rounded-full border border-accent/20 bg-accent/10 px-4 py-2 text-sm font-semibold uppercase tracking-[0.3em] text-accent transition hover:bg-accent/15">
               Back to Topic
@@ -102,7 +109,7 @@ export default function QuizPage({ params }: { params: { id: string } }) {
                 >
                   <div className="flex items-center gap-4">
                     <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-lg font-semibold text-slate-100">{key}</span>
-                    <span className="text-base leading-7">{value}</span>
+                    <span className="text-base leading-7">{getText(value)}</span>
                   </div>
                   {checked && isCorrectOption && (
                     <span className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-sm text-emerald-200">
@@ -135,7 +142,7 @@ export default function QuizPage({ params }: { params: { id: string } }) {
         {checked && (
           <div className="rounded-3xl border-2 border-accent bg-[#111f39] p-6 shadow-panel">
             <h3 className="text-xl font-semibold text-accent">Explanation</h3>
-            <p className="mt-4 leading-7 text-slate-200">{question.explanation}</p>
+            <p className="mt-4 leading-7 text-slate-200">{getText(question.explanation)}</p>
           </div>
         )}
       </section>

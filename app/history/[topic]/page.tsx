@@ -1,16 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { Suspense } from 'react';
 import QuestionCard from '../../components/QuestionCard';
 import type { QuestionItem } from '../../actions/questions';
 import { useLanguage } from '../../lib/LanguageContext';
 
 function HistoryQuizContent() {
-  const params = useParams();
-  const router = useRouter();
+  const params = useParams() as { topic?: string };
   const { language } = useLanguage();
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);

@@ -25,7 +25,7 @@ export default function HistoryPage() {
           throw new Error(payload.error || 'Unable to load topics.');
         }
 
-        setTopics(payload.topics || []);
+        setTopics((payload.topics || []) as BilingualText[]);
       } catch (error) {
         setTopics([]);
         setErrorMessage(error instanceof Error ? error.message : 'Unable to load topics.');
