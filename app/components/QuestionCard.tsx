@@ -10,9 +10,10 @@ type QuestionCardProps = {
   index: number;
   showExplanation: boolean;
   onAnswerSelect: () => void;
+  language: 'en' | 'hi';
 };
 
-export default function QuestionCard({ question, index, showExplanation, onAnswerSelect }: QuestionCardProps) {
+export default function QuestionCard({ question, index, showExplanation, onAnswerSelect, language }: QuestionCardProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   const optionEntries = useMemo(
@@ -22,6 +23,11 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
 
   const isCorrect = selectedOption === question.answer;
   const askedInLabel = question.askedIn || question.exam || 'Unknown';
+
+  const getText = (bilingual: any) => {
+    if (typeof bilingual === 'string') return bilingual; // fallback for old data
+    return bilingual?.[language] || bilingual?.en || '';
+  };
 
   return (
     <article className="rounded-3xl border border-white/10 bg-[#081420] p-7 shadow-panel">
@@ -43,7 +49,7 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
               </span>
             </div>
           </div>
-          <p className="text-xl font-semibold leading-8 text-white sm:text-2xl">{question.question}</p>
+          <p className="text-xl font-semibold leading-8 text-white sm:text-2xl">{getText(question.question)}</p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -85,7 +91,7 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
                     {key}
                   </div>
                   <div>
-                    <p className="text-sm leading-6 text-white">{optionText}</p>
+                    <p className="text-sm leading-6 text-white">{getText(optionText)}</p>
                   </div>
                 </div>
               </button>
@@ -107,7 +113,7 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
         {selectedOption && showExplanation && (
           <div className="rounded-3xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-slate-100 shadow-sm">
             <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Explanation</p>
-            <p className="mt-4 text-base leading-7 text-slate-200">{question.explanation}</p>
+            <p className="mt-4 text-base leading-7 text-slate-200">{getText(question.explanation)}</p>
           </div>
         )}
       </div>

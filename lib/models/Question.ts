@@ -1,18 +1,31 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
 
+export type BilingualText = {
+  en: string;
+  hi: string;
+};
+
 export type QuestionItem = {
   id: string;
   exam?: string;
   askedIn: string;
   subject: string;
   topic: string;
-  question: string;
-  options: Record<string, string>;
+  question: BilingualText;
+  options: Record<string, BilingualText>;
   answer: string;
-  explanation: string;
+  explanation: BilingualText;
 };
 
 export interface QuestionDocument extends QuestionItem, Document {}
+
+const bilingualTextSchema = new Schema<BilingualText>(
+  {
+    en: { type: String, required: true },
+    hi: { type: String, required: true },
+  },
+  { _id: false }
+);
 
 const questionSchema = new Schema<QuestionDocument>(
   {
@@ -21,10 +34,10 @@ const questionSchema = new Schema<QuestionDocument>(
     askedIn: { type: String, required: true },
     subject: { type: String, required: true },
     topic: { type: String, required: true },
-    question: { type: String, required: true },
+    question: { type: bilingualTextSchema, required: true },
     options: { type: Schema.Types.Mixed, required: true },
     answer: { type: String, required: true },
-    explanation: { type: String, required: true },
+    explanation: { type: bilingualTextSchema, required: true },
   },
   {
     timestamps: true,

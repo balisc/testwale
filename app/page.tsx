@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useLanguage } from './components/LanguageContext';
 
 const navLinks = [
   { label: 'Home', href: '/' },
@@ -16,6 +17,7 @@ const navLinks = [
 
 export default function HomePage() {
   const router = useRouter();
+  const { language, toggleLanguage } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -71,6 +73,13 @@ export default function HomePage() {
                   )}
                 </Link>
               ))}
+              {/* Language Toggle */}
+              <button
+                onClick={toggleLanguage}
+                className="rounded-full border border-white/10 bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+              >
+                {language === 'en' ? 'हिंदी' : 'English'}
+              </button>
             </div>
 
             {/* Mobile Menu Toggle */}

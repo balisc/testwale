@@ -5,16 +5,37 @@
     "askedIn": "BPSC 67th 2022",
     "subject": "history",
     "topic": "Ancient History",
-    "question": "Which Mauryan emperor visited Hellenistic courts and is mentioned by Greek writers?",
+    "question": {
+      "en": "Which Mauryan emperor visited Hellenistic courts and is mentioned by Greek writers?",
+      "hi": "कौन सा मौर्य सम्राट हेलेनिस्टिक न्यायालयों में गया और यूनानी लेखकों द्वारा उल्लिखित है?"
+    },
     "options": {
-      "A": "Chandragupta Maurya",
-      "B": "Bindusara",
-      "C": "Ashoka",
-      "D": "Samprati",
-      "E": "Bimbisara"
+      "A": {
+        "en": "Chandragupta Maurya",
+        "hi": "चंद्रगुप्त मौर्य"
+      },
+      "B": {
+        "en": "Bindusara",
+        "hi": "बिंदुसार"
+      },
+      "C": {
+        "en": "Ashoka",
+        "hi": "अशोक"
+      },
+      "D": {
+        "en": "Samprati",
+        "hi": "सम्प्रति"
+      },
+      "E": {
+        "en": "Bimbisara",
+        "hi": "बिम्बिसार"
+      }
     },
     "answer": "C",
-    "explanation": "Ashoka maintained diplomatic relations with Hellenistic rulers and sent envoys to Greek courts after the Kalinga war."
+    "explanation": {
+      "en": "Ashoka maintained diplomatic relations with Hellenistic rulers and sent envoys to Greek courts after the Kalinga war.",
+      "hi": "अशोक ने कलिंग युद्ध के बाद हेलेनिस्टिक शासकों के साथ राजनयिक संबंध बनाए रखे और यूनानी न्यायालयों में दूत भेजे।"
+    }
   },
   {
     "id": "2",
@@ -22,16 +43,37 @@
     "askedIn": "BPSC 68th 2023",
     "subject": "science",
     "topic": "Physics",
-    "question": "What is the primary reason for the blue color of the sky?",
+    "question": {
+      "en": "What is the primary reason for the blue color of the sky?",
+      "hi": "आकाश के नीले रंग का मुख्य कारण क्या है?"
+    },
     "options": {
-      "A": "Absorption of blue light by air",
-      "B": "Reflection from oceans",
-      "C": "Rayleigh scattering of sunlight",
-      "D": "Emission by ozone",
-      "E": "Diffraction of red light"
+      "A": {
+        "en": "Absorption of blue light by air",
+        "hi": "वायु द्वारा नीली रोशनी का अवशोषण"
+      },
+      "B": {
+        "en": "Reflection from oceans",
+        "hi": "महासागरों से परावर्तन"
+      },
+      "C": {
+        "en": "Rayleigh scattering of sunlight",
+        "hi": "सूर्य की रोशनी का रेले स्कैटरिंग"
+      },
+      "D": {
+        "en": "Emission by ozone",
+        "hi": "ओजोन द्वारा उत्सर्जन"
+      },
+      "E": {
+        "en": "Diffraction of red light",
+        "hi": "लाल रोशनी का विवर्तन"
+      }
     },
     "answer": "C",
-    "explanation": "Rayleigh scattering from small molecules in the atmosphere scatters shorter blue wavelengths more effectively than red wavelengths."
+    "explanation": {
+      "en": "Rayleigh scattering from small molecules in the atmosphere scatters shorter blue wavelengths more effectively than red wavelengths.",
+      "hi": "वायुमंडल में छोटे अणुओं से रेले स्कैटरिंग लाल तरंग दैर्ध्य की तुलना में छोटी नीली तरंग दैर्ध्य को अधिक प्रभावी ढंग से बिखेरती है।"
+    }
   },
   {
     "id": "3",

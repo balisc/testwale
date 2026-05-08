@@ -8,12 +8,14 @@ import QuestionCard from '../components/QuestionCard';
 import TopicSelector from '../components/TopicSelector';
 import questionsData from '../../data/questions.json';
 import type { QuestionItem } from '../actions/questions';
+import { useLanguage } from '../components/LanguageContext';
 
 export const dynamic = 'force-dynamic';
 
 function PracticeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { language } = useLanguage();
   const subject = searchParams.get('subject')?.trim() ?? '';
   const topic = searchParams.get('topic')?.trim() ?? '';
   const search = searchParams.get('search')?.trim() ?? '';
@@ -137,6 +139,7 @@ function PracticeContent() {
                 index={index}
                 showExplanation={showExplanation}
                 onAnswerSelect={handleAnswerSelection}
+                language={language}
               />
             ))}
           </div>
