@@ -1,71 +1,75 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Suspense } from 'react';
 import QuestionCard from '../components/QuestionCard';
-import TopicSelector from '../components/TopicSelector';
+import TopicCard from '../components/TopicCard';
 import type { QuestionItem } from '../actions/questions';
 import { useLanguage } from '../lib/LanguageContext';
 
 export const dynamic = 'force-dynamic';
 
+type Topic = {
+  en: string;
+  hi: string;
+};
+
 function PracticeContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { language } = useLanguage();
-  const subject = searchParams.get('subject')?.trim() ?? '';
-  const topic = searchParams.get('topic')?.trim() ?? '';
-  const search = searchParams.get('search')?.trim() ?? '';
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
 
-  const getText = (value: unknown) => {
-    if (typeof value === 'string') return value;
-    return (value as any)?.[language] || (value as any)?.en || (value as any)?.hi || '';
+  const getDisplayText = (text: string | any) => {
+    if (typeof text === 'string') return text;
+    return text?.[language] || text?.en || text?.hi || '';
   };
 
-  const availableTopics = useMemo(() => {
-    if (!subject) {
-      return [];
-    }
-
-    return Array.from(
-      new Set(
-        questions
-          .filter((item) => getText(item.subject).toLowerCase() === subject.toLowerCase())
-          .map((item) => getText(item.topic))
-          .filter(Boolean)
-      )
-    );
-  }, [subject, questions, language]);
-
+  // Load unique topics on mount
   useEffect(() => {
-    async function loadQuestions() {
+    async function loadTopics() {
       setIsLoading(true);
       setErrorMessage(null);
 
       try {
-        setShowExplanation(false);
-
-        const params = new URLSearchParams();
-        if (subject) params.set('subject', subject);
-        if (topic) params.set('topic', topic);
-        if (!subject && search) params.set('search', search);
-
-        const response = await fetch(`/api/questions?${params.toString()}`);
+        const response = await fetch('/api/topics');
         if (!response.ok) {
-          const errorPayload = await response.text().then((text) => {
-            try {
-              return JSON.parse(text);
-            } catch {
-              return {};
-            }
-          });
-          throw new Error(errorPayload.error || 'Unable to load questions.');
+          throw new Error('Unable to load topics.');
+        }
+
+        const payload = await response.json();
+        setTopics(payload.topics ?? []);
+      } catch (error) {
+        setTopics([]);
+        setErrorMessage(error instanceof Error ? error.message : 'Unable to load topics.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadTopics();
+  }, []);
+
+  // Load questions when topic is selected
+  useEffect(() => {
+    async function loadQuestions() {
+      if (!selectedTopic) return;
+
+      setIsLoading(true);
+      setErrorMessage(null);
+      setShowExplanation(false);
+
+      try {
+        const params = new URLSearchParams();
+        params.set('topic', getDisplayText(selectedTopic.hi) || getDisplayText(selectedTopic.en));
+
+        const response = await fetch(`/api/history/questions?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error('Unable to load questions for this topic.');
         }
 
         const payload = await response.json();
@@ -79,19 +83,15 @@ function PracticeContent() {
     }
 
     loadQuestions();
-  }, [subject, search, topic, language]);
-
-  const headingText = topic ? `${subject} - ${topic}` : subject ? subject : search ? `Search results for "${search}"` : 'Practice';
-
-  function handleTopicChange(nextTopic: string) {
-    const params = new URLSearchParams();
-    if (subject) params.set('subject', subject);
-    if (nextTopic) params.set('topic', nextTopic);
-    router.push(`/practice?${params.toString()}`);
-  }
+  }, [selectedTopic, language]);
 
   function handleAnswerSelection() {
     setShowExplanation(true);
+  }
+
+  function handleBackToTopics() {
+    setSelectedTopic(null);
+    setShowExplanation(false);
   }
 
   return (
@@ -100,9 +100,11 @@ function PracticeContent() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.35em] text-amber-300">Practice</p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">{headingText}</h1>
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+              {selectedTopic ? getDisplayText(selectedTopic.hi) || getDisplayText(selectedTopic.en) : 'Select a Topic'}
+            </h1>
             <p className="mt-4 max-w-2xl text-slate-300">
-              Questions are loaded dynamically from the <strong>testwale_db.history_questions</strong> Supabase table.
+              {selectedTopic ? 'Practice questions for this topic' : 'Choose a topic to start practicing'}
             </p>
           </div>
           <Link
@@ -114,37 +116,51 @@ function PracticeContent() {
         </div>
       </div>
 
-      <TopicSelector
-        subject={subject}
-        topics={availableTopics}
-        selectedTopic={topic}
-        onTopicChange={handleTopicChange}
-      />
-
       <div className="space-y-6">
         {isLoading ? (
           <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center text-slate-300 shadow-panel">
-            Loading questions...
+            {selectedTopic ? 'Loading questions...' : 'Loading topics...'}
           </div>
         ) : errorMessage ? (
           <div className="rounded-3xl border border-red-500/20 bg-red-500/5 p-8 text-center text-red-200 shadow-panel">
             <p className="text-lg font-semibold">{errorMessage}</p>
           </div>
-        ) : !questions.length ? (
+        ) : selectedTopic ? (
+          <>
+            <button
+              onClick={handleBackToTopics}
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-emerald-400 hover:text-emerald-300"
+            >
+              ← Back to Topics
+            </button>
+
+            {!questions.length ? (
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center text-slate-300 shadow-panel">
+                No questions found for this topic.
+              </div>
+            ) : (
+              <div className="grid gap-6">
+                {questions.map((question, index) => (
+                  <QuestionCard
+                    key={question.id}
+                    question={question}
+                    index={index}
+                    showExplanation={showExplanation}
+                    onAnswerSelect={handleAnswerSelection}
+                    language={language}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        ) : !topics.length ? (
           <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center text-slate-300 shadow-panel">
-            No questions were found for this subject.
+            No topics available.
           </div>
         ) : (
-          <div className="grid gap-6">
-            {questions.map((question, index) => (
-              <QuestionCard
-                key={question.id}
-                question={question}
-                index={index}
-                showExplanation={showExplanation}
-                onAnswerSelect={handleAnswerSelection}
-                language={language}
-              />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {topics.map((topic, index) => (
+              <TopicCard key={index} topic={topic} onSelect={setSelectedTopic} language={language} />
             ))}
           </div>
         )}
