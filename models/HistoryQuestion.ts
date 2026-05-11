@@ -44,6 +44,8 @@ const historyQuestionSchema = new Schema<HistoryQuestionDocument>(
   }
 );
 
-const HistoryQuestion: Model<HistoryQuestionDocument> = mongoose.models.HistoryQuestion || mongoose.model<HistoryQuestionDocument>('HistoryQuestion', historyQuestionSchema, 'history_questions');
+export const HistoryQuestion: Model<HistoryQuestionDocument> =
+  mongoose.models.HistoryQuestion ||
+  mongoose.model<HistoryQuestionDocument>('HistoryQuestion', historyQuestionSchema, 'history_questions');
 
 export default HistoryQuestion;

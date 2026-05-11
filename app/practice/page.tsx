@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import QuestionCard from '../components/QuestionCard';
 import TopicSelector from '../components/TopicSelector';
-import questionsData from '../../data/questions.json';
 import type { QuestionItem } from '../actions/questions';
 import { useLanguage } from '../lib/LanguageContext';
 
@@ -24,6 +23,11 @@ function PracticeContent() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
 
+  const getText = (value: unknown) => {
+    if (typeof value === 'string') return value;
+    return (value as any)?.[language] || (value as any)?.en || (value as any)?.hi || '';
+  };
+
   const availableTopics = useMemo(() => {
     if (!subject) {
       return [];
@@ -31,22 +35,16 @@ function PracticeContent() {
 
     return Array.from(
       new Set(
-        questionsData
-          .filter((item) => item.subject.toLowerCase() === subject.toLowerCase())
-          .map((item) => item.topic)
+        questions
+          .filter((item) => getText(item.subject).toLowerCase() === subject.toLowerCase())
+          .map((item) => getText(item.topic))
+          .filter(Boolean)
       )
     );
-  }, [subject]);
+  }, [subject, questions, language]);
 
   useEffect(() => {
     async function loadQuestions() {
-      if (!subject && !search) {
-        setQuestions([]);
-        setErrorMessage('Select a subject or enter a search term to begin.');
-        setIsLoading(false);
-        return;
-      }
-
       setIsLoading(true);
       setErrorMessage(null);
 
@@ -59,12 +57,18 @@ function PracticeContent() {
         if (!subject && search) params.set('search', search);
 
         const response = await fetch(`/api/questions?${params.toString()}`);
-        const payload = await response.json();
-
         if (!response.ok) {
-          throw new Error(payload.error || 'Unable to load questions.');
+          const errorPayload = await response.text().then((text) => {
+            try {
+              return JSON.parse(text);
+            } catch {
+              return {};
+            }
+          });
+          throw new Error(errorPayload.error || 'Unable to load questions.');
         }
 
+        const payload = await response.json();
         setQuestions(payload.questions ?? []);
       } catch (error) {
         setQuestions([]);
@@ -75,7 +79,7 @@ function PracticeContent() {
     }
 
     loadQuestions();
-  }, [subject, search, topic]);
+  }, [subject, search, topic, language]);
 
   const headingText = topic ? `${subject} - ${topic}` : subject ? subject : search ? `Search results for "${search}"` : 'Practice';
 
@@ -98,7 +102,7 @@ function PracticeContent() {
             <p className="text-sm uppercase tracking-[0.35em] text-amber-300">Practice</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">{headingText}</h1>
             <p className="mt-4 max-w-2xl text-slate-300">
-              Questions are loaded dynamically from the <strong>testwale_db.questions</strong> collection.
+              Questions are loaded dynamically from the <strong>testwale_db.history_questions</strong> Supabase table.
             </p>
           </div>
           <Link

@@ -19,12 +19,18 @@ export default function HistoryPage() {
     async function loadTopics() {
       try {
         const response = await fetch('/api/history/topics');
-        const payload = await response.json();
-
         if (!response.ok) {
-          throw new Error(payload.error || 'Unable to load topics.');
+          const errorPayload = await response.text().then((text) => {
+            try {
+              return JSON.parse(text);
+            } catch {
+              return {};
+            }
+          });
+          throw new Error(errorPayload.error || 'Unable to load topics.');
         }
 
+        const payload = await response.json();
         setTopics((payload.topics || []) as BilingualText[]);
       } catch (error) {
         setTopics([]);

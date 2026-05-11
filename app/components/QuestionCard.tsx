@@ -16,18 +16,31 @@ type QuestionCardProps = {
 export default function QuestionCard({ question, index, showExplanation, onAnswerSelect, language }: QuestionCardProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
-  const optionEntries = useMemo(
-    () => Object.entries(question.options).filter(([key]) => optionLabels.includes(key)),
-    [question.options]
-  );
+  const getText = (bilingual: any) => {
+    if (typeof bilingual === 'string') return bilingual; // fallback for old data
+    return bilingual?.[language] || bilingual?.en || bilingual?.hi || '';
+  };
+
+  const optionList = useMemo(() => {
+    const optionsByLang = question.options?.[language] ?? question.options?.en ?? question.options?.hi;
+
+    if (Array.isArray(optionsByLang)) {
+      return optionsByLang.map((optionText, index) => ({
+        key: optionLabels[index] || String(index),
+        text: optionText,
+      }));
+    }
+
+    return Object.entries(question.options || {})
+      .filter(([key]) => optionLabels.includes(key))
+      .map(([key, optionText]) => ({
+        key,
+        text: optionText,
+      }));
+  }, [question.options, language]);
 
   const isCorrect = selectedOption === question.answer;
   const askedInLabel = question.askedIn || question.exam || 'Unknown';
-
-  const getText = (bilingual: any) => {
-    if (typeof bilingual === 'string') return bilingual; // fallback for old data
-    return bilingual?.[language] || bilingual?.en || '';
-  };
 
   return (
     <article className="rounded-3xl border border-white/10 bg-[#081420] p-7 shadow-panel">
@@ -39,7 +52,7 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
       <div className="space-y-5">
         <div className="space-y-3 rounded-3xl bg-slate-900/70 p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs uppercase tracking-[0.35em] text-emerald-300">{question.subject}</p>
+            <p className="text-xs uppercase tracking-[0.35em] text-emerald-300">{getText(question.subject)}</p>
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1 text-xs uppercase tracking-[0.35em] text-slate-300">
                 Category: {getText(question.topic)}
@@ -53,7 +66,7 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {optionEntries.map(([key, optionText]) => {
+          {optionList.map(({ key, text }) => {
             const isSelected = selectedOption === key;
             const isAnswer = key === question.answer;
             const showCorrectState = selectedOption !== null;
@@ -91,7 +104,7 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
                     {key}
                   </div>
                   <div>
-                    <p className="text-sm leading-6 text-white">{getText(optionText)}</p>
+                    <p className="text-sm leading-6 text-white">{getText(text)}</p>
                   </div>
                 </div>
               </button>

@@ -1,19 +1,34 @@
 import { NextResponse } from 'next/server';
-import HistoryQuestion from '@/models/HistoryQuestion';
-import dbConnect from '@/lib/dbConnect';
+import supabase from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    await dbConnect();
-    const topics = await HistoryQuestion.distinct('topic');
+    const { data, error } = await supabase.from('history_questions').select('topic');
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const topics = Array.from(
+      new Set(
+        (data ?? [])
+          .map((row) => {
+            if (!row.topic) {
+              return '';
+            }
+            return typeof row.topic === 'string'
+              ? row.topic
+              : row.topic.en || row.topic.hi || '';
+          })
+          .filter(Boolean)
+      )
+    );
 
     return NextResponse.json({ topics });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unable to fetch topics.' },
-      { status: 500 }
-    );
+    console.error('History topics API error:', error);
+    return NextResponse.json({ error: 'DB Connection Failed' }, { status: 500 });
   }
 }

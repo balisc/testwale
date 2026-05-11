@@ -10,6 +10,7 @@
     "clear-db": "node scripts/clearDatabase.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.105.4",
     "mongodb": "^7.2.0",
     "mongoose": "^9.6.1",
     "next": "14.2.5",
