@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
   font-family: var(--font-inter);
 }
 
@@ -13,8 +13,7 @@ html {
 
 body {
   min-height: 100vh;
-  background: radial-gradient(circle at top, rgba(212, 175, 55, 0.08), transparent 25%),
-    linear-gradient(180deg, #0a192f 0%, #081426 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
 }
 
 * {
@@ -22,20 +21,31 @@ body {
 }
 
 ::selection {
-  background: rgba(212, 175, 55, 0.35);
-  color: #fff;
+  background: rgba(59, 130, 246, 0.2);
+  color: #1f2937;
 }
 
 .section-glass {
-  background: rgba(10, 25, 47, 0.72);
-  border: 1px solid rgba(212, 175, 55, 0.18);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(229, 231, 235, 0.5);
   backdrop-filter: blur(18px);
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-navy transition hover:bg-[#c69f33];
+  @apply inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700;
 }
 
 .shadow-panel {
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
 }
+
+/* Hide scrollbar but keep scrolling functionality */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+

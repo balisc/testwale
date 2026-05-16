@@ -2,14 +2,10 @@ import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
-
-function escapeForLike(value: string) {
-  return value.replace(/([%_])/g, '\\$1');
-}
+export const revalidate = 0;
 
 export async function GET(request: Request) {
   try {
-    // Fetch all questions without any filtering for now
     const { data, error } = await supabase.from('history_questions').select('*');
 
     console.log('Error Details:', error);
@@ -25,7 +21,7 @@ export async function GET(request: Request) {
       ...row,
     }));
 
-    return NextResponse.json({ questions });
+    return NextResponse.json({ questions }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('Questions API error:', error);
     return NextResponse.json(
@@ -33,7 +29,7 @@ export async function GET(request: Request) {
         error: 'Supabase query failed',
         details: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 }

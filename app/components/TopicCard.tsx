@@ -1,5 +1,7 @@
 'use client';
 
+import { translations } from '../lib/translations';
+
 type Topic = {
   en: string;
   hi: string;
@@ -15,6 +17,18 @@ export default function TopicCard({ topic, onSelect, language }: TopicCardProps)
   const displayText = language === 'hi' ? topic.hi : topic.en;
   const fallbackText = language === 'hi' ? topic.en : topic.hi;
   const topicName = displayText || fallbackText;
+
+  const getTranslation = (keyPath: string): string => {
+    const keys = keyPath.split('.');
+    let value: any = translations;
+    for (const key of keys) {
+      value = value?.[key];
+    }
+    if (typeof value === 'object' && value !== null) {
+      return value[language] || value.en || '';
+    }
+    return '';
+  };
 
   return (
     <button

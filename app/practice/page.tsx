@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { Suspense } from 'react';
 import QuestionCard from '../components/QuestionCard';
 import TopicCard from '../components/TopicCard';
+import Navbar from '../components/Navbar';
 import type { QuestionItem } from '../actions/questions';
-import { useLanguage } from '../lib/LanguageContext';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,20 +16,19 @@ type Topic = {
 };
 
 function PracticeContent() {
-  const { language } = useLanguage();
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
+  const language: 'en' | 'hi' = 'en';
 
   const getDisplayText = (text: string | any) => {
     if (typeof text === 'string') return text;
     return text?.[language] || text?.en || text?.hi || '';
   };
 
-  // Load unique topics on mount
   useEffect(() => {
     async function loadTopics() {
       setIsLoading(true);
@@ -54,7 +53,6 @@ function PracticeContent() {
     loadTopics();
   }, []);
 
-  // Load questions when topic is selected
   useEffect(() => {
     async function loadQuestions() {
       if (!selectedTopic) return;
@@ -64,26 +62,31 @@ function PracticeContent() {
       setShowExplanation(false);
 
       try {
-        const params = new URLSearchParams();
-        params.set('topic', getDisplayText(selectedTopic.hi) || getDisplayText(selectedTopic.en));
-
-        const response = await fetch(`/api/history/questions?${params.toString()}`);
+        const response = await fetch(`/api/questions?v=${new Date().getTime()}`);
         if (!response.ok) {
           throw new Error('Unable to load questions for this topic.');
         }
 
         const payload = await response.json();
-        setQuestions(payload.questions ?? []);
+        const allQuestions = payload.questions ?? [];
+
+        const filteredQuestions = allQuestions.filter((q: any) => {
+          const qTopic = getDisplayText(q.topic);
+          const selTopic = getDisplayText(selectedTopic);
+          return qTopic === selTopic;
+        });
+
+        setQuestions(filteredQuestions.length > 0 ? filteredQuestions : allQuestions);
       } catch (error) {
         setQuestions([]);
-        setErrorMessage(error instanceof Error ? error.message : 'Unable to load questions.');
+        setErrorMessage(error instanceof Error ? error.message : 'Unable to load questions for this topic.');
       } finally {
         setIsLoading(false);
       }
     }
 
     loadQuestions();
-  }, [selectedTopic, language]);
+  }, [selectedTopic]);
 
   function handleAnswerSelection() {
     setShowExplanation(true);
@@ -95,23 +98,23 @@ function PracticeContent() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-10 lg:px-10">
-      <div className="mb-8 rounded-[2rem] bg-[#03050b] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.28)]">
+    <div className="mx-auto max-w-7xl px-5 py-10 lg:px-10">
+      <div className="mb-8 rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-[0_25px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.35em] text-amber-300">Practice</p>
+            <p className="text-sm uppercase tracking-[0.35em] text-slate-300">Practice</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-              {selectedTopic ? getDisplayText(selectedTopic.hi) || getDisplayText(selectedTopic.en) : 'Select a Topic'}
+              {selectedTopic ? getDisplayText(selectedTopic) : 'Select a topic'}
             </h1>
             <p className="mt-4 max-w-2xl text-slate-300">
-              {selectedTopic ? 'Practice questions for this topic' : 'Choose a topic to start practicing'}
+              Choose a topic to load questions.
             </p>
           </div>
           <Link
             href="/"
-            className="rounded-full border border-white/10 bg-amber-400 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-amber-300"
+            className="rounded-full border border-white/10 bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
           >
-            Back to Home
+            Back
           </Link>
         </div>
       </div>
@@ -119,7 +122,7 @@ function PracticeContent() {
       <div className="space-y-6">
         {isLoading ? (
           <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center text-slate-300 shadow-panel">
-            {selectedTopic ? 'Loading questions...' : 'Loading topics...'}
+            Loading...
           </div>
         ) : errorMessage ? (
           <div className="rounded-3xl border border-red-500/20 bg-red-500/5 p-8 text-center text-red-200 shadow-panel">
@@ -128,10 +131,11 @@ function PracticeContent() {
         ) : selectedTopic ? (
           <>
             <button
+              type="button"
               onClick={handleBackToTopics}
-              className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-emerald-400 hover:text-emerald-300"
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-white/30 hover:bg-white/10"
             >
-              ← Back to Topics
+              ← Back to topics
             </button>
 
             {!questions.length ? (
@@ -165,14 +169,19 @@ function PracticeContent() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 
 export default function Practice() {
   return (
-    <Suspense fallback={<div className="mx-auto max-w-7xl px-5 py-10 text-center text-slate-400">Loading Practice...</div>}>
-      <PracticeContent />
-    </Suspense>
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-[#0a0a0a] pt-24 text-white">
+        <Suspense fallback={<div className="mx-auto max-w-7xl px-5 py-10 text-center text-slate-400">Loading Practice...</div>}>
+          <PracticeContent />
+        </Suspense>
+      </main>
+    </>
   );
 }

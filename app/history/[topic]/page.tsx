@@ -1,20 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Suspense } from 'react';
 import QuestionCard from '../../components/QuestionCard';
+import Navbar from '../../components/Navbar';
 import type { QuestionItem } from '../../actions/questions';
-import { useLanguage } from '../../lib/LanguageContext';
 
 function HistoryQuizContent() {
   const params = useParams() as { topic?: string };
-  const { language } = useLanguage();
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [quizCompleted, setQuizCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
+  const autoAdvanceTimerRef = useRef<number | null>(null);
+  const language: 'en' | 'hi' = 'en';
 
   const topic = params.topic ? String(params.topic) : '';
 
@@ -26,7 +29,7 @@ function HistoryQuizContent() {
       try {
         setShowExplanation(false);
 
-        const response = await fetch(`/api/history/questions?topic=${encodeURIComponent(topic)}`);
+        const response = await fetch(`/api/questions?v=${new Date().getTime()}`);
         if (!response.ok) {
           const errorPayload = await response.text().then((text) => {
             try {
@@ -39,7 +42,14 @@ function HistoryQuizContent() {
         }
 
         const payload = await response.json();
-        setQuestions(payload.questions ?? []);
+        const allQuestions = payload.questions ?? [];
+
+        const filteredQuestions = allQuestions.filter((q: any) => {
+          const qTopic = typeof q.topic === 'string' ? q.topic : q.topic?.en || q.topic?.hi || '';
+          return qTopic === topic;
+        });
+
+        setQuestions(filteredQuestions.length > 0 ? filteredQuestions : allQuestions);
       } catch (error) {
         setQuestions([]);
         setErrorMessage(error instanceof Error ? error.message : 'Unable to load questions.');
@@ -51,39 +61,70 @@ function HistoryQuizContent() {
     loadQuestions();
   }, [topic]);
 
-  const headingText = questions.length > 0 ? questionToHeading(questions[0]) : topic ? decodeURIComponent(topic) : 'History Quiz';
+  useEffect(() => {
+    return () => {
+      if (autoAdvanceTimerRef.current !== null) {
+        window.clearTimeout(autoAdvanceTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    setCurrentQuestionIndex(0);
+    setQuizCompleted(false);
+    setShowExplanation(false);
+  }, [questions]);
+
+  const headingText = questions.length > 0 ? questionToHeading(questions[currentQuestionIndex]) : topic ? decodeURIComponent(topic) : 'History Quiz';
 
   function questionToHeading(question: QuestionItem) {
     return typeof question.topic === 'string' ? question.topic : question.topic[language] || question.topic.en;
   }
 
-  function handleAnswerSelection() {
-    setShowExplanation(true);
+  function handleAnswerSelection(isCorrect: boolean) {
+    if (isCorrect) {
+      if (currentQuestionIndex + 1 < questions.length) {
+        setShowExplanation(false);
+        if (autoAdvanceTimerRef.current !== null) {
+          window.clearTimeout(autoAdvanceTimerRef.current);
+        }
+        autoAdvanceTimerRef.current = window.setTimeout(() => {
+          setCurrentQuestionIndex((prev) => prev + 1);
+          setShowExplanation(false);
+        }, 900);
+      } else {
+        setQuizCompleted(true);
+      }
+    } else {
+      setShowExplanation(true);
+    }
   }
 
+  const currentQuestion = questions[currentQuestionIndex];
+
   return (
-    <main className="mx-auto max-w-7xl px-5 py-10 lg:px-10">
-      <div className="mb-8 rounded-[2rem] bg-[#03050b] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.28)]">
+    <div className="mx-auto max-w-7xl px-5 py-10 lg:px-10">
+      <div className="mb-8 rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-[0_25px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.35em] text-amber-300">History Quiz</p>
+            <p className="text-sm uppercase tracking-[0.35em] text-slate-300">History Quiz</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">{headingText}</h1>
             <p className="mt-4 max-w-2xl text-slate-300">
-              Questions are loaded dynamically from the <strong>testwale_db.history_questions</strong> collection.
+              Practice questions by topic.
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <Link
               href="/history"
-              className="rounded-full border border-white/10 bg-slate-800 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+              className="rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
             >
               Back to Topics
             </Link>
             <Link
               href="/"
-              className="rounded-full border border-white/10 bg-amber-400 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-amber-300"
+              className="rounded-full border border-white/10 bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
             >
-              Back to Home
+              Back
             </Link>
           </div>
         </div>
@@ -102,29 +143,41 @@ function HistoryQuizContent() {
           <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center text-slate-300 shadow-panel">
             No questions were found for this topic.
           </div>
+        ) : quizCompleted ? (
+          <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/5 p-10 text-center text-emerald-100 shadow-panel">
+            <h2 className="text-2xl font-semibold text-white">Quiz Complete</h2>
+            <p className="mt-4 text-slate-300">You have answered all questions for this topic.</p>
+            <p className="mt-2 text-slate-300">Go back to the topic list or refresh to try again.</p>
+          </div>
         ) : (
           <div className="grid gap-6">
-            {questions.map((question, index) => (
-              <QuestionCard
-                key={question.id}
-                question={question}
-                index={index}
-                showExplanation={showExplanation}
-                onAnswerSelect={handleAnswerSelection}
-                language={language}
-              />
-            ))}
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-panel">
+              <p className="text-sm uppercase tracking-[0.35em] text-slate-300">Question {currentQuestionIndex + 1} of {questions.length}</p>
+            </div>
+            <QuestionCard
+              key={currentQuestion?.id ?? 'question-card'}
+              question={currentQuestion}
+              index={currentQuestionIndex}
+              showExplanation={showExplanation}
+              onAnswerSelect={handleAnswerSelection}
+              language={language}
+            />
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 
 export default function HistoryQuiz() {
   return (
-    <Suspense fallback={<div className="mx-auto max-w-7xl px-5 py-10 text-center text-slate-400">Loading History Quiz...</div>}>
-      <HistoryQuizContent />
-    </Suspense>
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-[#0a0a0a] pt-24 text-white">
+        <Suspense fallback={<div className="mx-auto max-w-7xl px-5 py-10 text-center text-slate-400">Loading History Quiz...</div>}>
+          <HistoryQuizContent />
+        </Suspense>
+      </main>
+    </>
   );
 }

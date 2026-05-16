@@ -1,310 +1,477 @@
 'use client';
 
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useLanguage } from './lib/LanguageContext';
+import { Heart, ArrowLeft, ArrowRight } from 'lucide-react';
+import Navbar from './components/Navbar';
+import SubjectGrid from './components/SubjectGrid';
+import { useLanguage } from '../lib/LanguageContext';
 
-const navLinks = [
-  { label: 'Home', href: '/' },
-  { label: 'Subjects', href: '/subjects' },
-  { label: 'Current Affairs', href: '/current-affairs', badge: 'New' },
-  { label: 'PYQ Series', href: '/pyq' },
-  { label: 'Our Vision', href: '/vision' },
-  { label: 'About Us', href: '/about' },
-  { label: 'Contact Us', href: '/contact' },
+type Language = 'en' | 'hi';
+
+type Suggestion =
+  | { type: 'subject'; subjectKey: string; labelEn: string; labelHi: string }
+  | { type: 'topic'; subjectKey: string; topicEn: string; topicHi: string };
+
+const pageTranslations = {
+  en: {
+    heroBadge: 'Limited-time free access',
+    heroTitle: 'Practice. Master. Ace.',
+    heroLine: 'Your competitive exams.',
+    heroSubtitle: 'Practice MCQs for all subjects - Mathematics, Science, English, History & more. Perfect for competitive exams, board preparations, and knowledge enhancement.',
+    searchPlaceholder: 'Search subjects or topics...',
+    searchButton: 'Search',
+    landingTitle: 'Choose Your Subject',
+    historyName: 'History',
+    historyCount: '1500+ questions',
+    scienceName: 'Science',
+    scienceCount: '1300+ questions',
+    polityName: 'Polity',
+    polityCount: '1200+ questions',
+    economicsName: 'Economics',
+    economicsCount: '1100+ questions',
+    geographyName: 'Geography',
+    geographyCount: '1000+ questions',
+    generalKnowledgeName: 'General Knowledge',
+    generalKnowledgeCount: '900+ questions',
+    exploreSubject: 'Explore Subject',
+    footerAbout: 'About Us',
+    footerContact: 'Contact',
+    footerTerms: 'Terms',
+    footerPrivacy: 'Privacy',
+    footerTagline: 'Created by student for student',
+  },
+  hi: {
+    heroBadge: 'सीमित समय के लिए मुफ्त पहुँच',
+    heroTitle: 'अभ्यास. महारत. सफलता.',
+    heroLine: 'आपकी प्रतियोगी परीक्षाएं।',
+    heroSubtitle: 'सभी विषयों के लिए अभ्यास प्रश्नोत्तरी - गणित, विज्ञान, अंग्रेज़ी, इतिहास और अधिक। प्रतियोगी परीक्षाओं, बोर्ड की तैयारी और ज्ञान वृद्धि के लिए उत्तम।',
+    searchPlaceholder: 'विषय, परीक्षाएं खोजें...',
+    searchButton: 'खोजें',
+    landingTitle: 'अपना विषय चुनें',
+    historyName: 'इतिहास',
+    historyCount: '1500+ प्रश्न',
+    scienceName: 'विज्ञान',
+    scienceCount: '1300+ प्रश्न',
+    polityName: 'राजव्यवस्था',
+    polityCount: '1200+ प्रश्न',
+    economicsName: 'अर्थशास्त्र',
+    economicsCount: '1100+ प्रश्न',
+    geographyName: 'भूगोल',
+    geographyCount: '1000+ प्रश्न',
+    generalKnowledgeName: 'सामान्य ज्ञान',
+    generalKnowledgeCount: '900+ प्रश्न',
+    exploreSubject: 'विषय देखें',
+    footerAbout: 'हमारे बारे में',
+    footerContact: 'संपर्क करें',
+    footerTerms: 'शर्तें',
+    footerPrivacy: 'गोपनीयता',
+    footerTagline: 'Created by student for student',
+  },
+} as const;
+
+const SUBJECT_LIST = [
+  { id: 'history', en: 'History', hi: 'इतिहास' },
+  { id: 'science', en: 'Science', hi: 'विज्ञान' },
+  { id: 'polity', en: 'Polity', hi: 'राजव्यवस्था' },
+  { id: 'economics', en: 'Economics', hi: 'अर्थशास्त्र' },
+  { id: 'geography', en: 'Geography', hi: 'भूगोल' },
+  { id: 'general-knowledge', en: 'General Knowledge', hi: 'सामान्य ज्ञान' },
+  { id: 'math', en: 'Math', hi: 'गणित' },
+  { id: 'current-affairs', en: 'Current Affairs', hi: 'वर्तमान मामले' },
+  { id: 'reasoning', en: 'Reasoning', hi: 'तर्क' },
 ];
 
 export default function HomePage() {
+  const { language } = useLanguage();
   const router = useRouter();
-  const { language, toggleLanguage } = useLanguage();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [mounted, setMounted] = useState(false);
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Lock body scroll when menu is open
+  const normalize = (value: string) => value.trim().toLowerCase();
+
   useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.height = '100vh';
-    } else {
-      document.body.style.overflow = 'unset';
-      document.body.style.height = 'auto';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-      document.body.style.height = 'auto';
-    };
-  }, [mobileMenuOpen]);
+    setMounted(true);
+  }, []);
 
-  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!searchQuery.trim()) return;
-    setMobileMenuOpen(false);
-    router.push(`/practice?search=${encodeURIComponent(searchQuery.trim())}`);
+  useEffect(() => {
+    async function loadSearchSuggestions() {
+      try {
+        setLoadingSuggestions(true);
+        const response = await fetch('/api/search-suggestions');
+        if (!response.ok) {
+          throw new Error('Unable to load suggestions');
+        }
+        const data = await response.json();
+        const topicSuggestions = (data.suggestions ?? []).map((item: any) => ({
+          type: 'topic' as const,
+          subjectKey: item.subjectKey,
+          topicEn: item.topicEn,
+          topicHi: item.topicHi,
+        }));
+        setSuggestions(topicSuggestions);
+      } catch (error) {
+        console.error('Search suggestions load error:', error);
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    }
+
+    loadSearchSuggestions();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const updateMobileState = () => {
+      const matches = mediaQuery.matches;
+      setIsMobile(matches);
+      if (!matches) {
+        setIsSearchActive(false);
+      }
+    };
+
+    updateMobileState();
+    mediaQuery.addEventListener?.('change', updateMobileState);
+
+    return () => {
+      mediaQuery.removeEventListener?.('change', updateMobileState);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    if (isSearchActive && isMobile) {
+      document.body.style.overflow = 'hidden';
+      inputRef.current?.focus();
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isSearchActive, isMobile, mounted]);
+
+  const activateMobileSearch = () => {
+    if (!isMobile) return;
+    setIsSearchActive(true);
+    setShowSuggestions(true);
   };
 
+  const deactivateMobileSearch = () => {
+    setIsSearchActive(false);
+    setShowSuggestions(false);
+    inputRef.current?.blur();
+  };
+
+  useEffect(() => {
+    const normalizedQuery = normalize(query);
+    if (!normalizedQuery) {
+      const subjectSuggestions = SUBJECT_LIST.map((subject) => ({
+        type: 'subject' as const,
+        subjectKey: subject.id,
+        labelEn: subject.en,
+        labelHi: subject.hi,
+      }));
+      setFilteredSuggestions([...subjectSuggestions, ...suggestions].slice(0, 8));
+      setActiveIndex(0);
+      return;
+    }
+
+    const subjectSuggestions = SUBJECT_LIST.map((subject) => ({
+      type: 'subject' as const,
+      subjectKey: subject.id,
+      labelEn: subject.en,
+      labelHi: subject.hi,
+    }));
+
+    const combined = [...subjectSuggestions, ...suggestions];
+    const filtered = combined.filter((item) => {
+      if (item.type === 'subject') {
+        return (
+          normalize(item.labelEn).includes(normalizedQuery) ||
+          normalize(item.labelHi).includes(normalizedQuery) ||
+          item.subjectKey.includes(normalizedQuery)
+        );
+      }
+
+      return (
+        normalize(item.topicEn).includes(normalizedQuery) ||
+        normalize(item.topicHi).includes(normalizedQuery)
+      );
+    });
+
+    setFilteredSuggestions(filtered.slice(0, 8));
+    setActiveIndex(0);
+  }, [query, suggestions]);
+
+  const navigateToSuggestion = (item: Suggestion) => {
+    if (item.type === 'subject') {
+      router.push(`/subjects/${item.subjectKey}`);
+      return;
+    }
+
+    const topicLabel = language === 'hi' && item.topicHi ? item.topicHi : item.topicEn;
+    router.push(`/subjects/${item.subjectKey}/${encodeURIComponent(topicLabel)}`);
+  };
+
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSearchError(null);
+
+    const normalizedQuery = normalize(query);
+    if (!normalizedQuery) return;
+
+    const matchedSubject = SUBJECT_LIST.find((subject) =>
+      normalize(subject.id) === normalizedQuery ||
+      normalize(subject.en) === normalizedQuery ||
+      normalize(subject.hi) === normalizedQuery
+    );
+
+    if (matchedSubject) {
+      router.push(`/subjects/${matchedSubject.id}`);
+      return;
+    }
+
+    const matchedTopic = suggestions.find(
+      (item): item is Extract<Suggestion, { type: 'topic' }> =>
+        item.type === 'topic' &&
+        (normalize(item.topicEn) === normalizedQuery || normalize(item.topicHi) === normalizedQuery)
+    );
+
+    if (matchedTopic) {
+      const topicLabel = language === 'hi' && matchedTopic.topicHi ? matchedTopic.topicHi : matchedTopic.topicEn;
+      router.push(`/subjects/${matchedTopic.subjectKey}/${encodeURIComponent(topicLabel)}`);
+      return;
+    }
+
+    if (filteredSuggestions.length > 0) {
+      navigateToSuggestion(filteredSuggestions[0]);
+      return;
+    }
+
+    setSearchError('No matching subject or topic found.');
+  };
+
+  const handleSuggestionClick = (item: Suggestion) => {
+    setQuery(item.type === 'subject' ? (language === 'hi' ? item.labelHi : item.labelEn) : (language === 'hi' && item.topicHi ? item.topicHi : item.topicEn));
+    setShowSuggestions(false);
+    navigateToSuggestion(item);
+  };
+
+  const activeTranslation = pageTranslations[language];
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-white" />;
+  }
+
   return (
-    <main className="min-h-screen bg-[#0a0a0a]">
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0a]/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-5 py-5 lg:px-10">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 text-sm font-black text-slate-950">
-                T
-              </div>
-              <span className="text-xl font-bold text-white">Testwale</span>
-            </Link>
+    <div className="min-h-screen bg-white text-slate-900">
+      <Navbar />
 
-            {/* Desktop Nav */}
-            <div className="hidden items-center gap-8 lg:flex">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className="relative flex items-center gap-2 text-sm font-medium text-slate-400 transition hover:text-white"
-                >
-                  {link.label}
-                  {link.badge && (
-                    <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-semibold text-blue-300">
-                      {link.badge}
-                    </span>
-                  )}
-                </Link>
-              ))}
-              {/* Language Toggle */}
-              <button
-                onClick={toggleLanguage}
-                className="rounded-full border border-white/10 bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
-              >
-                {language === 'en' ? 'हिंदी' : 'English'}
-              </button>
+      <main className="w-full pt-16">
+        {/* Hero Section */}
+        <section className="w-full px-4 py-20 md:py-28 flex flex-col items-center justify-center text-center">
+          <div className="max-w-4xl mx-auto">
+            {/* Micro-tag */}
+            <div className="inline-flex items-center gap-2 mb-8 rounded-full border border-purple-200 bg-purple-50 px-4 py-2">
+              <div className="h-2 w-2 rounded-full bg-purple-500" />
+              <span className="text-sm font-medium text-purple-900">{activeTranslation.heroBadge}</span>
             </div>
 
-            {/* Mobile Menu Toggle */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden"
-              aria-label="Toggle menu"
-            >
-              <div className="flex flex-col gap-1">
-                <div className={`h-0.5 w-6 bg-white transition ${mobileMenuOpen ? 'translate-y-2 rotate-45' : ''}`} />
-                <div className={`h-0.5 w-6 bg-white transition ${mobileMenuOpen ? 'opacity-0' : ''}`} />
-                <div className={`h-0.5 w-6 bg-white transition ${mobileMenuOpen ? '-translate-y-2 -rotate-45' : ''}`} />
-              </div>
-            </button>
-          </div>
-
-      {/* Mobile Menu Backdrop */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black lg:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 w-screen h-screen bg-[#030213] z-[9999] flex flex-col overflow-y-auto lg:hidden">
-          <div className="pt-28 px-8 flex flex-col items-start gap-y-10">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 text-2xl font-semibold text-white transition hover:text-amber-300"
-              >
-                {link.label}
-                {link.badge && (
-                  <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-semibold text-blue-300">
-                    {link.badge}
-                  </span>
-                )}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="relative overflow-hidden px-5 py-20 lg:px-10 lg:py-32">
-        {/* Radial Glow Background */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="h-96 w-96 rounded-full bg-gradient-to-br from-purple-600/30 via-magenta-600/20 to-transparent blur-3xl" />
-        </div>
-
-        <div className="relative z-10 mx-auto max-w-4xl space-y-8 text-center">
-          {/* Heading */}
-          <div className="space-y-4">
-            <p className="inline-block rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-sm font-semibold text-amber-300">
-              Master Your Competitive Exams
-            </p>
-            <h1 className="text-5xl font-bold leading-tight tracking-tight text-white sm:text-6xl lg:text-7xl">
-              Practice with thousands of MCQs
+            {/* Main Headline with Gradient */}
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight mb-0 bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              {activeTranslation.heroTitle}
             </h1>
-            <p className="mx-auto max-w-2xl text-lg text-slate-400 sm:text-xl">
-              Analyze previous year questions, track your progress, and ace your competitive exams with Testwale.
-            </p>
-          </div>
+            <h2 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6 bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              {activeTranslation.heroLine}
+            </h2>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="mx-auto max-w-2xl">
-            <div className="group relative rounded-2xl border border-white/10 bg-white/5 p-2 shadow-[0_25px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl transition focus-within:border-blue-400/50 focus-within:bg-white/10 focus-within:shadow-[0_25px_80px_rgba(59,130,246,0.15)]">
-              <div className="flex items-center gap-3">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search topics, subjects, exams..."
-                  className="w-full border-0 bg-transparent px-5 py-4 text-white outline-none placeholder:text-slate-500"
-                />
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 px-6 py-3 text-sm font-semibold text-white transition hover:from-purple-600 hover:to-blue-600 active:scale-95"
-                >
-                  <span>Search</span>
-                  <span>→</span>
-                </button>
+            {/* Sub-headline */}
+            <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-2xl mx-auto">
+              {activeTranslation.heroSubtitle}
+            </p>
+
+            {/* Search Bar */}
+            <div className="w-full max-w-2xl mx-auto mb-12">
+              <form onSubmit={handleSearchSubmit} className="flex flex-col gap-3">
+                <div className={isSearchActive && isMobile ? 'fixed inset-0 bg-white z-50 flex flex-col p-4 animate-in fade-in duration-200 md:hidden' : 'flex flex-col sm:flex-row gap-3 items-center'}>
+                  {isSearchActive && isMobile && (
+                    <button
+                      type="button"
+                      onClick={deactivateMobileSearch}
+                      className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200"
+                      aria-label="Back"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </button>
+                  )}
+
+                  <div className="flex-1 w-full relative">
+                    <input
+                      ref={inputRef}
+                      name="search"
+                      type="search"
+                      placeholder={activeTranslation.searchPlaceholder}
+                      autoComplete="off"
+                      inputMode="search"
+                      enterKeyHint="search"
+                      spellCheck={false}
+                      className={
+                        isSearchActive && isMobile
+                          ? 'w-full rounded-full border border-slate-200 bg-white px-5 py-3.5 text-slate-900 placeholder-gray-400 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100'
+                          : 'w-full rounded-full border border-gray-300 bg-white px-6 py-3.5 text-slate-900 placeholder-gray-400 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100'
+                      }
+                      value={query}
+                      onChange={(event) => {
+                        setQuery(event.target.value);
+                        setShowSuggestions(true);
+                        setSearchError(null);
+                      }}
+                      onFocus={() => {
+                        if (isMobile) {
+                          activateMobileSearch();
+                        } else {
+                          setShowSuggestions(true);
+                        }
+                      }}
+                      onClick={() => {
+                        if (isMobile) {
+                          activateMobileSearch();
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!isSearchActive) {
+                          window.setTimeout(() => setShowSuggestions(false), 250);
+                        }
+                      }}
+                      aria-label={activeTranslation.searchPlaceholder}
+                    />
+
+                    {showSuggestions && (
+                      <div className={
+                        isSearchActive && isMobile
+                          ? 'mt-4 max-h-[55vh] overflow-y-auto rounded-3xl border border-gray-200 bg-white shadow-lg'
+                          : 'absolute top-full left-0 right-0 z-50 mt-1 max-h-64 overflow-y-auto rounded-3xl border border-gray-200 bg-white shadow-lg'
+                      }>
+                        {loadingSuggestions ? (
+                          <div className="p-4 text-sm text-slate-500">Loading suggestions...</div>
+                        ) : filteredSuggestions.length > 0 ? (
+                          <div className="divide-y divide-gray-200">
+                            {filteredSuggestions.map((item, index) => {
+                              const label =
+                                item.type === 'subject'
+                                  ? language === 'hi'
+                                    ? item.labelHi
+                                    : item.labelEn
+                                  : language === 'hi' && item.topicHi
+                                  ? item.topicHi
+                                  : item.topicEn;
+                              const subtitle =
+                                item.type === 'subject'
+                                  ? 'Subject'
+                                  : `Topic • ${SUBJECT_LIST.find((subject) => subject.id === item.subjectKey)?.[language] ?? item.subjectKey}`;
+
+                              return (
+                                <button
+                                  key={`${item.type}-${item.type === 'subject' ? item.subjectKey : item.subjectKey + item.topicEn}-${index}`}
+                                  type="button"
+                                  onMouseDown={(event) => event.preventDefault()}
+                                  onClick={() => handleSuggestionClick(item)}
+                                  className={`w-full text-left px-5 py-3 transition hover:bg-slate-50 active:bg-slate-100 ${index === activeIndex ? 'bg-slate-100' : ''}`}
+                                >
+                                  <div className="text-sm font-semibold text-slate-900">{label}</div>
+                                  <div className="text-xs text-slate-500">{subtitle}</div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          query && <div className="p-4 text-sm text-slate-500">No matching subject or topic found.</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {!isSearchActive && (
+                    <button
+                      type="submit"
+                      className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold hover:shadow-lg transition flex items-center justify-center gap-2"
+                    >
+                      {activeTranslation.searchButton}
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                {isSearchActive && isMobile && (
+                  <button
+                    type="submit"
+                    className="w-full px-8 py-3.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold hover:shadow-lg transition flex items-center justify-center gap-2"
+                  >
+                    {activeTranslation.searchButton}
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                )}
+
+                {searchError && (
+                  <div className="text-sm text-rose-600">{searchError}</div>
+                )}
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section className="w-full px-4 py-20 bg-gray-50">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900">Choose Your Subject</h2>
+            </div>
+
+            <SubjectGrid />
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="w-full px-4 py-16 bg-white border-t border-gray-200">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+              <Link href="/about" className="text-slate-900 hover:text-indigo-600 transition font-medium">
+                {activeTranslation.footerAbout}
+              </Link>
+              <Link href="/contact" className="text-slate-900 hover:text-indigo-600 transition font-medium">
+                {activeTranslation.footerContact}
+              </Link>
+              <Link href="/terms" className="text-slate-900 hover:text-indigo-600 transition font-medium">
+                {activeTranslation.footerTerms}
+              </Link>
+              <Link href="/privacy" className="text-slate-900 hover:text-indigo-600 transition font-medium">
+                {activeTranslation.footerPrivacy}
+              </Link>
+            </div>
+
+            <div className="flex justify-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-6 py-3">
+                <Heart className="h-5 w-5 text-red-500 fill-red-500 animate-pulse" />
+                <span className="text-sm font-medium text-gray-800">{activeTranslation.footerTagline}</span>
               </div>
             </div>
-          </form>
-
-          {/* CTA */}
-          <div className="flex flex-col justify-center gap-4 sm:flex-row">
-            <Link
-              href="/subjects"
-              className="rounded-full bg-amber-400 px-8 py-4 text-sm font-semibold text-slate-950 transition hover:bg-amber-300 active:scale-95"
-            >
-              Explore Subjects
-            </Link>
-            <Link
-              href="/about"
-              className="rounded-full border border-white/20 px-8 py-4 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/5"
-            >
-              Learn More
-            </Link>
           </div>
-        </div>
-      </section>
-
-      {/* Choose Your Subject Section */}
-      <section className="border-t border-white/5 bg-[#050505] px-5 py-20 lg:px-10">
-        <div className="mx-auto max-w-6xl text-center">
-          <p className="text-sm uppercase tracking-[0.35em] text-amber-300">Choose Your Subject</p>
-          <h2 className="mt-4 text-4xl font-bold tracking-tight text-white sm:text-5xl">
-            Start practicing with curated MCQs for each subject
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-base text-slate-400 sm:text-lg">
-            Pick a subject below and begin your exam preparation with the right practice set.
-          </p>
-        </div>
-
-        <div className="mx-auto mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {[
-            {
-              name: 'History',
-              icon: '📜',
-              count: '2,450 Questions Available',
-              iconBg: 'bg-red-500/10',
-              hoverBorder: 'hover:border-red-400/40',
-              buttonGradient: 'from-red-500 to-red-600',
-              buttonShadow: 'shadow-[0_20px_60px_rgba(239,68,68,0.25)]',
-            },
-            {
-              name: 'Science',
-              icon: '🧪',
-              count: '2,120 Questions Available',
-              iconBg: 'bg-emerald-500/10',
-              hoverBorder: 'hover:border-emerald-400/40',
-              buttonGradient: 'from-emerald-500 to-emerald-600',
-              buttonShadow: 'shadow-[0_20px_60px_rgba(16,185,129,0.25)]',
-            },
-            {
-              name: 'Polity',
-              icon: '⚖️',
-              count: '1,980 Questions Available',
-              iconBg: 'bg-sky-500/10',
-              hoverBorder: 'hover:border-sky-400/40',
-              buttonGradient: 'from-sky-500 to-blue-600',
-              buttonShadow: 'shadow-[0_20px_60px_rgba(59,130,246,0.25)]',
-            },
-            {
-              name: 'Economics',
-              icon: '💰',
-              count: '1,720 Questions Available',
-              iconBg: 'bg-orange-500/10',
-              hoverBorder: 'hover:border-orange-400/40',
-              buttonGradient: 'from-orange-500 to-amber-500',
-              buttonShadow: 'shadow-[0_20px_60px_rgba(249,115,22,0.25)]',
-            },
-            {
-              name: 'Geography',
-              icon: '🗺️',
-              count: '1,835 Questions Available',
-              iconBg: 'bg-cyan-500/10',
-              hoverBorder: 'hover:border-cyan-400/40',
-              buttonGradient: 'from-cyan-500 to-sky-500',
-              buttonShadow: 'shadow-[0_20px_60px_rgba(6,182,212,0.25)]',
-            },
-            {
-              name: 'General Knowledge',
-              icon: '🧠',
-              count: '2,050 Questions Available',
-              iconBg: 'bg-fuchsia-500/10',
-              hoverBorder: 'hover:border-fuchsia-400/40',
-              buttonGradient: 'from-fuchsia-500 to-pink-500',
-              buttonShadow: 'shadow-[0_20px_60px_rgba(236,72,153,0.25)]',
-            },
-          ].map((subject) => (
-            <Link
-              key={subject.name}
-              href={`/practice?subject=${encodeURIComponent(subject.name)}`}
-              className={`group rounded-[1.75rem] border border-white/10 bg-[#050505] p-6 transition duration-300 ${subject.hoverBorder} hover:bg-[#06060a]`}
-            >
-              <div className="flex items-center justify-between">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-2xl text-2xl text-white ${subject.iconBg}`}>{subject.icon}</div>
-                <div className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">
-                  {subject.name}
-                </div>
-              </div>
-              <div className="mt-8 space-y-4">
-                <div>
-                  <h3 className="text-xl font-semibold text-white">{subject.name}</h3>
-                  <p className="mt-3 text-sm text-slate-400">{subject.count}</p>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm font-semibold text-slate-200">Start Practice</span>
-                  <span className={`rounded-full border border-white/10 bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition duration-300 group-hover:bg-gradient-to-r group-hover:text-white group-hover:shadow-xl ${subject.buttonGradient} ${subject.buttonShadow}`}>
-                    →
-                  </span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="relative z-10 border-t border-white/5 bg-gradient-to-b from-[#0a0a0a] to-[#050505] px-5 py-20 lg:px-10">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { label: 'Questions', value: '10K+' },
-              { label: 'Subjects', value: '6+' },
-              { label: 'Exams', value: '15+' },
-              { label: 'Students', value: '50K+' },
-            ].map((stat) => (
-              <div key={stat.label} className="rounded-2xl border border-white/5 bg-white/5 p-6 text-center">
-                <p className="text-3xl font-bold text-amber-300">{stat.value}</p>
-                <p className="mt-2 text-sm text-slate-400">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    </main>
+        </footer>
+      </main>
+    </div>
   );
 }

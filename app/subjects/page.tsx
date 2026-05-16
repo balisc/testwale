@@ -1,0 +1,27 @@
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import SubjectGrid from '../components/SubjectGrid';
+
+export const metadata = {
+  title: 'Subjects | Testwale',
+  description: 'Explore Testwale subjects and start practicing with curated topics.',
+};
+
+export default function SubjectsPage() {
+  return (
+    <main className="min-h-screen bg-slate-50 text-slate-900">
+      <Navbar />
+      <section className="mx-auto max-w-7xl px-5 py-28 lg:px-10">
+        <div className="mb-12 text-center">
+          <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Subjects</p>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Choose Your Subject</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600 sm:text-lg">
+            Review curated topics for each subject and jump into practice with confidence.
+          </p>
+        </div>
+        <SubjectGrid />
+      </section>
+      <Footer />
+    </main>
+  );
+}

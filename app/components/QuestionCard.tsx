@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { QuestionItem } from '../actions/questions';
+import { translations } from '../lib/translations';
 
 const optionLabels = ['A', 'B', 'C', 'D'];
 
@@ -9,16 +10,37 @@ type QuestionCardProps = {
   question: QuestionItem;
   index: number;
   showExplanation: boolean;
-  onAnswerSelect: () => void;
+  onAnswerSelect: (isCorrect: boolean) => void;
   language: 'en' | 'hi';
 };
 
 export default function QuestionCard({ question, index, showExplanation, onAnswerSelect, language }: QuestionCardProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
+  useEffect(() => {
+    setSelectedOption(null);
+  }, [question.id]);
+
   const getText = (bilingual: any) => {
     if (typeof bilingual === 'string') return bilingual; // fallback for old data
     return bilingual?.[language] || bilingual?.en || bilingual?.hi || '';
+  };
+
+  const askedInLabel = getText(question.askedIn ?? question.asked_in ?? question.exam ?? 'Unknown');
+
+  const answerText = getText(question.answer).trim();
+  const answerKey = answerText.length === 1 ? answerText.toUpperCase() : undefined;
+
+  const getTranslation = (keyPath: string): string => {
+    const keys = keyPath.split('.');
+    let value: any = translations;
+    for (const key of keys) {
+      value = value?.[key];
+    }
+    if (typeof value === 'object' && value !== null) {
+      return value[language] || value.en || '';
+    }
+    return '';
   };
 
   const optionList = useMemo(() => {
@@ -38,9 +60,6 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
         text: optionText,
       }));
   }, [question.options, language]);
-
-  const isCorrect = selectedOption === question.answer;
-  const askedInLabel = question.askedIn || question.exam || 'Unknown';
 
   return (
     <article className="rounded-3xl border border-white/10 bg-[#081420] p-7 shadow-panel">
@@ -68,7 +87,8 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
         <div className="grid gap-4 sm:grid-cols-2">
           {optionList.map(({ key, text }) => {
             const isSelected = selectedOption === key;
-            const isAnswer = key === question.answer;
+            const optionText = getText(text).trim();
+            const isAnswer = answerKey ? key === answerKey : optionText === answerText;
             const showCorrectState = selectedOption !== null;
 
             let optionClasses =
@@ -89,13 +109,15 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
                   : ' border-white/10 bg-white/5 text-slate-200 hover:border-emerald-400/30 hover:bg-white/10';
             }
 
+            const isCorrectSelection = answerKey ? key === answerKey : optionText === answerText;
+
             return (
               <button
                 key={key}
                 type="button"
                 onClick={() => {
                   setSelectedOption(key);
-                  onAnswerSelect();
+                  onAnswerSelect(isCorrectSelection);
                 }}
                 className={optionClasses}
               >
@@ -116,7 +138,7 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
           <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Answer state</p>
           <p className="mt-2 text-base font-semibold text-white">
             {selectedOption
-              ? isCorrect
+              ? (answerKey ? selectedOption === answerKey : answerText === getText(optionList.find((item) => item.key === selectedOption)?.text).trim())
                 ? 'Correct answer selected'
                 : 'Wrong option selected'
               : 'Please choose an option to review the explanation'}
@@ -125,7 +147,7 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
 
         {selectedOption && showExplanation && (
           <div className="rounded-3xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-slate-100 shadow-sm">
-            <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Explanation</p>
+            <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">{getTranslation('practice.explanation')}</p>
             <p className="mt-4 text-base leading-7 text-slate-200">{getText(question.explanation)}</p>
           </div>
         )}
