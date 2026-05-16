@@ -1,7 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import Link from 'next/link';import { motion } from 'framer-motion';import { useEffect, useState } from 'react';
 import { History, BookOpen, Globe, DollarSign, Calculator, Microscope, Newspaper, Brain } from 'lucide-react';
 import { useLanguage } from '../../lib/LanguageContext';
 
@@ -79,22 +78,43 @@ export default function SubjectGrid() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {subjects.map((subject) => {
           const IconComponent = iconMap[subject.iconName as keyof typeof iconMap];
-          return (
+          const subjectCount = counts[subject.id];
+          const isZero = subjectCount !== undefined && subjectCount === 0;
+
+          return isZero ? (
+            <div
+              key={subject.id}
+              className="flex flex-col items-center justify-center text-center p-8 rounded-2xl bg-white border border-gray-100 text-slate-400 opacity-80"
+            >
+              <div className={`flex items-center justify-center w-16 h-16 rounded-2xl ${subject.bgColor}`}>
+                <IconComponent className={`w-8 h-8 ${subject.iconColor}`} />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mt-4 mb-3">{t[subject.titleKey]}</h3>
+              <div className="rounded-full border border-dashed border-gray-200 bg-slate-50 px-3 py-1 text-sm font-medium">
+                Coming soon
+              </div>
+            </div>
+          ) : (
             <Link
               key={subject.id}
               href={`/subjects/${subject.id}`}
               className="block group"
             >
-              <div className="flex flex-col items-center justify-center text-center p-8 rounded-2xl bg-white shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-100 hover:-translate-y-1">
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                className="flex flex-col items-center justify-center text-center p-8 rounded-2xl bg-white shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-100 hover:-translate-y-1"
+              >
                 <div className={`flex items-center justify-center w-16 h-16 rounded-2xl ${subject.bgColor}`}>
                   <IconComponent className={`w-8 h-8 ${subject.iconColor}`} />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mt-4 mb-3">{t[subject.titleKey]}</h3>
                 <div className="flex items-center justify-center bg-gray-50 text-gray-600 rounded-full px-3 py-1 text-sm font-medium">
                   <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2"></div>
-                  {counts[subject.id] !== undefined ? `${counts[subject.id]} Questions` : subject.count}
+                  {subjectCount !== undefined ? `${subjectCount} Questions` : subject.count}
                 </div>
-              </div>
+              </motion.div>
             </Link>
           );
         })}

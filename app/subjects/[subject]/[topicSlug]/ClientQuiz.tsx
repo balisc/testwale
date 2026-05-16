@@ -1,5 +1,6 @@
-"use client";
+'use client';
 
+import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '../../../components/Navbar';
@@ -330,16 +331,19 @@ export default function ClientQuiz({
                   }
 
                   return (
-                    <button
+                    <motion.button
                       key={`${option}-${optionIndex}`}
                       type="button"
                       onClick={() => handleOptionClick(optionIndex)}
                       disabled={isAnswered}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                       className={buttonClass}
                     >
                       <span className="font-semibold mr-2">{String.fromCharCode(65 + optionIndex)}.</span>
                       {option}
-                    </button>
+                    </motion.button>
                   );
                 })
               ) : (
@@ -356,25 +360,31 @@ export default function ClientQuiz({
 
             {isAnswered && !isAnswerCorrect && currentQuestionIndex < questions.length - 1 && (
               <div className="mt-6 text-center">
-                <button
+                <motion.button
                   type="button"
                   onClick={handleNext}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                   className="inline-flex items-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition"
                 >
                   Next Question →
-                </button>
+                </motion.button>
               </div>
             )}
 
             {isAnswered && currentQuestionIndex === questions.length - 1 && !quizCompleted && !isAnswerCorrect && (
               <div className="mt-6 text-center">
-                <button
+                <motion.button
                   type="button"
                   onClick={() => setQuizCompleted(true)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                   className="inline-flex items-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition"
                 >
                   Finish Quiz →
-                </button>
+                </motion.button>
               </div>
             )}
 
@@ -384,8 +394,15 @@ export default function ClientQuiz({
                 <h2 className="mt-4 text-3xl font-bold text-slate-900">Better luck next time</h2>
                 <p className="mt-4 text-slate-600">You answered <span className="font-semibold text-slate-900">{score}</span> of <span className="font-semibold text-slate-900">{questions.length}</span> correctly.</p>
                 <p className="mt-2 text-slate-500">Review what you learned and try the next topic.</p>
-                <Link href={`/subjects/${subject}`} className="mt-6 inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition">
-                  Back to Topics
+                <Link href={`/subjects/${subject}`} legacyBehavior>
+                  <motion.a
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                    className="mt-6 inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition"
+                  >
+                    Back to Topics
+                  </motion.a>
                 </Link>
               </div>
             )}

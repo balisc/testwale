@@ -131,7 +131,47 @@ export default async function SubjectTopicPage({ params }: { params: { subject: 
     );
   }
 
-  const topics = await fetchTopics(subjectConfig.table, subjectKey);
+  let topics: TopicItem[] = [];
+  try {
+    topics = await fetchTopics(subjectConfig.table, subjectKey);
+  } catch (error: any) {
+    console.error('Error fetching topics for', subjectKey, error?.message ?? error);
+    return (
+      <main className="min-h-screen bg-white text-slate-900">
+        <Navbar />
+        <section className="mx-auto max-w-4xl px-5 py-28 text-center lg:px-10">
+          <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Coming soon</p>
+          <h1 className="mt-4 text-4xl font-semibold text-slate-900">{subjectConfig.label} — Coming Soon</h1>
+          <p className="mt-4 text-slate-600">We don’t have content for this subject yet. Please check back later.</p>
+          <div className="mt-8">
+            <Link href="/subjects" className="inline-flex rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+              Back to Subjects
+            </Link>
+          </div>
+        </section>
+        <Footer />
+      </main>
+    );
+  }
+
+  if (!topics || topics.length === 0) {
+    return (
+      <main className="min-h-screen bg-white text-slate-900">
+        <Navbar />
+        <section className="mx-auto max-w-4xl px-5 py-28 text-center lg:px-10">
+          <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Coming soon</p>
+          <h1 className="mt-4 text-4xl font-semibold text-slate-900">{subjectConfig.label} — Coming Soon</h1>
+          <p className="mt-4 text-slate-600">We don’t have content for this subject yet. Please check back later.</p>
+          <div className="mt-8">
+            <Link href="/subjects" className="inline-flex rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+              Back to Subjects
+            </Link>
+          </div>
+        </section>
+        <Footer />
+      </main>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

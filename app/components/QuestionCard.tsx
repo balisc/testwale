@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import type { QuestionItem } from '../actions/questions';
 import { translations } from '../lib/translations';
@@ -112,13 +113,16 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
             const isCorrectSelection = answerKey ? key === answerKey : optionText === answerText;
 
             return (
-              <button
+              <motion.button
                 key={key}
                 type="button"
                 onClick={() => {
                   setSelectedOption(key);
                   onAnswerSelect(isCorrectSelection);
                 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                 className={optionClasses}
               >
                 <div className="flex items-start gap-4">

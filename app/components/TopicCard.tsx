@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { translations } from '../lib/translations';
 
 type Topic = {
@@ -31,8 +32,11 @@ export default function TopicCard({ topic, onSelect, language }: TopicCardProps)
   };
 
   return (
-    <button
+    <motion.button
       onClick={() => onSelect(topic)}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
       className="group rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-950 p-6 shadow-lg transition duration-300 hover:border-emerald-400/50 hover:shadow-[0_0_30px_rgba(16,185,129,0.15)]"
     >
       <div className="flex flex-col items-center justify-center gap-3 text-center">

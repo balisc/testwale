@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Heart, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Navbar from './components/Navbar';
 import SubjectGrid from './components/SubjectGrid';
+import Footer from './components/Footer';
 import { useLanguage } from '../lib/LanguageContext';
 
 type Language = 'en' | 'hi';
@@ -40,7 +41,7 @@ const pageTranslations = {
     footerContact: 'Contact',
     footerTerms: 'Terms',
     footerPrivacy: 'Privacy',
-    footerTagline: 'Created by student for student',
+    footerTagline: 'Created by student for students',
   },
   hi: {
     heroBadge: 'सीमित समय के लिए मुफ्त पहुँच',
@@ -67,7 +68,7 @@ const pageTranslations = {
     footerContact: 'संपर्क करें',
     footerTerms: 'शर्तें',
     footerPrivacy: 'गोपनीयता',
-    footerTagline: 'Created by student for student',
+    footerTagline: 'Created by student for students',
   },
 } as const;
 
@@ -96,6 +97,13 @@ export default function HomePage() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [loadingSuggestions, setLoadingSuggestions] = useState(true);
+  const [siteStats, setSiteStats] = useState<{ questions: number | null; subjects: number | null; topics: number | null }>({
+    questions: null,
+    subjects: null,
+    topics: null,
+  });
+  const [loadingSiteStats, setLoadingSiteStats] = useState(true);
+  const [siteStatsError, setSiteStatsError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const normalize = (value: string) => value.trim().toLowerCase();
@@ -128,6 +136,31 @@ export default function HomePage() {
     }
 
     loadSearchSuggestions();
+  }, []);
+
+  useEffect(() => {
+    async function loadSiteStats() {
+      try {
+        setLoadingSiteStats(true);
+        const response = await fetch('/api/site-stats');
+        if (!response.ok) {
+          throw new Error('Unable to load site statistics');
+        }
+        const data = await response.json();
+        setSiteStats({
+          questions: typeof data.questions === 'number' ? data.questions : null,
+          subjects: typeof data.subjects === 'number' ? data.subjects : null,
+          topics: typeof data.topics === 'number' ? data.topics : null,
+        });
+      } catch (error) {
+        console.error('Site stats load error:', error);
+        setSiteStatsError('Unable to load counts from the database.');
+      } finally {
+        setLoadingSiteStats(false);
+      }
+    }
+
+    loadSiteStats();
   }, []);
 
   useEffect(() => {
@@ -273,6 +306,44 @@ export default function HomePage() {
   };
 
   const activeTranslation = pageTranslations[language];
+  const lang = language;
+
+  const sectionTitle = {
+    en: 'How it works',
+    hi: 'यह कैसे काम करता है',
+  } as const;
+
+  const stepsData = [
+    {
+      id: '1',
+      title: { en: 'Choose Subject', hi: 'विषय चुनें' },
+      desc: {
+        en: 'Select from Math, Reasoning, English, GK and more',
+        hi: 'गणित, रीजनिंग, अंग्रेजी, जीके और अन्य विषयों में से चुनें',
+      },
+    },
+    {
+      id: '2',
+      title: { en: 'Pick a Topic', hi: 'विषय का टॉपिक चुनें' },
+      desc: {
+        en: 'Focus on specific topics to strengthen weak areas',
+        hi: 'कमजोर क्षेत्रों को मजबूत करने के लिए विशिष्ट विषयों पर ध्यान केंद्रित करें',
+      },
+    },
+    {
+      id: '3',
+      title: { en: 'Practice & Learn', hi: 'अभ्यास करें और सीखें' },
+      desc: {
+        en: 'Attempt MCQs and review explanations',
+        hi: 'बहुविकल्पीय प्रश्नों (MCQs) का प्रयास करें और विस्तृत व्याख्याओं की समीक्षा करें',
+      },
+    },
+  ] as const;
+
+  const formatCount = (value: number | null, fallback: string) => {
+    if (value === null) return fallback;
+    return value.toLocaleString();
+  };
 
   if (!mounted) {
     return <div className="min-h-screen bg-white" />;
@@ -284,7 +355,7 @@ export default function HomePage() {
 
       <main className="w-full pt-16">
         {/* Hero Section */}
-        <section className="w-full px-4 py-20 md:py-28 flex flex-col items-center justify-center text-center">
+        <section className="w-full px-4 py-16 md:py-24 flex flex-col items-center justify-center text-center">
           <div className="max-w-4xl mx-auto">
             {/* Micro-tag */}
             <div className="inline-flex items-center gap-2 mb-8 rounded-full border border-purple-200 bg-purple-50 px-4 py-2">
@@ -431,7 +502,67 @@ export default function HomePage() {
                   <div className="text-sm text-rose-600">{searchError}</div>
                 )}
               </form>
+
+              <div className="mt-6 flex flex-col items-center justify-center gap-3 text-center sm:flex-row sm:justify-center">
+                <a
+                  href="/subjects"
+                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-8 py-3.5 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-800"
+                >
+                  Start Practicing
+                </a>
+                <p className="max-w-xl text-sm text-slate-500">
+                  Explore active subjects and take your first quiz in seconds.
+                </p>
+              </div>
             </div>
+
+            <div className="mt-10 md:mt-14 mb-8 px-4">
+              <div className="mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
+                  <div className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-1">
+                    {loadingSiteStats ? '...' : formatCount(siteStats.questions, '0')}
+                  </div>
+                  <div className="text-xs md:text-sm font-medium text-slate-400 tracking-wide uppercase">Questions</div>
+                </div>
+                <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
+                  <div className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-1">
+                    {loadingSiteStats ? '...' : formatCount(siteStats.subjects, '0')}
+                  </div>
+                  <div className="text-xs md:text-sm font-medium text-slate-400 tracking-wide uppercase">Subjects</div>
+                </div>
+                <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
+                  <div className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-1">
+                    {loadingSiteStats ? '...' : formatCount(siteStats.topics, '0')}
+                  </div>
+                  <div className="text-xs md:text-sm font-medium text-slate-400 tracking-wide uppercase">Topics</div>
+                </div>
+              </div>
+              {siteStatsError && (
+                <div className="mt-4 text-center text-sm text-rose-600">{siteStatsError}</div>
+              )}
+            </div>
+
+            <section className="border-t border-slate-100 mt-20 pt-20 pb-24 max-w-5xl mx-auto px-4 bg-slate-50/70 backdrop-blur-sm rounded-[2rem] shadow-sm">
+              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-14 tracking-tight text-center">
+                {sectionTitle[lang]}
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                {stepsData.map((step) => (
+                  <div key={step.id} className="space-y-4">
+                    <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-mono font-bold text-base md:text-lg mx-auto mb-5">
+                      {step.id}
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">
+                      {step.title[lang]}
+                    </h3>
+                    <p className="text-sm text-slate-500 max-w-xs mx-auto leading-relaxed">
+                      {step.desc[lang]}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
           </div>
         </section>
 
@@ -445,32 +576,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="w-full px-4 py-16 bg-white border-t border-gray-200">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-              <Link href="/about" className="text-slate-900 hover:text-indigo-600 transition font-medium">
-                {activeTranslation.footerAbout}
-              </Link>
-              <Link href="/contact" className="text-slate-900 hover:text-indigo-600 transition font-medium">
-                {activeTranslation.footerContact}
-              </Link>
-              <Link href="/terms" className="text-slate-900 hover:text-indigo-600 transition font-medium">
-                {activeTranslation.footerTerms}
-              </Link>
-              <Link href="/privacy" className="text-slate-900 hover:text-indigo-600 transition font-medium">
-                {activeTranslation.footerPrivacy}
-              </Link>
-            </div>
-
-            <div className="flex justify-center">
-              <div className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-6 py-3">
-                <Heart className="h-5 w-5 text-red-500 fill-red-500 animate-pulse" />
-                <span className="text-sm font-medium text-gray-800">{activeTranslation.footerTagline}</span>
-              </div>
-            </div>
-          </div>
-        </footer>
+        <Footer />
       </main>
     </div>
   );
