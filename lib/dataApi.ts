@@ -9,6 +9,8 @@ if (!MONGODB_DATA_API_KEY) {
   throw new Error('MONGODB_DATA_API_KEY is missing in .env.local');
 }
 
+const MONGODB_DATA_API_KEY_VALUE = MONGODB_DATA_API_KEY!;
+
 interface FindOptions {
   dataSource?: string;
   database: string;
@@ -56,7 +58,7 @@ export async function findDocuments(options: FindOptions) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'api-key': MONGODB_DATA_API_KEY,
+      'api-key': MONGODB_DATA_API_KEY_VALUE,
     },
     body: JSON.stringify(body),
   });
@@ -82,7 +84,7 @@ export async function insertDocument(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'api-key': MONGODB_DATA_API_KEY,
+      'api-key': MONGODB_DATA_API_KEY_VALUE,
     },
     body: JSON.stringify({
       dataSource: 'Cluster0',

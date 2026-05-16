@@ -27,7 +27,7 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
     return bilingual?.[language] || bilingual?.en || bilingual?.hi || '';
   };
 
-  const askedInLabel = getText(question.askedIn ?? question.asked_in ?? question.exam ?? 'Unknown');
+  const askedInLabel = getText(question.askedIn ?? (question as any).asked_in ?? question.exam ?? 'Unknown');
 
   const answerText = getText(question.answer).trim();
   const answerKey = answerText.length === 1 ? answerText.toUpperCase() : undefined;
@@ -133,7 +133,7 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
                     <p className="text-sm leading-6 text-white">{getText(text)}</p>
                   </div>
                 </div>
-              </button>
+              </motion.button>
             );
           })}
         </div>

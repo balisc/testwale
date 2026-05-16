@@ -46,6 +46,6 @@ export default function TopicCard({ topic, onSelect, language }: TopicCardProps)
         <h3 className="text-lg font-semibold text-white group-hover:text-emerald-300">{topicName}</h3>
         <p className="text-xs text-slate-400">Click to practice</p>
       </div>
-    </button>
+    </motion.button>
   );
 }
