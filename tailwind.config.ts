@@ -8,15 +8,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        navy: '#0A192F',
-        accent: '#D4AF37',
-        hoverbg: '#162A45',
+        brand: '#7C3AED',
+        surface: '#F8FAFC',
+        works: '#F1F5F9',
+        muted: '#64748B',
       },
       boxShadow: {
-        glow: '0 0 0 1px rgba(212, 175, 55, 0.15), 0 20px 50px rgba(0,0,0,0.35)',
+        soft: '0 24px 80px rgba(15, 23, 42, 0.08)',
       },
       fontFamily: {
-        heading: ['var(--font-lora)', 'serif'],
+        heading: ['var(--font-plus-jakarta-sans)', 'sans-serif'],
         body: ['var(--font-inter)', 'sans-serif'],
       },
     },

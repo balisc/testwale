@@ -18,8 +18,9 @@ type Suggestion =
 const pageTranslations = {
   en: {
     heroBadge: 'Limited-time free access',
-    heroTitle: 'Practice. Master. Ace.',
-    heroLine: 'Your competitive exams.',
+    heroTitle: 'Practice to dominate.',
+    heroLinePart1: 'Test your limits before',
+    heroLinePart2: 'the system tests you.',
     heroSubtitle: 'Practice MCQs for all subjects - Mathematics, Science, English, History & more. Perfect for competitive exams, board preparations, and knowledge enhancement.',
     searchPlaceholder: 'Search subjects or topics...',
     searchButton: 'Search',
@@ -45,8 +46,9 @@ const pageTranslations = {
   },
   hi: {
     heroBadge: 'सीमित समय के लिए मुफ्त पहुँच',
-    heroTitle: 'अभ्यास. महारत. सफलता.',
-    heroLine: 'आपकी प्रतियोगी परीक्षाएं।',
+    heroTitle: 'कटऑफ़ के जागने तक प्रतीक्षा न करें।',
+    heroLinePart1: 'अपने सीमाओं को परखें',
+    heroLinePart2: 'पहले कि सिस्टम आपको परखे।',
     heroSubtitle: 'सभी विषयों के लिए अभ्यास प्रश्नोत्तरी - गणित, विज्ञान, अंग्रेज़ी, इतिहास और अधिक। प्रतियोगी परीक्षाओं, बोर्ड की तैयारी और ज्ञान वृद्धि के लिए उत्तम।',
     searchPlaceholder: 'विषय, परीक्षाएं खोजें...',
     searchButton: 'खोजें',
@@ -104,6 +106,8 @@ export default function HomePage() {
   });
   const [loadingSiteStats, setLoadingSiteStats] = useState(true);
   const [siteStatsError, setSiteStatsError] = useState<string | null>(null);
+  const [animatedSiteStats, setAnimatedSiteStats] = useState({ questions: 0, subjects: 0, topics: 0 });
+  const statsDirectionRef = useRef(1);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const normalize = (value: string) => value.trim().toLowerCase();
@@ -162,6 +166,43 @@ export default function HomePage() {
 
     loadSiteStats();
   }, []);
+
+  useEffect(() => {
+    let interval: number | undefined;
+
+    if (loadingSiteStats) {
+      statsDirectionRef.current = 1;
+      setAnimatedSiteStats({ questions: 0, subjects: 0, topics: 0 });
+
+      interval = window.setInterval(() => {
+        setAnimatedSiteStats((prev) => {
+          const direction = statsDirectionRef.current;
+          const nextQuestions = Math.min(Math.max(prev.questions + direction * 50, 0), 1000);
+          const nextSubjects = Math.min(Math.max(prev.subjects + direction * 20, 0), 1000);
+          const nextTopics = Math.min(Math.max(prev.topics + direction * 15, 0), 1000);
+
+          if (
+            (direction === 1 && (nextQuestions >= 1000 || nextSubjects >= 1000 || nextTopics >= 1000)) ||
+            (direction === -1 && (nextQuestions <= 0 || nextSubjects <= 0 || nextTopics <= 0))
+          ) {
+            statsDirectionRef.current = -direction;
+          }
+
+          return {
+            questions: nextQuestions,
+            subjects: nextSubjects,
+            topics: nextTopics,
+          };
+        });
+      }, 25);
+    }
+
+    return () => {
+      if (interval) {
+        window.clearInterval(interval);
+      }
+    };
+  }, [loadingSiteStats]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -350,29 +391,31 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
       <Navbar />
 
-      <main className="w-full pt-16">
+      <main className="w-full pt-24">
+        <div className="max-w-6xl mx-auto px-4">
         {/* Hero Section */}
-        <section className="w-full px-4 py-16 md:py-24 flex flex-col items-center justify-center text-center">
-          <div className="max-w-4xl mx-auto">
+        <section className="w-full rounded-[2rem] border border-slate-200/70 bg-white shadow-soft px-6 py-16 md:px-8 md:py-20">
+          <div className="max-w-4xl mx-auto text-center">
             {/* Micro-tag */}
-            <div className="inline-flex items-center gap-2 mb-8 rounded-full border border-purple-200 bg-purple-50 px-4 py-2">
-              <div className="h-2 w-2 rounded-full bg-purple-500" />
-              <span className="text-sm font-medium text-purple-900">{activeTranslation.heroBadge}</span>
+            <div className="inline-flex items-center gap-2 mb-8 rounded-full border border-indigo-100 bg-indigo-50 px-4 py-2 shadow-sm">
+              <div className="h-2 w-2 rounded-full bg-indigo-600" />
+              <span className="text-sm font-semibold text-indigo-700">{activeTranslation.heroBadge}</span>
             </div>
 
             {/* Main Headline with Gradient */}
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight mb-0 bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-[-0.04em] mb-3 bg-gradient-to-r from-brand via-[#8B5CF6] to-[#6366F1] bg-clip-text text-transparent max-w-full mx-auto leading-[0.96] sm:leading-[0.98]">
               {activeTranslation.heroTitle}
             </h1>
-            <h2 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6 bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              {activeTranslation.heroLine}
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-[-0.04em] leading-[0.96] mb-8 bg-gradient-to-r from-brand via-[#8B5CF6] to-[#6366F1] bg-clip-text text-transparent max-w-full mx-auto">
+              <span className="block">{activeTranslation.heroLinePart1}</span>
+              <span className="block">{activeTranslation.heroLinePart2}</span>
             </h2>
 
             {/* Sub-headline */}
-            <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-muted mb-12 max-w-2xl mx-auto leading-8">
               {activeTranslation.heroSubtitle}
             </p>
 
@@ -403,8 +446,8 @@ export default function HomePage() {
                       spellCheck={false}
                       className={
                         isSearchActive && isMobile
-                          ? 'w-full rounded-full border border-slate-200 bg-white px-5 py-3.5 text-slate-900 placeholder-gray-400 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100'
-                          : 'w-full rounded-full border border-gray-300 bg-white px-6 py-3.5 text-slate-900 placeholder-gray-400 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100'
+                          ? 'w-full rounded-full border border-slate-200 bg-white px-5 py-3.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-brand focus:ring-2 focus:ring-[#EDE9FE]'
+                          : 'w-full rounded-full border border-slate-200 bg-white px-6 py-4 text-slate-900 placeholder-slate-400 outline-none transition focus:border-brand focus:ring-2 focus:ring-[#EDE9FE]'
                       }
                       value={query}
                       onChange={(event) => {
@@ -436,7 +479,7 @@ export default function HomePage() {
                       <div className={
                         isSearchActive && isMobile
                           ? 'mt-4 max-h-[55vh] overflow-y-auto rounded-3xl border border-gray-200 bg-white shadow-lg'
-                          : 'absolute top-full left-0 right-0 z-50 mt-1 max-h-64 overflow-y-auto rounded-3xl border border-gray-200 bg-white shadow-lg'
+                          : 'absolute top-full left-0 right-0 z-50 mt-2 max-h-64 overflow-y-auto rounded-3xl border border-gray-200 bg-white shadow-lg'
                       }>
                         {loadingSuggestions ? (
                           <div className="p-4 text-sm text-slate-500">Loading suggestions...</div>
@@ -480,7 +523,7 @@ export default function HomePage() {
                   {!isSearchActive && (
                     <button
                       type="submit"
-                      className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold hover:shadow-lg transition flex items-center justify-center gap-2"
+                      className="w-full sm:w-auto rounded-full bg-brand px-10 py-4 text-sm font-semibold text-white shadow-xl transition hover:bg-[#6D28D9] flex items-center justify-center gap-2"
                     >
                       {activeTranslation.searchButton}
                       <ArrowRight className="w-4 h-4" />
@@ -491,7 +534,7 @@ export default function HomePage() {
                 {isSearchActive && isMobile && (
                   <button
                     type="submit"
-                    className="w-full px-8 py-3.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold hover:shadow-lg transition flex items-center justify-center gap-2"
+                    className="w-full rounded-full bg-brand px-10 py-4 text-sm font-semibold text-white shadow-xl transition hover:bg-[#6D28D9] flex items-center justify-center gap-2"
                   >
                     {activeTranslation.searchButton}
                     <ArrowRight className="w-4 h-4" />
@@ -503,10 +546,10 @@ export default function HomePage() {
                 )}
               </form>
 
-              <div className="mt-6 flex flex-col items-center justify-center gap-3 text-center sm:flex-row sm:justify-center">
+              <div className="mt-6 flex flex-col items-center justify-center gap-4 text-center sm:flex-row sm:justify-center">
                 <a
                   href="/subjects"
-                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-8 py-3.5 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-800"
+                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-10 py-4 text-sm font-semibold text-white shadow-xl transition hover:bg-slate-800"
                 >
                   Start Practicing
                 </a>
@@ -518,23 +561,23 @@ export default function HomePage() {
 
             <div className="mt-10 md:mt-14 mb-8 px-4">
               <div className="mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
-                  <div className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-1">
-                    {loadingSiteStats ? '...' : formatCount(siteStats.questions, '0')}
+                <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl flex flex-col items-center justify-center text-center">
+                  <div className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-2">
+                    {loadingSiteStats ? animatedSiteStats.questions.toLocaleString() : formatCount(siteStats.questions, '0')}
                   </div>
-                  <div className="text-xs md:text-sm font-medium text-slate-400 tracking-wide uppercase">Questions</div>
+                  <div className="text-xs md:text-sm font-semibold uppercase tracking-[0.28em] text-muted">Questions</div>
                 </div>
-                <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
-                  <div className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-1">
-                    {loadingSiteStats ? '...' : formatCount(siteStats.subjects, '0')}
+                <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl flex flex-col items-center justify-center text-center">
+                  <div className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-2">
+                    {loadingSiteStats ? animatedSiteStats.subjects.toLocaleString() : formatCount(siteStats.subjects, '0')}
                   </div>
-                  <div className="text-xs md:text-sm font-medium text-slate-400 tracking-wide uppercase">Subjects</div>
+                  <div className="text-xs md:text-sm font-semibold uppercase tracking-[0.28em] text-muted">Subjects</div>
                 </div>
-                <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
-                  <div className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-1">
-                    {loadingSiteStats ? '...' : formatCount(siteStats.topics, '0')}
+                <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl flex flex-col items-center justify-center text-center">
+                  <div className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-2">
+                    {loadingSiteStats ? animatedSiteStats.topics.toLocaleString() : formatCount(siteStats.topics, '0')}
                   </div>
-                  <div className="text-xs md:text-sm font-medium text-slate-400 tracking-wide uppercase">Topics</div>
+                  <div className="text-xs md:text-sm font-semibold uppercase tracking-[0.28em] text-muted">Topics</div>
                 </div>
               </div>
               {siteStatsError && (
@@ -542,21 +585,29 @@ export default function HomePage() {
               )}
             </div>
 
-            <section className="border-t border-slate-100 mt-20 pt-20 pb-24 max-w-5xl mx-auto px-4 bg-slate-50/70 backdrop-blur-sm rounded-[2rem] shadow-sm">
-              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-14 tracking-tight text-center">
-                {sectionTitle[lang]}
-              </h2>
+            <section className="mt-20 rounded-[2rem] bg-works px-4 py-14 md:px-8 md:py-16">
+              <div className="max-w-3xl mx-auto text-center mb-12">
+                <p className="text-sm uppercase tracking-[0.35em] text-[#475569] mb-3 font-semibold">How it works</p>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-slate-900 mb-4 tracking-tight leading-tight">
+                  {sectionTitle[lang]}
+                </h2>
+                <p className="text-base sm:text-lg text-muted max-w-2xl mx-auto leading-8">
+                  {lang === 'en'
+                    ? 'Follow these three steps to quickly choose a subject, pick a topic, and practice with confidence.'
+                    : 'इन तीन चरणों का पालन करें और जल्दी से विषय चुनें, विषय चयन करें, और आत्मविश्वास के साथ अभ्यास करें।'}
+                </p>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {stepsData.map((step) => (
-                  <div key={step.id} className="space-y-4">
-                    <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-mono font-bold text-base md:text-lg mx-auto mb-5">
+                  <div key={step.id} className="rounded-[2rem] border border-transparent bg-white p-8 shadow-xl transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl hover:border-[#DDD6FE]">
+                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#F3E8FF] text-brand font-semibold text-lg mb-5 shadow-sm">
                       {step.id}
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">
+                    <h3 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-3 tracking-tight leading-snug">
                       {step.title[lang]}
                     </h3>
-                    <p className="text-sm text-slate-500 max-w-xs mx-auto leading-relaxed">
+                    <p className="text-base sm:text-lg text-muted leading-7">
                       {step.desc[lang]}
                     </p>
                   </div>
@@ -566,15 +617,12 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="w-full px-4 py-20 bg-gray-50">
+        <section className="w-full px-4 py-20 bg-surface">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-900">Choose Your Subject</h2>
-            </div>
-
             <SubjectGrid />
           </div>
         </section>
+        </div>
 
         <Footer />
       </main>

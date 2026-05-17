@@ -284,25 +284,25 @@ export default function ClientQuiz({
       <Navbar />
       <main className="pt-20 pb-16">
         <div className="max-w-5xl mx-auto px-4">
-          <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="mb-8">
             <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-slate-500">{subject} / {decodedTopic}</p>
               <h1 className="text-3xl font-bold text-slate-900">{decodedTopic} Quiz</h1>
-              <p className="mt-2 text-slate-600">Question {currentQuestionIndex + 1} of {questions.length}</p>
             </div>
           </div>
 
           <div className="rounded-3xl bg-white p-8 shadow-sm border border-slate-200">
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <span className="text-sm font-semibold uppercase tracking-[0.35em] text-slate-500">Question {currentQuestionIndex + 1}</span>
+            <div className="mb-6 flex items-start justify-between gap-3">
+              <div className="flex flex-1 min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-900 sm:px-4 sm:py-2 sm:text-sm">
+                  Question {currentQuestionIndex + 1}
+                </div>
                 {askedInText && (
-                  <div className="mt-3 inline-block bg-slate-100 text-slate-600 px-2.5 py-1 text-xs rounded-md font-medium">
+                  <div className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-[10px] font-medium sm:text-xs">
                     {askedInText}
                   </div>
                 )}
               </div>
-              <div className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${timeLeft <= 10 ? 'border-red-200 bg-red-50 text-red-600' : 'border-slate-200 bg-slate-50 text-slate-900'}`}>
+              <div className={`flex h-11 min-w-[3rem] items-center justify-center gap-2 rounded-full border px-3 text-sm font-semibold transition ${timeLeft <= 10 ? 'border-red-200 bg-red-50 text-red-600' : 'border-slate-200 bg-slate-50 text-slate-900'}`}>
                 <span>⏱️</span>
                 <span>{String(timeLeft).padStart(2, '0')}</span>
               </div>

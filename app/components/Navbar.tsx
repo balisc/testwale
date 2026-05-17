@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useLanguage } from '../../lib/LanguageContext';
 
 type Language = 'en' | 'hi';
@@ -29,6 +30,8 @@ const translations: Record<Language, { brand: string; tagline: string; home: str
 
 export default function Navbar() {
   const { language, setLanguage } = useLanguage();
+  const pathname = usePathname();
+  const isActive = (href: string) => pathname === href;
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -56,10 +59,10 @@ export default function Navbar() {
       </Link>
 
       <div className="hidden md:flex items-center gap-8">
-        <Link href="/" className="text-sm font-medium text-slate-900 hover:text-slate-700 transition">
+        <Link href="/" className={`text-sm font-medium transition ${isActive('/') ? 'text-brand' : 'text-slate-900 hover:text-slate-700'}`}>
           {activeTranslation.home}
         </Link>
-        <Link href="/subjects" className="text-sm font-medium text-slate-900 hover:text-slate-700 transition">
+        <Link href="/subjects" className={`text-sm font-medium transition ${isActive('/subjects') ? 'text-brand' : 'text-slate-900 hover:text-slate-700'}`}>
           {activeTranslation.subjects}
         </Link>
       </div>
@@ -85,6 +88,12 @@ export default function Navbar() {
             {activeTranslation.hindi}
           </button>
         </div>
+        <Link
+          href="/subjects"
+          className="hidden md:inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-[#6D28D9]"
+        >
+          Start Practice
+        </Link>
 
         <button
           type="button"

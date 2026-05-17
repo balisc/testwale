@@ -1,6 +1,7 @@
 'use client';
 
-import Link from 'next/link';import { motion } from 'framer-motion';import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { History, BookOpen, Globe, DollarSign, Calculator, Microscope, Newspaper, Brain } from 'lucide-react';
 import { useLanguage } from '../../lib/LanguageContext';
 
@@ -8,6 +9,8 @@ type Language = 'en' | 'hi';
 
 const translations: Record<Language, Record<string, string>> = {
   en: {
+    exploreSubjects: 'Explore Subjects',
+    exploreSubtitle: 'Click any active subject to jump straight into mock exams and start practicing immediately.',
     history: 'History',
     polity: 'Polity',
     geography: 'Geography',
@@ -16,8 +19,13 @@ const translations: Record<Language, Record<string, string>> = {
     science: 'Science',
     currentAffairs: 'Current Affairs',
     reasoning: 'Reasoning',
+    startPractice: 'Start Practice',
+    preparingContent: 'Preparing content...',
+    questions: 'questions',
   },
   hi: {
+    exploreSubjects: 'विषय चुनें',
+    exploreSubtitle: 'किसी भी सक्रिय विषय पर क्लिक करें और सीधे मॉक परीक्षा में जाएं और तुरंत अभ्यास शुरू करें।',
     history: 'इतिहास',
     polity: 'राजव्यवस्था',
     geography: 'भूगोल',
@@ -26,18 +34,29 @@ const translations: Record<Language, Record<string, string>> = {
     science: 'विज्ञान',
     currentAffairs: 'वर्तमान मामले',
     reasoning: 'तर्क',
+    startPractice: 'अभ्यास शुरू करें',
+    preparingContent: 'सामग्री तैयार हो रही है...',
+    questions: 'प्रश्न',
   },
 };
 
-const subjects = [
-  { id: 'history', titleKey: 'history', iconName: 'History', count: '1,200+ MCQs', iconColor: 'text-blue-600', bgColor: 'bg-blue-50' },
-  { id: 'polity', titleKey: 'polity', iconName: 'BookOpen', count: '1,100+ MCQs', iconColor: 'text-green-600', bgColor: 'bg-green-50' },
-  { id: 'geography', titleKey: 'geography', iconName: 'Globe', count: '1,000+ MCQs', iconColor: 'text-purple-600', bgColor: 'bg-purple-50' },
-  { id: 'economics', titleKey: 'economics', iconName: 'DollarSign', count: '950+ MCQs', iconColor: 'text-yellow-600', bgColor: 'bg-yellow-50' },
-  { id: 'math', titleKey: 'math', iconName: 'Calculator', count: '800+ MCQs', iconColor: 'text-red-600', bgColor: 'bg-red-50' },
-  { id: 'science', titleKey: 'science', iconName: 'Microscope', count: '1,300+ MCQs', iconColor: 'text-indigo-600', bgColor: 'bg-indigo-50' },
-  { id: 'current-affairs', titleKey: 'currentAffairs', iconName: 'Newspaper', count: '700+ MCQs', iconColor: 'text-orange-600', bgColor: 'bg-orange-50' },
-  { id: 'reasoning', titleKey: 'reasoning', iconName: 'Brain', count: '900+ MCQs', iconColor: 'text-pink-600', bgColor: 'bg-pink-50' },
+interface SubjectConfig {
+  id: string;
+  titleKey: keyof typeof translations.en;
+  iconName: keyof typeof iconMap;
+  iconBgColor: string;
+  iconColor: string;
+}
+
+const subjects: SubjectConfig[] = [
+  { id: 'polity', titleKey: 'polity', iconName: 'BookOpen', iconBgColor: 'bg-blue-600', iconColor: 'text-white' },
+  { id: 'history', titleKey: 'history', iconName: 'History', iconBgColor: 'bg-purple-600', iconColor: 'text-white' },
+  { id: 'geography', titleKey: 'geography', iconName: 'Globe', iconBgColor: 'bg-emerald-600', iconColor: 'text-white' },
+  { id: 'economics', titleKey: 'economics', iconName: 'DollarSign', iconBgColor: 'bg-amber-600', iconColor: 'text-white' },
+  { id: 'math', titleKey: 'math', iconName: 'Calculator', iconBgColor: 'bg-orange-600', iconColor: 'text-white' },
+  { id: 'science', titleKey: 'science', iconName: 'Microscope', iconBgColor: 'bg-indigo-600', iconColor: 'text-white' },
+  { id: 'current-affairs', titleKey: 'currentAffairs', iconName: 'Newspaper', iconBgColor: 'bg-rose-600', iconColor: 'text-white' },
+  { id: 'reasoning', titleKey: 'reasoning', iconName: 'Brain', iconBgColor: 'bg-cyan-600', iconColor: 'text-white' },
 ];
 
 const iconMap = {
@@ -74,48 +93,81 @@ export default function SubjectGrid() {
   }, []);
 
   return (
-    <div className="bg-gray-50 p-8 rounded-3xl">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="w-full">
+      {/* Subject Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto px-4">
         {subjects.map((subject) => {
-          const IconComponent = iconMap[subject.iconName as keyof typeof iconMap];
+          const IconComponent = iconMap[subject.iconName];
           const subjectCount = counts[subject.id];
-          const isZero = subjectCount !== undefined && subjectCount === 0;
+          const isActive = subjectCount !== undefined && subjectCount > 0;
+          const displayCount = subjectCount !== undefined ? subjectCount : 0;
 
-          return isZero ? (
-            <div
-              key={subject.id}
-              className="flex flex-col items-center justify-center text-center p-8 rounded-2xl bg-white border border-gray-100 text-slate-400 opacity-80"
-            >
-              <div className={`flex items-center justify-center w-16 h-16 rounded-2xl ${subject.bgColor}`}>
-                <IconComponent className={`w-8 h-8 ${subject.iconColor}`} />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mt-4 mb-3">{t[subject.titleKey]}</h3>
-              <div className="rounded-full border border-dashed border-gray-200 bg-slate-50 px-3 py-1 text-sm font-medium">
-                Coming soon
-              </div>
-            </div>
-          ) : (
+          return isActive ? (
             <Link
               key={subject.id}
               href={`/subjects/${subject.id}`}
-              className="block group"
+              className="group"
             >
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                className="flex flex-col items-center justify-center text-center p-8 rounded-2xl bg-white shadow-sm border border-gray-100 transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-100 hover:-translate-y-1"
-              >
-                <div className={`flex items-center justify-center w-16 h-16 rounded-2xl ${subject.bgColor}`}>
-                  <IconComponent className={`w-8 h-8 ${subject.iconColor}`} />
+              <div className="bg-white border border-slate-100 p-6 rounded-2xl relative shadow-sm hover:border-purple-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 ease-out cursor-pointer flex items-start gap-4 h-full">
+                {/* Left Side Icon Box */}
+                <div className={`${subject.iconBgColor} w-12 h-12 rounded-xl flex items-center justify-center shrink-0`}>
+                  <IconComponent className={`w-6 h-6 ${subject.iconColor}`} />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mt-4 mb-3">{t[subject.titleKey]}</h3>
-                <div className="flex items-center justify-center bg-gray-50 text-gray-600 rounded-full px-3 py-1 text-sm font-medium">
-                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2"></div>
-                  {subjectCount !== undefined ? `${subjectCount} Questions` : subject.count}
+
+                {/* Card Body */}
+                <div className="flex-1 flex flex-col">
+                  <h3 className="text-slate-900 font-bold text-lg mb-0.5">
+                    {t[subject.titleKey as keyof typeof t] || subject.titleKey}
+                  </h3>
+                  <p className="text-sm text-slate-500 mb-auto">
+                    {displayCount.toLocaleString()} {t.questions}
+                  </p>
+
+                  {/* Bottom CTA Button */}
+                  <button
+                    className="w-full bg-slate-50 group-hover:bg-purple-600 group-hover:text-white text-slate-700 text-sm font-semibold py-2.5 rounded-xl mt-5 text-center block transition-all duration-200"
+                    aria-label={`${t.startPractice} - ${t[subject.titleKey as keyof typeof t]}`}
+                  >
+                    {t.startPractice}
+                  </button>
                 </div>
-              </motion.div>
+              </div>
             </Link>
+          ) : (
+            <div
+              key={subject.id}
+              className="opacity-65 cursor-not-allowed select-none"
+            >
+              <div className="bg-white border border-slate-100 p-6 rounded-2xl relative shadow-sm flex items-start gap-4 h-full">
+                {/* Disabled Status Badge */}
+                <div className="absolute top-3 right-3 bg-slate-100 text-slate-400 border border-slate-200/60 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">
+                  Coming Soon
+                </div>
+
+                {/* Left Side Icon Box */}
+                <div className={`${subject.iconBgColor} w-12 h-12 rounded-xl flex items-center justify-center shrink-0`}>
+                  <IconComponent className={`w-6 h-6 ${subject.iconColor}`} />
+                </div>
+
+                {/* Card Body */}
+                <div className="flex-1 flex flex-col">
+                  <h3 className="text-slate-900 font-bold text-lg mb-0.5">
+                    {t[subject.titleKey as keyof typeof t] || subject.titleKey}
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    {t.preparingContent}
+                  </p>
+
+                  {/* Disabled Button */}
+                  <button
+                    disabled
+                    className="w-full bg-slate-50 text-slate-400 text-sm font-semibold py-2.5 rounded-xl mt-5 text-center block cursor-not-allowed"
+                  >
+                    {t.startPractice}
+                  </button>
+                </div>
+              </div>
+            </div>
           );
         })}
       </div>

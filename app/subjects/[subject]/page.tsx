@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
 import SubjectTopicsClient from './SubjectTopicsClient';
 import supabase from '../../../lib/supabase';
 
@@ -19,6 +18,7 @@ const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
 type TopicItem = {
   en: string;
   hi: string;
+  count: number;
 };
 
 async function fetchTopics(tableName: string, subjectKey: string) {
@@ -70,23 +70,35 @@ async function fetchTopics(tableName: string, subjectKey: string) {
     });
   }
 
-  const uniqueTopics: TopicItem[] = [];
   const seen = new Set<string>();
+  const topicCounts = new Map<string, number>();
+  const topicItems: TopicItem[] = [];
 
   for (const row of filteredRows) {
-    // Handle both JSON object format (history) and separate columns format (others)
     const topicEn = String(row.topic?.en ?? row.topic_en ?? row.topic ?? '').trim();
     const topicHi = String(row.topic?.hi ?? row.topic_hi ?? '').trim();
     const key = `${topicEn}||${topicHi}`;
 
     if (!topicEn && !topicHi) continue;
-    if (seen.has(key)) continue;
 
+    topicCounts.set(key, (topicCounts.get(key) ?? 0) + 1);
+
+    if (seen.has(key)) continue;
     seen.add(key);
-    uniqueTopics.push({ en: topicEn, hi: topicHi });
+
+    topicItems.push({ en: topicEn, hi: topicHi, count: 0 });
   }
 
-  uniqueTopics.sort((a, b) => a.en.localeCompare(b.en, 'en', { sensitivity: 'base' }));
+  const uniqueTopics = topicItems
+    .map((topic) => {
+      const key = `${topic.en}||${topic.hi}`;
+      return {
+        ...topic,
+        count: topicCounts.get(key) ?? 0,
+      };
+    })
+    .sort((a, b) => a.en.localeCompare(b.en, 'en', { sensitivity: 'base' }));
+
   console.log('--- TERMINAL DEBUG: Unique topics count ---', uniqueTopics.length);
   return uniqueTopics;
 }
@@ -126,7 +138,6 @@ export default async function SubjectTopicPage({ params }: { params: { subject: 
             </Link>
           </div>
         </section>
-        <Footer />
       </main>
     );
   }
@@ -149,7 +160,6 @@ export default async function SubjectTopicPage({ params }: { params: { subject: 
             </Link>
           </div>
         </section>
-        <Footer />
       </main>
     );
   }
@@ -168,7 +178,6 @@ export default async function SubjectTopicPage({ params }: { params: { subject: 
             </Link>
           </div>
         </section>
-        <Footer />
       </main>
     );
   }
@@ -177,7 +186,6 @@ export default async function SubjectTopicPage({ params }: { params: { subject: 
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <SubjectTopicsClient subjectKey={subjectKey} topics={topics} />
-      <Footer />
     </div>
   );
 }
