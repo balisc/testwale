@@ -46,11 +46,11 @@ const pageTranslations = {
   },
   hi: {
     heroBadge: 'सीमित समय के लिए मुफ्त पहुँच',
-    heroTitle: 'कटऑफ़ के जागने तक प्रतीक्षा न करें।',
-    heroLinePart1: 'अपने सीमाओं को परखें',
-    heroLinePart2: 'पहले कि सिस्टम आपको परखे।',
-    heroSubtitle: 'सभी विषयों के लिए अभ्यास प्रश्नोत्तरी - गणित, विज्ञान, अंग्रेज़ी, इतिहास और अधिक। प्रतियोगी परीक्षाओं, बोर्ड की तैयारी और ज्ञान वृद्धि के लिए उत्तम।',
-    searchPlaceholder: 'विषय, परीक्षाएं खोजें...',
+    heroTitle: 'दबदबा बनाने के लिए अभ्यास करो।',
+    heroLinePart1: 'अपनी सीमाओं को यहाँ परख लो,',
+    heroLinePart2: 'इससे पहले कि सिस्टम तुम्हारा इम्तिहान ले।',
+    heroSubtitle: 'सभी विषयों के लिए अभ्यास प्रश्नोत्तरी — गणित, विज्ञान, अंग्रेज़ी, इतिहास और अधिक। प्रतियोगी परीक्षाओं, बोर्ड की तैयारी और आत्मविश्वास के लिए उत्तम।',
+    searchPlaceholder: 'विषय या टॉपिक खोजें...',
     searchButton: 'खोजें',
     landingTitle: 'अपना विषय चुनें',
     historyName: 'इतिहास',
@@ -70,7 +70,7 @@ const pageTranslations = {
     footerContact: 'संपर्क करें',
     footerTerms: 'शर्तें',
     footerPrivacy: 'गोपनीयता',
-    footerTagline: 'Created by student for students',
+    footerTagline: 'विद्यार्थियों द्वारा विद्यार्थियों के लिए निर्मित',
   },
 } as const;
 
@@ -88,6 +88,10 @@ const SUBJECT_LIST = [
 
 export default function HomePage() {
   const { language } = useLanguage();
+  const isHindi = language === 'hi';
+  const heroTextSizeClass = isHindi ? 'text-[clamp(1.3rem,5.2vw,3.2rem)]' : 'text-[clamp(1.35rem,5.8vw,3.9rem)]';
+  const heroLineSpacingClass = isHindi ? 'space-y-3 mb-10' : 'space-y-2 mb-8';
+  const heroTitleMargin = isHindi ? 'mb-4' : 'mb-2';
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState('');
@@ -397,8 +401,8 @@ export default function HomePage() {
       <main className="w-full pt-24">
         <div className="max-w-6xl mx-auto px-4">
         {/* Hero Section */}
-        <section className="w-full rounded-[2rem] border border-slate-200/70 bg-white shadow-soft px-6 py-16 md:px-8 md:py-20">
-          <div className="max-w-4xl mx-auto text-center">
+        <section className="w-full rounded-[2rem] border border-slate-200/70 bg-white shadow-soft px-6 py-10 md:px-12 md:py-14 flex justify-center">
+          <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto text-center">
             {/* Micro-tag */}
             <div className="inline-flex items-center gap-2 mb-8 rounded-full border border-indigo-100 bg-indigo-50 px-4 py-2 shadow-sm">
               <div className="h-2 w-2 rounded-full bg-indigo-600" />
@@ -406,10 +410,10 @@ export default function HomePage() {
             </div>
 
             {/* Main Headline with Gradient */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-[-0.04em] mb-3 bg-gradient-to-r from-brand via-[#8B5CF6] to-[#6366F1] bg-clip-text text-transparent max-w-full mx-auto leading-[0.96] sm:leading-[0.98]">
+            <h1 className={`mt-2.5 ${heroTextSizeClass} font-black tracking-[-0.04em] ${heroTitleMargin} bg-gradient-to-r from-brand via-[#8B5CF6] to-[#6366F1] bg-clip-text text-transparent max-w-full mx-auto leading-[1.3] break-words whitespace-normal`}>
               {activeTranslation.heroTitle}
             </h1>
-            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-[-0.04em] leading-[0.96] mb-8 bg-gradient-to-r from-brand via-[#8B5CF6] to-[#6366F1] bg-clip-text text-transparent max-w-full mx-auto">
+            <h2 className={`mt-3 ${heroTextSizeClass} font-black tracking-[-0.04em] leading-[1.3] ${heroLineSpacingClass} bg-gradient-to-r from-brand via-[#8B5CF6] to-[#6366F1] bg-clip-text text-transparent max-w-full mx-auto break-words whitespace-normal`}>
               <span className="block">{activeTranslation.heroLinePart1}</span>
               <span className="block">{activeTranslation.heroLinePart2}</span>
             </h2>

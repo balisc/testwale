@@ -23,7 +23,7 @@ type TopicItem = {
 
 async function fetchTopics(tableName: string, subjectKey: string) {
   const normalizedSubjectKey = String(subjectKey).trim().toLowerCase();
-  console.log('--- TERMINAL DEBUG: Fetching topics for subject ---', normalizedSubjectKey);
+  console.log('--- TERMINAL DEBUG: Fetching topics for subject ---', normalizedSubjectKey, 'from table:', tableName);
 
   let data: any = null;
   let error: any = null;
@@ -32,7 +32,8 @@ async function fetchTopics(tableName: string, subjectKey: string) {
   ({ data, error } = await supabase
     .from(tableName)
     .select('*')
-    .not('topic', 'is', null));
+    .not('topic', 'is', null)
+    .order('id', { ascending: true }));
 
   if (error) {
     console.error('❌ SUPABASE ERROR:', error.message);
@@ -50,25 +51,15 @@ async function fetchTopics(tableName: string, subjectKey: string) {
     subject_hi?: string | null;
   }>;
 
-  // Filter by subject if columns exist, otherwise trust the table data
-  let filteredRows = rows;
-  if (rows.length > 0 && rows[0].subject_en !== undefined) {
-    // Bilingual table format
-    filteredRows = rows.filter((row) => {
-      const subjectEn = String(row.subject_en ?? '').trim().toLowerCase();
-      return subjectEn === normalizedSubjectKey;
-    });
-  } else if (rows.length > 0 && rows[0].subject !== undefined) {
-    // JSON object format or plain string subject field
-    filteredRows = rows.filter((row) => {
-      const subjectValue = row.subject;
-      const subjectEn =
-        typeof subjectValue === 'string'
-          ? String(subjectValue).trim().toLowerCase()
-          : String(subjectValue?.en ?? '').trim().toLowerCase();
-      return subjectEn === normalizedSubjectKey;
-    });
+  console.log('--- TERMINAL DEBUG: Fetched rows count ---', rows.length);
+  if (rows.length > 0) {
+    console.log('--- TERMINAL DEBUG: First row sample ---', JSON.stringify(rows[0], null, 2).slice(0, 200));
   }
+
+  // Each table is already subject-specific (e.g., polity_questions contains only polity data)
+  // So we use all rows without filtering by subject
+  const filteredRows = rows;
+  console.log('--- TERMINAL DEBUG: Using all rows from subject-specific table ---', filteredRows.length);
 
   const seen = new Set<string>();
   const topicCounts = new Map<string, number>();
@@ -89,15 +80,13 @@ async function fetchTopics(tableName: string, subjectKey: string) {
     topicItems.push({ en: topicEn, hi: topicHi, count: 0 });
   }
 
-  const uniqueTopics = topicItems
-    .map((topic) => {
-      const key = `${topic.en}||${topic.hi}`;
-      return {
-        ...topic,
-        count: topicCounts.get(key) ?? 0,
-      };
-    })
-    .sort((a, b) => a.en.localeCompare(b.en, 'en', { sensitivity: 'base' }));
+  const uniqueTopics = topicItems.map((topic) => {
+    const key = `${topic.en}||${topic.hi}`;
+    return {
+      ...topic,
+      count: topicCounts.get(key) ?? 0,
+    };
+  });
 
   console.log('--- TERMINAL DEBUG: Unique topics count ---', uniqueTopics.length);
   return uniqueTopics;

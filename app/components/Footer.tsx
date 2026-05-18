@@ -14,17 +14,21 @@ export default function Footer() {
   const t = translations[language];
 
   return (
-    <footer className="w-full px-4 py-12 bg-brand text-white">
-      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <h3 className="text-2xl font-semibold">Testwale</h3>
-          <p className="mt-3 text-sm text-slate-100 inline-flex items-center gap-2">
-            <Heart className="w-4 h-4 text-white" />
-            {t.tagline}
-          </p>
+    <footer className="w-full px-4 py-12 bg-white text-slate-900 border-t border-slate-200 shadow-sm">
+      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl font-extrabold tracking-tight">Testwale</span>
+          </div>
+          <div className="inline-flex items-center gap-3 rounded-3xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-sm ring-1 ring-red-100">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-600">
+              <Heart className="w-4 h-4" />
+            </span>
+            <span>{t.tagline}</span>
+          </div>
         </div>
 
-        <p className="text-sm text-slate-100/90">© 2026 Testwale. All rights reserved.</p>
+        <p className="text-sm text-slate-500">© 2026 Testwale. All rights reserved.</p>
       </div>
     </footer>
   );

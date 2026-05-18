@@ -99,16 +99,22 @@ export default function SubjectGrid() {
         {subjects.map((subject) => {
           const IconComponent = iconMap[subject.iconName];
           const subjectCount = counts[subject.id];
-          const isActive = subjectCount !== undefined && subjectCount > 0;
+          const hasTopicCount = subjectCount !== undefined && subjectCount > 0;
           const displayCount = subjectCount !== undefined ? subjectCount : 0;
 
-          return isActive ? (
+          return (
             <Link
               key={subject.id}
               href={`/subjects/${subject.id}`}
-              className="group"
+              className={`group ${hasTopicCount ? '' : 'opacity-80'}`}
             >
               <div className="bg-white border border-slate-100 p-6 rounded-2xl relative shadow-sm hover:border-purple-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 ease-out cursor-pointer flex items-start gap-4 h-full">
+                {!hasTopicCount && (
+                  <div className="absolute top-3 right-3 bg-slate-100 text-slate-500 border border-slate-200/60 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">
+                    Coming Soon
+                  </div>
+                )}
+
                 {/* Left Side Icon Box */}
                 <div className={`${subject.iconBgColor} w-12 h-12 rounded-xl flex items-center justify-center shrink-0`}>
                   <IconComponent className={`w-6 h-6 ${subject.iconColor}`} />
@@ -123,51 +129,16 @@ export default function SubjectGrid() {
                     {displayCount.toLocaleString()} {t.questions}
                   </p>
 
-                  {/* Bottom CTA Button */}
                   <button
-                    className="w-full bg-slate-50 group-hover:bg-purple-600 group-hover:text-white text-slate-700 text-sm font-semibold py-2.5 rounded-xl mt-5 text-center block transition-all duration-200"
+                    className={`w-full text-sm font-semibold py-2.5 rounded-xl mt-5 text-center block transition-all duration-200 ${hasTopicCount ? 'bg-slate-50 group-hover:bg-purple-600 group-hover:text-white text-slate-700' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
                     aria-label={`${t.startPractice} - ${t[subject.titleKey as keyof typeof t]}`}
+                    disabled={!hasTopicCount}
                   >
                     {t.startPractice}
                   </button>
                 </div>
               </div>
             </Link>
-          ) : (
-            <div
-              key={subject.id}
-              className="opacity-65 cursor-not-allowed select-none"
-            >
-              <div className="bg-white border border-slate-100 p-6 rounded-2xl relative shadow-sm flex items-start gap-4 h-full">
-                {/* Disabled Status Badge */}
-                <div className="absolute top-3 right-3 bg-slate-100 text-slate-400 border border-slate-200/60 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">
-                  Coming Soon
-                </div>
-
-                {/* Left Side Icon Box */}
-                <div className={`${subject.iconBgColor} w-12 h-12 rounded-xl flex items-center justify-center shrink-0`}>
-                  <IconComponent className={`w-6 h-6 ${subject.iconColor}`} />
-                </div>
-
-                {/* Card Body */}
-                <div className="flex-1 flex flex-col">
-                  <h3 className="text-slate-900 font-bold text-lg mb-0.5">
-                    {t[subject.titleKey as keyof typeof t] || subject.titleKey}
-                  </h3>
-                  <p className="text-sm text-slate-500">
-                    {t.preparingContent}
-                  </p>
-
-                  {/* Disabled Button */}
-                  <button
-                    disabled
-                    className="w-full bg-slate-50 text-slate-400 text-sm font-semibold py-2.5 rounded-xl mt-5 text-center block cursor-not-allowed"
-                  >
-                    {t.startPractice}
-                  </button>
-                </div>
-              </div>
-            </div>
           );
         })}
       </div>

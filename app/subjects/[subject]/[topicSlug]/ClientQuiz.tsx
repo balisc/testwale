@@ -78,6 +78,7 @@ export default function ClientQuiz({
 }) {
   const { language: lang, setLanguage } = useLanguage();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [shuffledQuestions, setShuffledQuestions] = useState<QuestionRow[]>(questions ?? []);
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState(false);
@@ -96,6 +97,8 @@ export default function ClientQuiz({
       return undefined;
     }
 
+    // timer is handled below
+
     timerRef.current = window.setInterval(() => {
       setTimeLeft((previous) => {
         if (previous <= 1) {
@@ -112,6 +115,24 @@ export default function ClientQuiz({
       }
     };
   }, [isAnswered, currentQuestionIndex]);
+
+  // Shuffle questions on client mount so each refresh shows a different order
+  useEffect(() => {
+    function shuffle<T>(arr: T[]) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tmp;
+      }
+      return arr;
+    }
+
+    if (Array.isArray(questions) && questions.length > 0) {
+      setShuffledQuestions(shuffle([...questions]));
+      setCurrentQuestionIndex(0);
+    }
+  }, [questions]);
 
   useEffect(() => {
     return () => {
@@ -134,7 +155,7 @@ export default function ClientQuiz({
         timerRef.current = null;
       }
 
-      if (currentQuestionIndex + 1 < questions.length) {
+      if (currentQuestionIndex + 1 < shuffledQuestions.length) {
         // Move to next question without showing answer
         setCurrentQuestionIndex((prev) => prev + 1);
         resetForNextQuestion();
@@ -144,7 +165,7 @@ export default function ClientQuiz({
         setQuizCompleted(true);
       }
     }
-  }, [timeLeft, currentQuestionIndex, isAnswered, questions.length]);
+  }, [timeLeft, currentQuestionIndex, isAnswered, shuffledQuestions.length]);
 
   const resetForNextQuestion = () => {
     if (timerRef.current !== null) {
@@ -181,7 +202,7 @@ export default function ClientQuiz({
     );
   }
 
-  const questionsPresent = Array.isArray(questions) && questions.length > 0;
+  const questionsPresent = Array.isArray(shuffledQuestions) && shuffledQuestions.length > 0;
 
   if (!questionsPresent) {
     return (
@@ -201,7 +222,7 @@ export default function ClientQuiz({
     );
   }
 
-  const currentQuestion = questions[currentQuestionIndex];
+  const currentQuestion = shuffledQuestions[currentQuestionIndex];
   const rawOptions = currentQuestion.options ?? { en: currentQuestion.options_en ?? [], hi: currentQuestion.options_hi ?? [] };
   const finalOptions = getOptionTexts(rawOptions, lang);
 
@@ -240,7 +261,7 @@ export default function ClientQuiz({
       setScore((prev) => prev + 1);
       autoAdvanceTimeoutRef.current = window.setTimeout(() => {
         autoAdvanceTimeoutRef.current = null;
-        if (currentQuestionIndex + 1 < questions.length) {
+        if (currentQuestionIndex + 1 < shuffledQuestions.length) {
           setCurrentQuestionIndex((prev) => prev + 1);
           resetForNextQuestion();
         } else {
@@ -251,7 +272,7 @@ export default function ClientQuiz({
   };
 
   const handleNext = () => {
-    if (currentQuestionIndex < questions.length - 1) {
+    if (currentQuestionIndex < shuffledQuestions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
       resetForNextQuestion();
     }
@@ -266,7 +287,7 @@ export default function ClientQuiz({
             <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
               <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Quiz complete</p>
               <h1 className="mt-6 text-4xl font-bold text-slate-900">Better luck next time</h1>
-              <p className="mt-4 text-slate-600">You answered <span className="font-semibold text-slate-900">{score}</span> of <span className="font-semibold text-slate-900">{questions.length}</span> correctly.</p>
+              <p className="mt-4 text-slate-600">You answered <span className="font-semibold text-slate-900">{score}</span> of <span className="font-semibold text-slate-900">{shuffledQuestions.length}</span> correctly.</p>
               <p className="mt-2 text-slate-500">Review what you learned and try the next topic.</p>
               <Link href={`/subjects/${subject}`} className="mt-8 inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition">
                 Back to Topics
@@ -358,7 +379,7 @@ export default function ClientQuiz({
               </div>
             )}
 
-            {isAnswered && !isAnswerCorrect && currentQuestionIndex < questions.length - 1 && (
+            {isAnswered && !isAnswerCorrect && currentQuestionIndex < shuffledQuestions.length - 1 && (
               <div className="mt-6 text-center">
                 <motion.button
                   type="button"
@@ -373,7 +394,7 @@ export default function ClientQuiz({
               </div>
             )}
 
-            {isAnswered && currentQuestionIndex === questions.length - 1 && !quizCompleted && !isAnswerCorrect && (
+            {isAnswered && currentQuestionIndex === shuffledQuestions.length - 1 && !quizCompleted && !isAnswerCorrect && (
               <div className="mt-6 text-center">
                 <motion.button
                   type="button"
@@ -392,7 +413,7 @@ export default function ClientQuiz({
               <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center">
                 <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Quiz complete</p>
                 <h2 className="mt-4 text-3xl font-bold text-slate-900">Better luck next time</h2>
-                <p className="mt-4 text-slate-600">You answered <span className="font-semibold text-slate-900">{score}</span> of <span className="font-semibold text-slate-900">{questions.length}</span> correctly.</p>
+                <p className="mt-4 text-slate-600">You answered <span className="font-semibold text-slate-900">{score}</span> of <span className="font-semibold text-slate-900">{shuffledQuestions.length}</span> correctly.</p>
                 <p className="mt-2 text-slate-500">Review what you learned and try the next topic.</p>
                 <Link href={`/subjects/${subject}`} legacyBehavior>
                   <motion.a
