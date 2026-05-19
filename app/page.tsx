@@ -409,17 +409,17 @@ export default function HomePage() {
               <span className="text-sm font-semibold text-indigo-700">{activeTranslation.heroBadge}</span>
             </div>
 
-            {/* Main Headline with Gradient */}
-            <h1 className={`mt-2.5 ${heroTextSizeClass} font-black tracking-[-0.04em] ${heroTitleMargin} bg-gradient-to-r from-brand via-[#8B5CF6] to-[#6366F1] bg-clip-text text-transparent max-w-full mx-auto leading-[1.3] break-words whitespace-normal`}>
+            {/* Main Headline with Purple Scale */}
+            <h1 className={`mt-2.5 ${heroTitleMargin} text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.2] text-purple-600 text-center break-words whitespace-normal`}>
               {activeTranslation.heroTitle}
             </h1>
-            <h2 className={`mt-3 ${heroTextSizeClass} font-black tracking-[-0.04em] leading-[1.3] ${heroLineSpacingClass} bg-gradient-to-r from-brand via-[#8B5CF6] to-[#6366F1] bg-clip-text text-transparent max-w-full mx-auto break-words whitespace-normal`}>
+            <h2 className={`mt-3 ${heroLineSpacingClass} text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.2] text-purple-600 text-center break-words whitespace-normal`}>
               <span className="block">{activeTranslation.heroLinePart1}</span>
               <span className="block">{activeTranslation.heroLinePart2}</span>
             </h2>
 
-            {/* Sub-headline */}
-            <p className="text-base sm:text-lg md:text-xl text-muted mb-12 max-w-2xl mx-auto leading-8">
+            {/* Descriptive subtitle with strict half-size ratio */}
+            <p className="text-[15px] sm:text-lg md:text-xl lg:text-2xl font-normal text-slate-500 max-w-3xl mx-auto text-center mt-6 leading-relaxed">
               {activeTranslation.heroSubtitle}
             </p>
 
