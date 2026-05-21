@@ -4,6 +4,9 @@ import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
 import ClientQuiz from './ClientQuiz';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 type Question = Record<string, any>;
 
 const SUBJECT_TABLES: Record<string, string> = {
@@ -136,6 +139,12 @@ export default async function QuizPage({ params }: { params: { subject: string; 
 
     if (!error) {
       console.log('✅ TERMINAL DEBUG: Fetch success. Total questions:', data?.length);
+      try {
+        const sampleIds = (data ?? []).slice(0, 5).map((r: any) => r.id ?? r._id ?? r.pk ?? null);
+        console.log('✅ TERMINAL DEBUG: Sample question ids:', sampleIds);
+      } catch (e) {
+        console.log('✅ TERMINAL DEBUG: Failed to read sample ids', e);
+      }
       questions = (data ?? []) as Question[];
       if (!questions.length) {
         console.error('❌ SUPABASE ERROR: No questions found for exact topic match.');

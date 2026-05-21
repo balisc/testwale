@@ -298,12 +298,12 @@ export default function HomePage() {
 
   const navigateToSuggestion = (item: Suggestion) => {
     if (item.type === 'subject') {
-      router.push(`/subjects/${item.subjectKey}`);
+      router.push(`/subjects/${item.subjectKey}?v=${Date.now()}`);
       return;
     }
 
     const topicLabel = language === 'hi' && item.topicHi ? item.topicHi : item.topicEn;
-    router.push(`/subjects/${item.subjectKey}/${encodeURIComponent(topicLabel)}`);
+    router.push(`/subjects/${item.subjectKey}/${encodeURIComponent(topicLabel)}?v=${Date.now()}`);
   };
 
   const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -320,7 +320,7 @@ export default function HomePage() {
     );
 
     if (matchedSubject) {
-      router.push(`/subjects/${matchedSubject.id}`);
+      router.push(`/subjects/${matchedSubject.id}?v=${Date.now()}`);
       return;
     }
 
@@ -332,7 +332,7 @@ export default function HomePage() {
 
     if (matchedTopic) {
       const topicLabel = language === 'hi' && matchedTopic.topicHi ? matchedTopic.topicHi : matchedTopic.topicEn;
-      router.push(`/subjects/${matchedTopic.subjectKey}/${encodeURIComponent(topicLabel)}`);
+      router.push(`/subjects/${matchedTopic.subjectKey}/${encodeURIComponent(topicLabel)}?v=${Date.now()}`);
       return;
     }
 

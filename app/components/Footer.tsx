@@ -18,7 +18,7 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="text-3xl font-extrabold tracking-tight">Testwale</span>
+            <span className="text-3xl font-extrabold tracking-tight">Questionwale</span>
           </div>
           <div className="inline-flex items-center gap-3 rounded-3xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-sm ring-1 ring-red-100">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-600">
@@ -28,7 +28,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <p className="text-sm text-slate-500">© 2026 Testwale. All rights reserved.</p>
+        <p className="text-sm text-slate-500">© 2026 Questionwale. All rights reserved.</p>
       </div>
     </footer>
   );

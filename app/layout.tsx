@@ -8,8 +8,8 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'sw
 const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-plus-jakarta-sans', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Testwale',
-  description: 'Testwale exam prep and practice engine',
+  title: 'Questionwale',
+  description: 'Questionwale exam prep and practice engine',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

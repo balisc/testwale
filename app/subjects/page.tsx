@@ -3,8 +3,8 @@ import Footer from '../components/Footer';
 import SubjectGrid from '../components/SubjectGrid';
 
 export const metadata = {
-  title: 'Subjects | Testwale',
-  description: 'Explore Testwale subjects and start practicing with curated topics.',
+  title: 'Subjects | Questionwale',
+  description: 'Explore Questionwale subjects and start practicing with curated topics.',
 };
 
 export default function SubjectsPage() {

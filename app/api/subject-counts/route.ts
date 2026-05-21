@@ -16,14 +16,25 @@ const SUBJECT_TABLES: Record<string, string> = {
 export async function GET() {
   const counts: Record<string, number> = {};
   for (const [subject, table] of Object.entries(SUBJECT_TABLES)) {
-    const result = await supabase.from(table).select('*', { count: 'exact', head: true });
+    // Use an explicit id-count query to get a reliable row count from Supabase/Postgres.
+    const result = await supabase.from(table).select('id', { count: 'exact' });
     if (result.error) {
+      // If table doesn't exist, skip it instead of failing the entire request.
+      const notFound = /Could not find the table/i.test(result.error.message) || /relation " .* " does not exist/i.test(result.error.message) || /relation ".*" does not exist/i.test(result.error.message);
+      if (notFound) {
+        console.warn(`Subject counts skipped missing table: ${table}`);
+        counts[subject] = 0;
+        continue;
+      }
+
       return NextResponse.json(
         { error: `Unable to load counts for ${subject}: ${result.error.message}` },
         { status: 500 }
       );
     }
-    counts[subject] = result.count ?? 0;
+
+    // Supabase returns `count` when count: 'exact' is requested. Fall back to data length if absent.
+    counts[subject] = typeof result.count === 'number' ? result.count : (result.data?.length ?? 0);
   }
 
   return NextResponse.json(counts, {

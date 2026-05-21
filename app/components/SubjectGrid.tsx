@@ -105,7 +105,7 @@ export default function SubjectGrid() {
           return (
             <Link
               key={subject.id}
-              href={`/subjects/${subject.id}`}
+              href={`/subjects/${subject.id}?v=${Date.now()}`}
               className={`group ${hasTopicCount ? '' : 'opacity-80'}`}
             >
               <div className="bg-white border border-slate-100 p-6 rounded-2xl relative shadow-sm hover:border-purple-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 ease-out cursor-pointer flex items-start gap-4 h-full">

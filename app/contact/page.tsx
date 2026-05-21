@@ -52,11 +52,11 @@ export default function ContactPage() {
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <nav className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 lg:px-10">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex min-w-0 items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-sky-500 text-sm font-black text-white">
               T
             </div>
-            <span className="text-xl font-bold text-white">Testwale</span>
+            <span className="max-w-[9rem] truncate text-base font-bold text-white sm:text-xl">Questionwale</span>
           </Link>
 
           <div className="hidden items-center gap-8 lg:flex">
@@ -122,14 +122,14 @@ export default function ContactPage() {
                   Let’s build your exam success together.
                 </h1>
                 <p className="mt-4 text-slate-300 sm:text-lg">
-                  Reach out to Testwale for support, partnerships, or course recommendations. We’re here to help you prepare with confidence.
+                  Reach out to Questionwale for support, partnerships, or course recommendations. We’re here to help you prepare with confidence.
                 </p>
               </div>
 
               <div className="grid gap-4 rounded-3xl border border-slate-700 bg-slate-950/80 p-6">
                 <div>
                   <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Email</p>
-                  <p className="mt-2 text-lg font-semibold text-white">support@testwale.com</p>
+                  <p className="mt-2 text-lg font-semibold text-white">support@questionwale.com</p>
                 </div>
                 <div>
                   <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Location</p>

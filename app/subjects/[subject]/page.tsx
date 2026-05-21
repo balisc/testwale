@@ -15,6 +15,9 @@ const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
   reasoning: { table: 'reasoning_questions', label: 'Reasoning' },
 };
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 type TopicItem = {
   en: string;
   hi: string;
@@ -98,14 +101,14 @@ export async function generateMetadata({ params }: { params: { subject: string }
 
   if (!subject) {
     return {
-      title: 'Subject Not Found | Testwale',
+      title: 'Subject Not Found | Questionwale',
       description: 'The requested subject does not exist.',
     };
   }
 
   return {
-    title: `${subject.label} Topics | Testwale`,
-    description: `Browse ${subject.label} topics and start practicing on Testwale.`,
+    title: `${subject.label} Topics | Questionwale`,
+    description: `Browse ${subject.label} topics and start practicing on Questionwale.`,
   };
 }
 

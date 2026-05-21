@@ -55,14 +55,13 @@ function getOptionTexts(rawOptions: any, lang: 'en' | 'hi'): string[] {
 
 function resolveCorrectAnswerText(correctAnswerField: any, lang: 'en' | 'hi', finalOptions: string[]): string {
   const extracted = extractText(correctAnswerField, lang).trim();
-  if (extracted) return extracted;
 
-  if (typeof correctAnswerField === 'string' && correctAnswerField.length === 1) {
-    const answerIndex = correctAnswerField.toUpperCase().charCodeAt(0) - 65;
+  if (typeof extracted === 'string' && extracted.length === 1 && /^[a-dA-D]$/.test(extracted)) {
+    const answerIndex = extracted.toUpperCase().charCodeAt(0) - 65;
     return finalOptions[answerIndex]?.trim() ?? '';
   }
 
-  return '';
+  return extracted;
 }
 
 export default function ClientQuiz({

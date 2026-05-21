@@ -17,8 +17,8 @@ export const translations = {
     badge: { en: 'Master Your Competitive Exams', hi: 'अपनी प्रतियोगी परीक्षाओं में महारत हासिल करें' },
     title: { en: 'Practice with thousands of MCQs', hi: 'हजारों MCQs के साथ अभ्यास करें' },
     description: {
-      en: 'Analyze previous year questions, track your progress, and ace your competitive exams with Testwale.',
-      hi: 'पिछले साल के प्रश्नों का विश्लेषण करें, अपनी प्रगति ट्रैक करें, और Testwale के साथ अपनी प्रतियोगी परीक्षाओं में सफल हों।',
+      en: 'Analyze previous year questions, track your progress, and ace your competitive exams with Questionwale.',
+      hi: 'पिछले साल के प्रश्नों का विश्लेषण करें, अपनी प्रगति ट्रैक करें, और Questionwale के साथ अपनी प्रतियोगी परीक्षाओं में सफल हों।',
     },
     searchPlaceholder: {
       en: 'Search topics, subjects, exams...',
@@ -158,7 +158,7 @@ export const translations = {
     back: { en: 'Back', hi: 'वापस' },
     next: { en: 'Next', hi: 'अगला' },
     close: { en: 'Close', hi: 'बंद करें' },
-    testwale: { en: 'Testwale', hi: 'Testwale' },
+    testwale: { en: 'Questionwale', hi: 'Questionwale' },
     english: { en: 'English', hi: 'English' },
     hindi: { en: 'हिंदी', hi: 'हिंदी' },
   },

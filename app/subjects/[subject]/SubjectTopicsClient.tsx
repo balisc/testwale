@@ -75,12 +75,18 @@ export default function SubjectTopicsClient({
               <p className="text-sm text-slate-500 leading-6">
                 Select a topic below to test your limits. Continuous revision leads to an elite rank.
               </p>
-              <div className="rounded-3xl bg-white border border-slate-100 p-6">
-                <div className="text-xs text-slate-500 uppercase tracking-[0.24em] font-semibold">
-                  {labels.progressLabel}
+                <div className="rounded-3xl bg-white border border-slate-100 p-6 space-y-4">
+                  <div className="text-xs text-slate-500 uppercase tracking-[0.24em] font-semibold">
+                    {labels.progressLabel}
+                  </div>
+                  <div>
+                    <div className="text-sm text-slate-500">{labels.featureSoon}</div>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="text-xs text-slate-500 uppercase tracking-[0.18em] font-semibold">{labels.totalQuestionsLabel}</div>
+                    <div className="mt-2 text-2xl font-extrabold text-slate-900">{topics.reduce((s, t) => s + (t.count ?? 0), 0).toLocaleString()}</div>
+                  </div>
                 </div>
-                <p className="mt-4 text-sm text-slate-500">{labels.featureSoon}</p>
-              </div>
             </div>
           </div>
         </aside>
@@ -99,7 +105,7 @@ export default function SubjectTopicsClient({
             {topics.map((topic, index) => {
               const topicLabel = lang === 'hi' ? topic.hi || topic.en : topic.en || topic.hi;
               const questionLabel = `${topic.count ?? 45} ${labels.questionsAvailable}`;
-              const href = `/subjects/${subjectKey}/${encodeURIComponent(topicLabel)}`;
+                const href = `/subjects/${subjectKey}/${encodeURIComponent(topicLabel)}?v=${Date.now()}`;
 
               return (
                 <Link

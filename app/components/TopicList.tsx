@@ -20,7 +20,7 @@ export default function TopicList({ topics, subjectKey }: TopicListProps) {
     <div className="space-y-4">
       {topics.map((topic) => {
         const topicText = language === 'hi' ? topic.hi || topic.en : topic.en || topic.hi;
-        const topicHref = `/subjects/${subjectKey}/${encodeURIComponent(topicText)}`;
+        const topicHref = `/subjects/${subjectKey}/${encodeURIComponent(topicText)}?v=${Date.now()}`;
 
         return (
           <Link

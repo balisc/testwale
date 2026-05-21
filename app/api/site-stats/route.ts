@@ -28,27 +28,37 @@ export async function GET() {
         .toLowerCase();
 
     for (const [subject, table] of Object.entries(SUBJECT_TABLES)) {
-      const { data, error } = await supabase.from(table).select('topic');
+      // First get an exact row count using id-count so we don't rely on potentially-truncated data arrays.
+      const countResult = await supabase.from(table).select('id', { count: 'exact' });
 
-      if (error) {
-        const notFound = /Could not find the table/i.test(error.message) || /relation ".*" does not exist/i.test(error.message);
+      if (countResult.error) {
+        const notFound = /Could not find the table/i.test(countResult.error.message) || /relation ".*" does not exist/i.test(countResult.error.message);
         if (notFound) {
           console.warn(`Site stats skipped missing table: ${table}`);
           continue;
         }
-        throw new Error(`Failed to query ${table}: ${error.message}`);
+        throw new Error(`Failed to count rows for ${table}: ${countResult.error.message}`);
       }
 
-      if ((data?.length ?? 0) > 0) {
+      const tableCount = typeof countResult.count === 'number' ? countResult.count : (countResult.data?.length ?? 0);
+      if (tableCount > 0) {
         totalSubjects += 1;
       }
+      totalQuestions += tableCount;
 
-      totalQuestions += data?.length ?? 0;
+      // Now fetch topics for unique topic calculation (select possible topic fields).
+      const { data: topicData, error: topicError } = await supabase
+        .from(table)
+        .select('*');
+      if (topicError) {
+        console.warn(`Site stats topic fetch skipped for ${table}: ${topicError.message}`);
+        continue;
+      }
 
-      for (const row of data ?? []) {
+      for (const row of topicData ?? []) {
         const topicValue = row.topic;
-        const topicEn = typeof topicValue === 'string' ? topicValue : topicValue?.en ?? '';
-        const topicHi = typeof topicValue === 'string' ? '' : topicValue?.hi ?? '';
+        const topicEn = String(topicValue?.en ?? row.topic_en ?? topicValue ?? '').trim();
+        const topicHi = String(topicValue?.hi ?? row.topic_hi ?? '').trim();
 
         const canonicalTopic = normalizeTopic(topicEn || topicHi);
         if (canonicalTopic) {
