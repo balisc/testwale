@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Navbar from '../../components/Navbar';
 import SubjectTopicsClient from './SubjectTopicsClient';
 import supabase from '../../../lib/supabase';
+import { buildSubjectMetadata } from '@/lib/seo';
 
 const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
   history: { table: 'history_questions', label: 'History' },
@@ -106,10 +107,7 @@ export async function generateMetadata({ params }: { params: { subject: string }
     };
   }
 
-  return {
-    title: `${subject.label} Topics | Questionwale`,
-    description: `Browse ${subject.label} topics and start practicing on Questionwale.`,
-  };
+  return buildSubjectMetadata(subject.label);
 }
 
 export default async function SubjectTopicPage({ params }: { params: { subject: string } }) {

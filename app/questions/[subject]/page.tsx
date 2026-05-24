@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import questionsData from '../../../data/questions.json';
+import { buildExamMetadata } from '@/lib/seo';
 
 const topicList = ['Ancient History', 'Medieval History', 'Modern History'];
 
@@ -8,6 +9,12 @@ type LocalizedText = string | { en: string; hi: string };
 function getText(value: LocalizedText, locale: 'en' | 'hi' = 'en') {
   if (typeof value === 'string') return value;
   return value[locale] || value.en;
+}
+
+export function generateMetadata({ params }: { params: { subject: string } }) {
+  const rawSubject = String(params.subject).toLowerCase();
+  const examName = rawSubject.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return buildExamMetadata(examName);
 }
 
 export default function SubjectPage({ params }: { params: any }) {

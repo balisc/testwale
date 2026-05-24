@@ -8,8 +8,40 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'sw
 const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-plus-jakarta-sans', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Questionwale',
-  description: 'Questionwale exam prep and practice engine',
+  title: {
+    default: 'Questionwale',
+    template: '%s | Questionwale',
+  },
+  description: 'Questionwale exam prep and practice engine. Solve MCQs, topic quizzes, and previous-year questions to boost your competitive exam readiness.',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://questionwale.com'),
+  openGraph: {
+    title: 'Questionwale',
+    description: 'Questionwale exam prep and practice engine. Solve MCQs, topic quizzes, and previous-year questions to boost your competitive exam readiness.',
+    type: 'website',
+    siteName: 'Questionwale',
+    images: [
+      {
+        url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://questionwale.com'}/og-image.png`,
+        alt: 'Questionwale exam practice',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Questionwale',
+    description: 'Questionwale exam prep and practice engine. Solve MCQs, topic quizzes, and previous-year questions to boost your competitive exam readiness.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

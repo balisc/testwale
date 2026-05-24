@@ -3,9 +3,17 @@ import supabase from '../../../../lib/supabase';
 import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
 import ClientQuiz from './ClientQuiz';
+import { buildTopicMetadata } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+const formatSubjectLabel = (subjectKey: string) => {
+  return String(subjectKey)
+    .trim()
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
 
 type Question = Record<string, any>;
 
@@ -29,6 +37,21 @@ const decodeTopicSlug = (slug: string) => {
     return slug;
   }
 };
+
+export async function generateMetadata({ params }: { params: { subject: string; topicSlug: string } }) {
+  const subjectKey = String(params.subject ?? '').trim().toLowerCase();
+  const subjectName = formatSubjectLabel(subjectKey);
+  const topicName = decodeTopicSlug(String(params.topicSlug ?? ''));
+
+  if (!SUBJECT_TABLES[subjectKey]) {
+    return {
+      title: 'Quiz Not Found | Questionwale',
+      description: 'The requested quiz page does not exist.',
+    };
+  }
+
+  return buildTopicMetadata(subjectName, topicName);
+}
 
 export default async function QuizPage({ params }: { params: { subject: string; topicSlug: string } }) {
   console.log('--- TERMINAL DEBUG: Raw params received ---', params);
