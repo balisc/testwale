@@ -32,7 +32,8 @@ function decodeCursor(token?: string) {
 }
 
 export async function GET(req: Request) {
-  if (!isAuthorized(req)) return new Response('Unauthorized', { status: 401 })
+  // Authorization removed - sitemaps are public
+  // if (!isAuthorized(req)) return new Response('Unauthorized', { status: 401 })
 
   try {
     const url = new URL(req.url)
@@ -60,15 +61,15 @@ export async function GET(req: Request) {
         }
 
         // keyset fetch
-        let query: any = supabase.from('questions').select('slug,updated_at,id').order('id', { ascending: true }).limit(MAX_URLS_PER_SITEMAP)
+        let query: any = supabase.from('history_questions').select('*').order('id', { ascending: true }).limit(MAX_URLS_PER_SITEMAP)
         if (lastId) query = query.gt('id', lastId)
         const { data, error } = await query
         if (error) throw error
 
         for (const doc of data || []) {
-          const slug = doc.slug || doc.id
+          const slug = doc.topic || doc.id
           const urlp = `${SITE_URL}/quiz/${slugify(slug)}`
-          const lastmod = doc.updated_at ? new Date(doc.updated_at).toISOString() : now
+          const lastmod = doc.created_at ? new Date(doc.created_at).toISOString() : now
           const entry = `  <url>\n    <loc>${urlp}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`
           controller.enqueue(new TextEncoder().encode(entry))
         }

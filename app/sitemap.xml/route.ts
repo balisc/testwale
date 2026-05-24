@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     const now = new Date().toISOString()
 
     while (true) {
-      let query: any = supabase.from('questions').select('id').order('id', { ascending: true }).limit(MAX_URLS_PER_SITEMAP)
+      let query: any = supabase.from('history_questions').select('id').order('id', { ascending: true }).limit(MAX_URLS_PER_SITEMAP)
       if (lastId !== null) query = query.gt('id', lastId)
       const { data, error } = await query
       if (error) throw error

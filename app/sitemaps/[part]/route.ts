@@ -14,7 +14,8 @@ function slugify(s: any) {
 }
 
 export async function GET(req: Request, { params }: { params: { part: string } }) {
-  if (!isAuthorized(req)) return new Response('Unauthorized', { status: 401 })
+  // Authorization removed - sitemaps are public
+  // if (!isAuthorized(req)) return new Response('Unauthorized', { status: 401 })
 
   try {
     // accept part like "1" or "sitemap-questions-1.xml"
@@ -45,17 +46,17 @@ export async function GET(req: Request, { params }: { params: { part: string } }
 
         // fetch page of question slugs
         const { data, error } = await supabase
-          .from('questions')
-          .select('slug,updated_at,id', { count: 'exact', head: false })
+          .from('history_questions')
+          .select('*', { count: 'exact', head: false })
           .order('id', { ascending: true })
           .range(from, to)
 
         if (error) throw error
 
         for (const doc of data || []) {
-          const slug = doc.slug || doc.id
+          const slug = doc.topic || doc.id
           const url = `${SITE_URL}/quiz/${slugify(slug)}`
-          const lastmod = doc.updated_at ? new Date(doc.updated_at).toISOString() : now
+          const lastmod = doc.created_at ? new Date(doc.created_at).toISOString() : now
           const entry = `  <url>\n    <loc>${url}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`
           controller.enqueue(new TextEncoder().encode(entry))
         }
