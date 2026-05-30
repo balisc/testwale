@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabase';
+import questionsData from '@/data/questions.json';
 
 const SUBJECT_TABLES: Record<string, string> = {
   history: 'history_questions',
@@ -19,6 +20,7 @@ export async function GET() {
   try {
     let totalQuestions = 0;
     let totalSubjects = 0;
+    let missingTableCount = 0;
     const uniqueTopics = new Set<string>();
 
     const normalizeTopic = (value: string) =>
@@ -34,7 +36,7 @@ export async function GET() {
       if (countResult.error) {
         const notFound = /Could not find the table/i.test(countResult.error.message) || /relation ".*" does not exist/i.test(countResult.error.message);
         if (notFound) {
-          console.warn(`Site stats skipped missing table: ${table}`);
+          missingTableCount += 1;
           continue;
         }
         throw new Error(`Failed to count rows for ${table}: ${countResult.error.message}`);
@@ -51,7 +53,6 @@ export async function GET() {
         .from(table)
         .select('*');
       if (topicError) {
-        console.warn(`Site stats topic fetch skipped for ${table}: ${topicError.message}`);
         continue;
       }
 
@@ -65,6 +66,31 @@ export async function GET() {
           uniqueTopics.add(canonicalTopic);
         }
       }
+    }
+
+    if (missingTableCount === Object.keys(SUBJECT_TABLES).length) {
+      const fallbackSubjects = new Set<string>();
+      for (const question of questionsData) {
+        totalQuestions += 1;
+        fallbackSubjects.add(String(question.subject || '').trim().toLowerCase());
+
+        const topicValue = question.topic as any;
+        const topicEn = String(
+          typeof topicValue === 'object' && topicValue !== null
+            ? topicValue.en ?? question.topic ?? ''
+            : topicValue ?? ''
+        ).trim();
+        const topicHi = String(
+          typeof topicValue === 'object' && topicValue !== null
+            ? topicValue.hi ?? ''
+            : ''
+        ).trim();
+        const canonicalTopic = normalizeTopic(topicEn || topicHi);
+        if (canonicalTopic) {
+          uniqueTopics.add(canonicalTopic);
+        }
+      }
+      totalSubjects = fallbackSubjects.size;
     }
 
     return NextResponse.json(

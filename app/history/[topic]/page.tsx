@@ -78,7 +78,9 @@ function HistoryQuizContent() {
   const headingText = questions.length > 0 ? questionToHeading(questions[currentQuestionIndex]) : topic ? decodeURIComponent(topic) : 'History Quiz';
 
   function questionToHeading(question: QuestionItem) {
-    return typeof question.topic === 'string' ? question.topic : question.topic[language] || question.topic.en;
+    if (typeof question.topic === 'string') return question.topic;
+    if (!question.topic) return '';
+    return question.topic[language] || question.topic.en || '';
   }
 
   function handleAnswerSelection(isCorrect: boolean) {

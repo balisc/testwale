@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
 import { useLanguage } from '../../../../lib/LanguageContext';
+import { buildQuestionPath, generateQuestionSlug } from '@/lib/slugGenerator';
 
 type QuestionRow = Record<string, any>;
 
@@ -64,6 +65,18 @@ function resolveCorrectAnswerText(correctAnswerField: any, lang: 'en' | 'hi', fi
   return extracted;
 }
 
+function getQuestionId(row: any, fallbackIndex: number) {
+  return String(row.id ?? row._id ?? row.pk ?? row.question_id ?? `question-${fallbackIndex + 1}`);
+}
+
+function getQuestionText(row: any, lang: 'en' | 'hi') {
+  return (
+    extractText(row.question ?? row.question_text ?? row.question_en ?? row.question_hi ?? row.title ?? '', lang) ||
+    extractText(row.topic ?? row.topic_en ?? row.topic_hi ?? '', lang) ||
+    `Question ${getQuestionId(row, 0)}`
+  );
+}
+
 export default function ClientQuiz({
   questions,
   decodedTopic,
@@ -114,6 +127,20 @@ export default function ClientQuiz({
       }
     };
   }, [isAnswered, currentQuestionIndex]);
+
+  useEffect(() => {
+    const currentQuestion = shuffledQuestions[currentQuestionIndex];
+    if (!currentQuestion) return;
+
+    const questionId = getQuestionId(currentQuestion, currentQuestionIndex);
+    const questionText = getQuestionText(currentQuestion, lang);
+    const newPath = buildQuestionPath(questionId, questionText);
+
+    if (typeof window !== 'undefined' && window.location.pathname !== newPath) {
+      window.history.replaceState({}, '', newPath);
+      document.title = `${questionText} | ${subject} | Questionwale`;
+    }
+  }, [currentQuestionIndex, shuffledQuestions, lang, subject]);
 
   // Shuffle questions on client mount so each refresh shows a different order
   useEffect(() => {
@@ -229,6 +256,10 @@ export default function ClientQuiz({
     extractText(currentQuestion.question ?? currentQuestion.question_text ?? currentQuestion.question_en ?? currentQuestion.question_hi, lang) ||
     'Untitled question';
 
+  const questionId = String(
+    currentQuestion.id ?? currentQuestion._id ?? currentQuestion.pk ?? currentQuestion.ID ?? currentQuestion.question_id ?? `${subject}-${currentQuestionIndex + 1}`
+  );
+
   const askedInText = extractText(currentQuestion.asked_in ?? currentQuestion.askedIn ?? currentQuestion.askedInText, lang);
 
   const correctAnswerField = currentQuestion.correct_answer ?? currentQuestion.answer;
@@ -311,7 +342,7 @@ export default function ClientQuiz({
           </div>
 
           <div className="rounded-3xl bg-white p-8 shadow-sm border border-slate-200">
-            <div className="mb-6 flex items-start justify-between gap-3">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex flex-1 min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                 <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-900 sm:px-4 sm:py-2 sm:text-sm">
                   Question {currentQuestionIndex + 1}
@@ -328,7 +359,9 @@ export default function ClientQuiz({
               </div>
             </div>
 
-            <h2 className="text-xl font-semibold text-slate-900 mb-6">{questionText}</h2>
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold text-slate-900">{questionText}</h2>
+            </div>
 
             <div className="grid gap-3 mb-6">
               {finalOptions.length ? (

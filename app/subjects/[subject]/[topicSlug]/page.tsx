@@ -38,6 +38,47 @@ const decodeTopicSlug = (slug: string) => {
   }
 };
 
+const normalizeText = (value: unknown) => {
+  if (value === null || value === undefined) return '';
+  const text = typeof value === 'string' ? value : String(value);
+  return text.replace(/\s+/g, ' ').trim().toLowerCase();
+};
+
+const extractTopicValues = (row: any) => {
+  const rawTopic = row.topic;
+  let en = '';
+  let hi = '';
+
+  if (rawTopic && typeof rawTopic === 'object') {
+    en = String(rawTopic.en ?? rawTopic.en ?? rawTopic.hi ?? '').trim();
+    hi = String(rawTopic.hi ?? rawTopic.hi ?? rawTopic.en ?? '').trim();
+  } else if (typeof rawTopic === 'string') {
+    en = rawTopic.trim();
+    hi = rawTopic.trim();
+    try {
+      const parsed = JSON.parse(rawTopic);
+      if (parsed && typeof parsed === 'object') {
+        en = String(parsed.en ?? parsed.en ?? parsed.hi ?? rawTopic).trim();
+        hi = String(parsed.hi ?? parsed.hi ?? parsed.en ?? rawTopic).trim();
+      }
+    } catch {
+      // Keep raw string values.
+    }
+  }
+
+  const topicEn = String(row.topic_en ?? row.topic?.en ?? en ?? '').trim();
+  const topicHi = String(row.topic_hi ?? row.topic?.hi ?? hi ?? '').trim();
+
+  return {
+    topicEn,
+    topicHi,
+  };
+};
+
+const topicMatches = (topicText: string, targetText: string) => {
+  return normalizeText(topicText) === normalizeText(targetText);
+};
+
 export async function generateMetadata({ params }: { params: { subject: string; topicSlug: string } }) {
   const subjectKey = String(params.subject ?? '').trim().toLowerCase();
   const subjectName = formatSubjectLabel(subjectKey);

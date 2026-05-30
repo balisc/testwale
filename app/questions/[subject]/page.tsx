@@ -1,6 +1,22 @@
 import Link from 'next/link';
 import questionsData from '../../../data/questions.json';
 import { buildExamMetadata } from '@/lib/seo';
+import { buildQuestionPath } from '@/lib/slugGenerator';
+import supabase from '@/lib/supabase';
+
+export const dynamic = 'force-dynamic';
+
+const SUBJECT_TABLES: Record<string, string> = {
+  history: 'history_questions',
+  science: 'science_questions',
+  polity: 'polity_questions',
+  economics: 'economics_questions',
+  geography: 'geography_questions',
+  'general-knowledge': 'general_knowledge_questions',
+  math: 'math_questions',
+  'current-affairs': 'current_affairs_questions',
+  reasoning: 'reasoning_questions',
+};
 
 const topicList = ['Ancient History', 'Medieval History', 'Modern History'];
 
@@ -17,10 +33,29 @@ export function generateMetadata({ params }: { params: { subject: string } }) {
   return buildExamMetadata(examName);
 }
 
-export default function SubjectPage({ params }: { params: any }) {
+async function fetchQuestionsForSubject(subjectKey: string) {
+  const tableName = SUBJECT_TABLES[subjectKey];
+  if (tableName) {
+    try {
+      const { data, error } = await supabase.from(tableName).select('*').order('id', { ascending: true });
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+      if (error) {
+        console.error(`Supabase query failed for ${tableName}:`, error.message ?? error);
+      }
+    } catch (err) {
+      console.warn(`Supabase fetch failed for ${tableName}, falling back to local JSON.`, err);
+    }
+  }
+
+  return questionsData.filter((item) => item.subject.toLowerCase() === subjectKey);
+}
+
+export default async function SubjectPage({ params }: { params: any }) {
   const subjectKey = String(params.subject).toLowerCase();
-  const questions = questionsData.filter((item) => item.subject.toLowerCase() === subjectKey);
   const header = subjectKey.replace('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const questions = await fetchQuestionsForSubject(subjectKey);
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-8 lg:px-10">
@@ -60,7 +95,7 @@ export default function SubjectPage({ params }: { params: any }) {
                 </div>
                 <h2 className="text-xl font-semibold text-white">{getText(question.question)}</h2>
                 <div className="mt-6 flex flex-wrap items-center gap-3">
-                  <Link href={`/quiz/${question.id}`} className="rounded-full border border-accent/20 bg-accent/10 px-4 py-2 text-sm font-semibold uppercase tracking-[0.3em] text-accent transition hover:bg-accent/15">
+                  <Link href={buildQuestionPath(question.id, question.question)} className="rounded-full border border-accent/20 bg-accent/10 px-4 py-2 text-sm font-semibold uppercase tracking-[0.3em] text-accent transition hover:bg-accent/15">
                     Start Practice
                   </Link>
                   <span className="text-sm text-slate-400">ID: {question.id}</span>

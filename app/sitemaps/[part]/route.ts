@@ -13,6 +13,20 @@ function slugify(s: any) {
   return String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 }
 
+function extractKeywords(text: string): string {
+  const words = text
+    .replace(/[^\w\s]/g, '')
+    .split(/\s+/)
+    .filter((word) => word.length > 0)
+    .slice(0, 6)
+  return words.join('-').toLowerCase()
+}
+
+function generateQuestionSlug(questionText: string, questionId: string): string {
+  const keywords = extractKeywords(questionText)
+  return `${keywords}-q${questionId}`
+}
+
 export async function GET(req: Request, { params }: { params: { part: string } }) {
   // Authorization removed - sitemaps are public
   // if (!isAuthorized(req)) return new Response('Unauthorized', { status: 401 })
@@ -54,8 +68,10 @@ export async function GET(req: Request, { params }: { params: { part: string } }
         if (error) throw error
 
         for (const doc of data || []) {
-          const slug = doc.topic || doc.id
-          const url = `${SITE_URL}/quiz/${slugify(slug)}`
+          const slug = doc.question && typeof doc.question === 'object' 
+            ? generateQuestionSlug(doc.question.en || doc.question, doc.id)
+            : generateQuestionSlug(doc.topic || doc.id, doc.id)
+          const url = `${SITE_URL}/question/${doc.id}/${slug}`
           const lastmod = doc.created_at ? new Date(doc.created_at).toISOString() : now
           const entry = `  <url>\n    <loc>${url}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`
           controller.enqueue(new TextEncoder().encode(entry))

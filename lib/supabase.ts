@@ -1,8 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL)?.trim();
+const rawSupabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL)?.trim();
+const SUPABASE_URL = rawSupabaseUrl?.replace(/\/?rest\/v1\/?$/i, '').replace(/\/$/, '');
 const SUPABASE_KEY = (
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_KEY ?? process.env.SUPABASE_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_KEY ??
+  process.env.SUPABASE_KEY ??
+  process.env.SUPABASE_ANON_KEY
 )?.trim();
 
 if (!SUPABASE_URL) {
@@ -10,7 +14,7 @@ if (!SUPABASE_URL) {
 }
 
 if (!SUPABASE_KEY) {
-  throw new Error('Supabase key is missing. Set NEXT_PUBLIC_SUPABASE_ANON_KEY or SUPABASE_KEY in .env.local');
+  throw new Error('Supabase key is missing. Set NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_KEY, or SUPABASE_ANON_KEY in .env.local');
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
