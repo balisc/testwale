@@ -44,13 +44,15 @@ const supabase: any = SUPABASE_AVAILABLE
       auth: {
         persistSession: false,
       },
-      fetch: (input: RequestInfo, init?: RequestInit) => {
-        const nextInit = {
-          ...init,
-          cache: 'no-store',
-        };
+      global: {
+        fetch: (input: string | URL | Request, init?: RequestInit) => {
+          const nextInit = {
+            ...(init as RequestInit),
+            cache: 'no-store' as RequestCache,
+          };
 
-        return fetch(input, nextInit);
+          return fetch(input, nextInit as RequestInit);
+        },
       },
     })
   : {
