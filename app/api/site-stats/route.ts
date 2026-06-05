@@ -1,91 +1,115 @@
 import { NextResponse } from 'next/server';
 import questionsData from '@/data/questions.json';
-import { SUBJECT_TABLES, getActiveQuestionCount, fetchActiveTopicCandidates } from '@/lib/questionCounts';
+import supabase from '@/lib/supabase';
+import { slugifySubject } from '@/lib/slugGenerator';
 
 export const dynamic = 'force-dynamic';
 
+function getSubjectText(subject: unknown) {
+  if (!subject) return '';
+  if (typeof subject === 'string') return subject.trim();
+  if (typeof subject === 'object') {
+    return String((subject as any).en ?? (subject as any).hi ?? '').trim();
+  }
+  return '';
+}
+
+function normalizeSubjectKey(subject: unknown) {
+  const raw = slugifySubject(getSubjectText(subject));
+  if (!raw) return '';
+  return raw.startsWith('indian-') ? raw.replace(/^indian-/, '') : raw;
+}
+
+function isUnknownColumnError(error: any) {
+  const message = String(error?.message ?? '').replace(/\s+/g, ' ');
+  return /column .* does not exist|invalid input syntax for type boolean|operator does not exist|Could not find the table/i.test(message);
+}
+
+function extractTopicText(row: any) {
+  if (!row) return '';
+  if (typeof row.topic === 'string' && row.topic.trim()) return row.topic.trim();
+  if (row.topic && typeof row.topic === 'object') {
+    return String(row.topic.en ?? row.topic.hi ?? '').trim();
+  }
+  if (typeof row.topic_en === 'string' && row.topic_en.trim()) return row.topic_en.trim();
+  if (typeof row.topic_hi === 'string' && row.topic_hi.trim()) return row.topic_hi.trim();
+  return '';
+}
+
+function isActiveRow(row: any) {
+  if (row?.status == null) return true;
+  return String(row.status).trim().toLowerCase() === 'active';
+}
+
 export async function GET() {
+  const subjects = new Set<string>();
+  const topics = new Set<string>();
+  let questions = 0;
+
   try {
-    let totalQuestions = 0;
-    let totalSubjects = 0;
-    let missingTableCount = 0;
-    const uniqueTopics = new Set<string>();
+    const candidateColumns = [
+      'subject, topic, status',
+      'subject, topic_en, topic_hi, status',
+      'subject, topic, topic_en, topic_hi, status',
+      'subject, topic',
+      'subject, topic_en, topic_hi',
+      'subject, topic, topic_en, topic_hi',
+    ];
 
-    const normalizeTopic = (value: string) =>
-      value
-        .trim()
-        .replace(/\s+/g, ' ')
-        .toLowerCase();
+    let rows: any[] = [];
+    let result: any = null;
 
-    for (const [subject, table] of Object.entries(SUBJECT_TABLES)) {
-      let tableCount = 0;
-      let topicData: any[] = [];
+    for (const selectColumns of candidateColumns) {
+      result = await supabase
+        .from('questions')
+        .select(selectColumns, { head: false, count: 'exact' })
+        .eq('status', 'active')
+        .range(0, 1999);
 
-      try {
-        tableCount = await getActiveQuestionCount(table);
-      } catch (error: any) {
-        const message = String(error?.message ?? '');
-        const notFound = /Could not find the table/i.test(message) || /relation ".*" does not exist/i.test(message);
-        if (notFound) {
-          missingTableCount += 1;
+      if (result.error) {
+        if (isUnknownColumnError(result.error)) {
           continue;
         }
-        throw error;
-      }
 
-      if (tableCount > 0) {
-        totalSubjects += 1;
-      }
-      totalQuestions += tableCount;
+        console.warn('Site stats query active filter failed for columns', selectColumns, result.error.message);
+        result = await supabase.from('questions').select(selectColumns, { head: false, count: 'exact' }).range(0, 1999);
+        if (result.error) {
+          if (isUnknownColumnError(result.error)) {
+            continue;
+          }
 
-      try {
-        topicData = await fetchActiveTopicCandidates(table);
-      } catch (error) {
-        topicData = [];
-      }
-
-      for (const row of topicData ?? []) {
-        const topicValue = row.topic;
-        const topicEn = String(topicValue?.en ?? row.topic_en ?? topicValue ?? '').trim();
-        const topicHi = String(topicValue?.hi ?? row.topic_hi ?? '').trim();
-
-        const canonicalTopic = normalizeTopic(topicEn || topicHi);
-        if (canonicalTopic) {
-          uniqueTopics.add(canonicalTopic);
+          throw result.error;
         }
       }
+
+      rows = Array.isArray(result.data) ? result.data : [];
+      questions = typeof result.count === 'number' ? result.count : 0;
+      break;
     }
 
-    if (missingTableCount === Object.keys(SUBJECT_TABLES).length) {
-      const fallbackSubjects = new Set<string>();
-      for (const question of questionsData) {
-        totalQuestions += 1;
-        fallbackSubjects.add(String(question.subject || '').trim().toLowerCase());
+    if (!rows.length && result?.error) {
+      throw result.error;
+    }
 
-        const topicValue = question.topic as any;
-        const topicEn = String(
-          typeof topicValue === 'object' && topicValue !== null
-            ? topicValue.en ?? question.topic ?? ''
-            : topicValue ?? ''
-        ).trim();
-        const topicHi = String(
-          typeof topicValue === 'object' && topicValue !== null
-            ? topicValue.hi ?? ''
-            : ''
-        ).trim();
-        const canonicalTopic = normalizeTopic(topicEn || topicHi);
-        if (canonicalTopic) {
-          uniqueTopics.add(canonicalTopic);
-        }
+    for (const row of rows as any[]) {
+      if (!isActiveRow(row)) continue;
+
+      const subjectKey = normalizeSubjectKey(row.subject);
+      if (subjectKey) {
+        subjects.add(subjectKey);
       }
-      totalSubjects = fallbackSubjects.size;
+
+      const topicText = extractTopicText(row);
+      if (topicText) {
+        topics.add(topicText.toLowerCase());
+      }
     }
 
     return NextResponse.json(
       {
-        questions: totalQuestions,
-        subjects: totalSubjects,
-        topics: uniqueTopics.size,
+        questions,
+        subjects: subjects.size,
+        topics: topics.size,
       },
       {
         headers: {
@@ -93,47 +117,30 @@ export async function GET() {
         },
       }
     );
-  } catch (error) {
-    console.error('Site stats API error:', error);
+  } catch (error: any) {
+    console.error('Site stats API error:', error?.message ?? error);
 
-    let totalQuestions = 0;
+    const activeRows = (questionsData as any[]).filter(isActiveRow);
     const fallbackSubjects = new Set<string>();
-    const uniqueTopics = new Set<string>();
+    const fallbackTopics = new Set<string>();
 
-    const normalizeTopic = (value: string) =>
-      value
-        .trim()
-        .replace(/\s+/g, ' ')
-        .toLowerCase();
+    for (const row of activeRows) {
+      const subjectKey = normalizeSubjectKey(row.subject);
+      if (subjectKey) {
+        fallbackSubjects.add(subjectKey);
+      }
 
-    for (const question of questionsData) {
-      totalQuestions += 1;
-      fallbackSubjects.add(String(question.subject || '').trim().toLowerCase());
-
-      const topicValue = question.topic as any;
-      const topicEn = String(
-        typeof topicValue === 'object' && topicValue !== null
-          ? topicValue.en ?? question.topic ?? ''
-          : topicValue ?? ''
-      ).trim();
-      const topicHi = String(
-        typeof topicValue === 'object' && topicValue !== null
-          ? topicValue.hi ?? ''
-          : ''
-      ).trim();
-
-      const canonicalTopic = normalizeTopic(topicEn || topicHi);
-      if (canonicalTopic) {
-        uniqueTopics.add(canonicalTopic);
+      const topicText = extractTopicText(row);
+      if (topicText) {
+        fallbackTopics.add(topicText.toLowerCase());
       }
     }
 
     return NextResponse.json(
       {
-        questions: totalQuestions,
+        questions: activeRows.length,
         subjects: fallbackSubjects.size,
-        topics: uniqueTopics.size,
-        fallback: true,
+        topics: fallbackTopics.size,
       },
       {
         headers: {

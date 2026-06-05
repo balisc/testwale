@@ -95,7 +95,12 @@ function extractTopicValues(row: any) {
 }
 
 async function fetchTopics(tableName: string, subCategory?: string) {
-  let query = supabase.from(tableName).select('*').not('topic', 'is', null).order('id', { ascending: true }).limit('all');
+  let query = supabase
+    .from(tableName)
+    .select('id, topic, topic_en, topic_hi, sub_category')
+    .not('topic', 'is', null)
+    .order('id', { ascending: true })
+    .limit('all');
   let data: any = null;
   let error: any = null;
 

@@ -21,11 +21,13 @@ function createNoopQuery() {
     select: () => noOp,
     order: () => noOp,
     not: () => noOp,
+    is: () => noOp,
     eq: () => noOp,
     filter: () => noOp,
     single: () => noOp,
     limit: () => noOp,
     or: () => noOp,
+    group: () => noOp,
     then(onFulfilled: any) {
       return Promise.resolve(fallback).then(onFulfilled);
     },
@@ -41,6 +43,14 @@ const supabase: any = SUPABASE_AVAILABLE
   ? createClient(SUPABASE_URL!, SUPABASE_KEY!, {
       auth: {
         persistSession: false,
+      },
+      fetch: (input: RequestInfo, init?: RequestInit) => {
+        const nextInit = {
+          ...init,
+          cache: 'no-store',
+        };
+
+        return fetch(input, nextInit);
       },
     })
   : {

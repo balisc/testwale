@@ -7,6 +7,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .env.local
+.env
 
 # Auto-generated sitemap files from next-sitemap
 public/sitemap*.xml

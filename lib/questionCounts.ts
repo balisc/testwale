@@ -101,32 +101,51 @@ export async function getActiveQuestionCount(table: string) {
   return await countRows(table);
 }
 
-export async function fetchActiveTopicCandidates(table: string) {
-  const fallbackColumns = 'topic, topic_en, topic_hi';
+const TOPIC_COLUMN_GROUPS = [
+  ['topic'],
+  ['topic_en', 'topic_hi'],
+  ['topic_en'],
+  ['topic_hi'],
+];
 
+async function selectTopicColumns(table: string, columns: string[]) {
+  const query = supabase.from(table).select(columns.join(', '));
+  const result = await query;
+  if (result.error) {
+    throw result.error;
+  }
+  return result.data ?? [];
+}
+
+export async function fetchActiveTopicCandidates(table: string) {
   for (const strategy of ACTIVE_COUNT_STRATEGIES) {
-    try {
-      const query = strategy.apply(supabase.from(table).select(fallbackColumns));
-      const result = await query;
-      if (result.error) {
-        throw result.error;
+    for (const columns of TOPIC_COLUMN_GROUPS) {
+      try {
+        const query = strategy.apply(supabase.from(table).select(columns.join(', ')));
+        const result = await query;
+        if (result.error) {
+          throw result.error;
+        }
+        return result.data ?? [];
+      } catch (error: any) {
+        if (!isUnknownColumnError(error)) {
+          console.error(`Active topic query failed for ${table} (${strategy.name}):`, error.message ?? error);
+          throw error;
+        }
       }
-      return result.data ?? [];
+    }
+  }
+
+  for (const columns of TOPIC_COLUMN_GROUPS) {
+    try {
+      return await selectTopicColumns(table, columns);
     } catch (error: any) {
       if (!isUnknownColumnError(error)) {
-        console.error(`Active topic query failed for ${table} (${strategy.name}):`, error.message ?? error);
+        console.error(`Topic fallback query failed for ${table}:`, error.message ?? error);
         throw error;
       }
     }
   }
 
-  let fallback = await supabase.from(table).select(fallbackColumns);
-  if (fallback.error) {
-    fallback = await supabase.from(table).select('topic');
-    if (fallback.error) {
-      throw fallback.error;
-    }
-  }
-
-  return fallback.data ?? [];
+  return [];
 }

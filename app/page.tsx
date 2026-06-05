@@ -220,16 +220,9 @@ export default function HomePage() {
       interval = window.setInterval(() => {
         setAnimatedSiteStats((prev) => {
           const direction = statsDirectionRef.current;
-          const nextQuestions = Math.min(Math.max(prev.questions + direction * 50, 0), 1000);
-          const nextSubjects = Math.min(Math.max(prev.subjects + direction * 20, 0), 1000);
-          const nextTopics = Math.min(Math.max(prev.topics + direction * 15, 0), 1000);
-
-          if (
-            (direction === 1 && (nextQuestions >= 1000 || nextSubjects >= 1000 || nextTopics >= 1000)) ||
-            (direction === -1 && (nextQuestions <= 0 || nextSubjects <= 0 || nextTopics <= 0))
-          ) {
-            statsDirectionRef.current = -direction;
-          }
+          const nextQuestions = Math.max(prev.questions + direction * 50, 0);
+          const nextSubjects = Math.max(prev.subjects + direction * 20, 0);
+          const nextTopics = Math.max(prev.topics + direction * 15, 0);
 
           return {
             questions: nextQuestions,
@@ -238,6 +231,12 @@ export default function HomePage() {
           };
         });
       }, 25);
+    } else {
+      setAnimatedSiteStats({
+        questions: siteStats.questions ?? 0,
+        subjects: siteStats.subjects ?? 0,
+        topics: siteStats.topics ?? 0,
+      });
     }
 
     return () => {
@@ -245,7 +244,7 @@ export default function HomePage() {
         window.clearInterval(interval);
       }
     };
-  }, [loadingSiteStats]);
+  }, [loadingSiteStats, siteStats]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -429,7 +428,7 @@ export default function HomePage() {
     return value.toLocaleString();
   };
 
-  if (loadingSiteStats || !mounted || loadingSubjectCounts || subjectCountsError) {
+  if (loadingSiteStats || !mounted || loadingSubjectCounts) {
     return <LoadingTestPage />;
   }
 
