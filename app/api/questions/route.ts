@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import questionsData from '@/data/questions.json';
 import supabase from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -8,17 +9,18 @@ export async function GET(request: Request) {
   try {
     const { data, error } = await supabase.from('history_questions').select('*');
 
-    console.log('Error Details:', error);
-    console.log('Data count:', data?.length);
-    console.log('First record:', data?.[0]);
-
     if (error) {
-      throw new Error(error.message);
+      console.warn('Questions API fallback to local JSON:', error.message);
+      const fallbackQuestions = questionsData.map((row: any, index: number) => ({
+        ...row,
+        id: row.id ?? String(index),
+      }));
+      return NextResponse.json({ questions: fallbackQuestions }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
-    const questions = (data ?? []).map((row, index) => ({
-      id: row.id ?? String(index),
+    const questions = (data ?? []).map((row: any, index: number) => ({
       ...row,
+      id: row.id ?? String(index),
     }));
 
     return NextResponse.json({ questions }, { headers: { 'Cache-Control': 'no-store' } });

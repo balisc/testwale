@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -9,7 +10,7 @@ type Language = 'en' | 'hi';
 
 const translations: Record<Language, { brand: string; tagline: string; home: string; subjects: string; pyq: string; english: string; hindi: string }> = {
   en: {
-    brand: 'Questionwale',
+    brand: 'uestionwale',
     tagline: 'Created by student for student',
     home: 'Home',
     subjects: 'Subjects',
@@ -18,7 +19,7 @@ const translations: Record<Language, { brand: string; tagline: string; home: str
     hindi: 'Hindi',
   },
   hi: {
-    brand: 'Questionwale',
+    brand: 'uestionwale',
     tagline: 'Created by student for student',
     home: 'होम',
     subjects: 'विषय',
@@ -60,24 +61,31 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="fixed top-0 left-0 w-full h-16 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 px-4 sm:px-6">
+    <nav className="fixed top-0 left-0 w-full h-16 z-50 bg-white/95 border-b border-slate-200 px-4 sm:px-5 shadow-sm">
       <div className="flex h-full items-center justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/"
             aria-label={`${activeTranslation.brand} - ${activeTranslation.tagline}`}
-            className="max-w-[9rem] sm:max-w-[12rem] truncate text-base sm:text-lg font-extrabold tracking-tight text-purple-600 hover:opacity-80 transition"
+            className="flex items-center gap-.5 max-w-[9rem] sm:max-w-[12rem] truncate text-base sm:text-lg font-extrabold tracking-tight text-brand hover:opacity-80 transition"
           >
-            {activeTranslation.brand}
+            <Image
+              src="/logo/questionwale_logo.webp"
+              alt="Questionwale favicon"
+              width={38}
+              height={38}
+              className="h-9 w-9 px-.9 rounded-full"
+            />
+            <span className="truncate">{activeTranslation.brand}</span>
           </Link>
         </div>
 
         <div className="flex flex-1 min-w-0 items-center justify-center">
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/" className={`text-sm font-medium transition ${isActive('/') ? 'text-brand' : 'text-slate-900 hover:text-slate-700'}`}>
+            <Link href="/" className={`text-sm font-medium transition-all duration-300 ${isActive('/') ? 'text-brand' : 'text-slate-900 hover:text-slate-700'}`}>
               {activeTranslation.home}
             </Link>
-            <Link href="/subjects" className={`text-sm font-medium transition ${isActive('/subjects') ? 'text-brand' : 'text-slate-900 hover:text-slate-700'}`}>
+            <Link href="/subjects" className={`text-sm font-medium transition-all duration-300 ${isActive('/subjects') ? 'text-brand' : 'text-slate-900 hover:text-slate-700'}`}>
               {activeTranslation.subjects}
             </Link>
           </div>

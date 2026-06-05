@@ -70,27 +70,41 @@ const iconMap = {
   Brain,
 };
 
-export default function SubjectGrid() {
+interface SubjectGridProps {
+  counts?: Record<string, number>;
+}
+
+export default function SubjectGrid({ counts: initialCounts }: SubjectGridProps) {
   const { language } = useLanguage();
   const t = translations[language];
-  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [counts, setCounts] = useState<Record<string, number> | null>(initialCounts ?? null);
+  const [loading, setLoading] = useState(initialCounts === undefined);
 
   useEffect(() => {
+    if (initialCounts) {
+      setCounts(initialCounts);
+      setLoading(false);
+      return;
+    }
+
     async function loadCounts() {
       try {
-        const response = await fetch('/api/subject-counts');
+        setLoading(true);
+        const response = await fetch('/api/subject-counts', { cache: 'no-store' });
         if (!response.ok) {
           return;
         }
         const data = await response.json();
         setCounts(data);
       } catch {
-        // keep fallback counts if API fails
+        // keep fallback state if API fails
+      } finally {
+        setLoading(false);
       }
     }
 
     loadCounts();
-  }, []);
+  }, [initialCounts]);
 
   return (
     <div className="w-full">
@@ -98,18 +112,18 @@ export default function SubjectGrid() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto px-4">
         {subjects.map((subject) => {
           const IconComponent = iconMap[subject.iconName];
-          const subjectCount = counts[subject.id];
-          const hasTopicCount = subjectCount !== undefined && subjectCount > 0;
-          const displayCount = subjectCount !== undefined ? subjectCount : 0;
+          const subjectCount = counts?.[subject.id];
+          const hasTopicCount = !loading && subjectCount !== undefined && subjectCount > 0;
+          const displayCount = loading ? '...' : subjectCount !== undefined ? subjectCount : 0;
 
           return (
             <Link
               key={subject.id}
-              href={`/subjects/${subject.id}?v=${Date.now()}`}
+              href={`/${subject.id}`}
               className={`group ${hasTopicCount ? '' : 'opacity-80'}`}
             >
               <div className="bg-white border border-slate-100 p-6 rounded-2xl relative shadow-sm hover:border-purple-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 ease-out cursor-pointer flex items-start gap-4 h-full">
-                {!hasTopicCount && (
+                {!loading && !hasTopicCount && (
                   <div className="absolute top-3 right-3 bg-slate-100 text-slate-500 border border-slate-200/60 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">
                     Coming Soon
                   </div>

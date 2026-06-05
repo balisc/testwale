@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
+import LayoutShell from './components/LayoutShell';
 import { LanguageProvider } from '../lib/LanguageContext';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
@@ -26,6 +27,10 @@ export const metadata: Metadata = {
       },
     ],
   },
+  icons: {
+    icon: '/logo/questionwale_logo.webp',
+    apple: '/logo/questionwale_logo.webp',
+  },
   twitter: {
     card: 'summary_large_image',
     title: 'Questionwale',
@@ -46,13 +51,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${plusJakarta.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${plusJakarta.variable} scroll-auto`}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/logo/questionwale_logo.webp" />
       </head>
-      <body suppressHydrationWarning className="min-h-screen bg-[#F8FAFC] text-slate-900 antialiased font-body">
-        <LanguageProvider>{children}</LanguageProvider>
+      <body suppressHydrationWarning className="min-h-screen bg-[#F8FAFC] text-slate-900 antialiased font-body m-0 p-0 overflow-x-hidden">
+        <LanguageProvider>
+          <LayoutShell>{children}</LayoutShell>
+        </LanguageProvider>
       </body>
     </html>
   );

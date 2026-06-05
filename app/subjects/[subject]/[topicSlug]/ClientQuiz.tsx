@@ -1,10 +1,8 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Navbar from '../../../components/Navbar';
-import Footer from '../../../components/Footer';
+import { useSearchParams } from 'next/navigation';
 import { useLanguage } from '../../../../lib/LanguageContext';
 import { buildQuestionPath, generateQuestionSlug } from '@/lib/slugGenerator';
 
@@ -77,19 +75,31 @@ function getQuestionText(row: any, lang: 'en' | 'hi') {
   );
 }
 
+function getQuestionSlug(row: any, fallbackIndex: number, lang: 'en' | 'hi') {
+  const questionId = getQuestionId(row, fallbackIndex);
+  const questionText = getQuestionText(row, lang);
+  return generateQuestionSlug(questionText, questionId, lang).trim();
+}
+
 export default function ClientQuiz({
   questions,
   decodedTopic,
   subject,
   fetchError,
+  initialQuestionSlug,
+  topSection,
 }: {
   questions: QuestionRow[];
   decodedTopic: string;
   subject: string;
   fetchError?: string | null;
+  initialQuestionSlug?: string;
+  topSection?: ReactNode;
 }) {
-  const { language: lang, setLanguage } = useLanguage();
+  const { language: lang } = useLanguage();
+  const searchParams = useSearchParams();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const initialIndexLoaded = useRef(false);
   const [shuffledQuestions, setShuffledQuestions] = useState<QuestionRow[]>(questions ?? []);
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
@@ -134,12 +144,9 @@ export default function ClientQuiz({
 
     const questionId = getQuestionId(currentQuestion, currentQuestionIndex);
     const questionText = getQuestionText(currentQuestion, lang);
-    const newPath = buildQuestionPath(questionId, questionText);
-
-    if (typeof window !== 'undefined' && window.location.pathname !== newPath) {
-      window.history.replaceState({}, '', newPath);
-      document.title = `${questionText} | ${subject} | Questionwale`;
-    }
+    
+    // Update the document title with question info
+    document.title = `${questionText} | ${subject} | Questionwale`;
   }, [currentQuestionIndex, shuffledQuestions, lang, subject]);
 
   // Shuffle questions on client mount so each refresh shows a different order
@@ -154,11 +161,62 @@ export default function ClientQuiz({
       return arr;
     }
 
-    if (Array.isArray(questions) && questions.length > 0) {
-      setShuffledQuestions(shuffle([...questions]));
-      setCurrentQuestionIndex(0);
+    const nextQuestions = Array.isArray(questions) ? [...questions] : [];
+    const nextShuffled = nextQuestions.length > 0 ? shuffle(nextQuestions) : [];
+    let startIndex = 0;
+
+    if (!initialIndexLoaded.current && nextShuffled.length > 0) {
+      const qParam = searchParams.get('q');
+      const qIndex = qParam !== null ? parseInt(qParam, 10) : NaN;
+      if (initialQuestionSlug) {
+        const matchingIndex = nextShuffled.findIndex((row, rowIndex) => {
+          return getQuestionSlug(row, rowIndex, lang) === initialQuestionSlug;
+        });
+        if (matchingIndex >= 0) {
+          startIndex = matchingIndex;
+        } else if (!isNaN(qIndex) && qIndex >= 0 && qIndex < nextShuffled.length) {
+          startIndex = qIndex;
+        }
+      } else if (!isNaN(qIndex) && qIndex >= 0 && qIndex < nextShuffled.length) {
+        startIndex = qIndex;
+      }
+
+      initialIndexLoaded.current = true;
     }
-  }, [questions]);
+
+    setShuffledQuestions(nextShuffled);
+    setCurrentQuestionIndex(startIndex);
+    setSelectedOptionIndex(null);
+    setIsAnswered(false);
+    setIsAnswerCorrect(false);
+    setQuizCompleted(false);
+    setTimeLeft(30);
+  }, [questions, initialQuestionSlug]);
+
+  // Update URL when question changes
+  useEffect(() => {
+    const currentQuestion = shuffledQuestions[currentQuestionIndex];
+    if (!currentQuestion || typeof window === 'undefined') return;
+
+    const questionId = getQuestionId(currentQuestion, currentQuestionIndex);
+    const questionText = getQuestionText(currentQuestion, lang);
+    const newPathname = buildQuestionPath(subject, questionId, questionText);
+
+    const url = new URL(window.location.href);
+    const newQValue = String(currentQuestionIndex);
+    const currentQParam = url.searchParams.get('q');
+    const currentPathname = url.pathname;
+
+    if (currentPathname === newPathname && currentQParam === newQValue) return;
+
+    url.pathname = newPathname;
+    url.searchParams.set('q', newQValue);
+    url.searchParams.delete('slug');
+    url.searchParams.delete('topic');
+
+    const normalizedUrl = url.toString();
+    window.history.replaceState({ q: currentQuestionIndex }, '', normalizedUrl);
+  }, [currentQuestionIndex, shuffledQuestions.length, subject, lang]);
 
   useEffect(() => {
     return () => {
@@ -213,17 +271,15 @@ export default function ClientQuiz({
   if (fetchError) {
     return (
       <div className="min-h-screen bg-slate-50">
-        <Navbar />
-        <main className="pt-20 pb-12">
+        <main className="pt-6 pb-12">
           <div className="max-w-3xl mx-auto px-4 text-center">
             <h1 className="text-3xl font-bold text-slate-900 mb-4">Quiz not available</h1>
             <p className="text-slate-600 mb-6">{fetchError}</p>
-            <Link href={`/subjects/${subject}`} className="inline-flex rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition">
+            <Link href={`/${subject}`} className="inline-flex rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition">
               Back to Topics
             </Link>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -233,17 +289,15 @@ export default function ClientQuiz({
   if (!questionsPresent) {
     return (
       <div className="min-h-screen bg-slate-50">
-        <Navbar />
-        <main className="pt-20 pb-12">
+        <main className="pt-6 pb-12">
           <div className="max-w-3xl mx-auto px-4 text-center">
             <h1 className="text-3xl font-bold text-slate-900 mb-4">No questions found</h1>
             <p className="text-slate-600 mb-6">No questions available for this topic.</p>
-            <Link href={`/subjects/${subject}`} className="inline-flex rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition">
+            <Link href={`/${subject}`} className="inline-flex rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition">
               Back to Topics
             </Link>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -311,30 +365,28 @@ export default function ClientQuiz({
   if (quizCompleted) {
     return (
       <div className="min-h-screen bg-slate-50">
-        <Navbar />
-        <main className="pt-20 pb-16">
+        <main className="pt-6 pb-16">
           <div className="mx-auto max-w-5xl px-4">
             <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
               <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Quiz complete</p>
               <h1 className="mt-6 text-4xl font-bold text-slate-900">Better luck next time</h1>
               <p className="mt-4 text-slate-600">You answered <span className="font-semibold text-slate-900">{score}</span> of <span className="font-semibold text-slate-900">{shuffledQuestions.length}</span> correctly.</p>
               <p className="mt-2 text-slate-500">Review what you learned and try the next topic.</p>
-              <Link href={`/subjects/${subject}`} className="mt-8 inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition">
+              <Link href={`/${subject}`} className="mt-8 inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition">
                 Back to Topics
               </Link>
             </div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Navbar />
-      <main className="pt-20 pb-16">
+      <main className="pt-6 pb-16">
         <div className="max-w-5xl mx-auto px-4">
+          {topSection && <div className="mb-8">{topSection}</div>}
           <div className="mb-8">
             <div>
               <h1 className="text-3xl font-bold text-slate-900">{decodedTopic} Quiz</h1>
@@ -384,19 +436,16 @@ export default function ClientQuiz({
                   }
 
                   return (
-                    <motion.button
+                    <button
                       key={`${option}-${optionIndex}`}
                       type="button"
                       onClick={() => handleOptionClick(optionIndex)}
                       disabled={isAnswered}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                      className={buttonClass}
+                      className={`${buttonClass} transition duration-200 ease-out transform hover:-translate-y-0.5 active:scale-95`}
                     >
                       <span className="font-semibold mr-2">{String.fromCharCode(65 + optionIndex)}.</span>
                       {option}
-                    </motion.button>
+                    </button>
                   );
                 })
               ) : (
@@ -413,31 +462,25 @@ export default function ClientQuiz({
 
             {isAnswered && !isAnswerCorrect && currentQuestionIndex < shuffledQuestions.length - 1 && (
               <div className="mt-6 text-center">
-                <motion.button
+                <button
                   type="button"
                   onClick={handleNext}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                  className="inline-flex items-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition"
+                  className="inline-flex items-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition duration-200 ease-out transform hover:-translate-y-0.5 hover:bg-slate-800 active:scale-95"
                 >
                   Next Question →
-                </motion.button>
+                </button>
               </div>
             )}
 
             {isAnswered && currentQuestionIndex === shuffledQuestions.length - 1 && !quizCompleted && !isAnswerCorrect && (
               <div className="mt-6 text-center">
-                <motion.button
+                <button
                   type="button"
                   onClick={() => setQuizCompleted(true)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                  className="inline-flex items-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition"
+                  className="inline-flex items-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition duration-200 ease-out transform hover:-translate-y-0.5 hover:bg-slate-800 active:scale-95"
                 >
                   Finish Quiz →
-                </motion.button>
+                </button>
               </div>
             )}
 
@@ -447,22 +490,16 @@ export default function ClientQuiz({
                 <h2 className="mt-4 text-3xl font-bold text-slate-900">Better luck next time</h2>
                 <p className="mt-4 text-slate-600">You answered <span className="font-semibold text-slate-900">{score}</span> of <span className="font-semibold text-slate-900">{shuffledQuestions.length}</span> correctly.</p>
                 <p className="mt-2 text-slate-500">Review what you learned and try the next topic.</p>
-                <Link href={`/subjects/${subject}`} legacyBehavior>
-                  <motion.a
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                    className="mt-6 inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition"
-                  >
+                <Link href={`/${subject}`} legacyBehavior>
+                  <a className="mt-6 inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition duration-200 ease-out transform hover:-translate-y-0.5 hover:bg-slate-800 active:scale-95">
                     Back to Topics
-                  </motion.a>
+                  </a>
                 </Link>
               </div>
             )}
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

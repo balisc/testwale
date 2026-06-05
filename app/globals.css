@@ -5,6 +5,16 @@
 :root {
   color-scheme: light;
   font-family: var(--font-inter);
+  --color-bg: #ffffff;
+  --color-surface: #f8fafc;
+  --color-text: #0f172a;
+  --color-text-strong: #111827;
+  --color-muted: #475569;
+  --color-border: #e2e8f0;
+  --color-primary: #4338ca;
+  --color-primary-on: #ffffff;
+  --color-accent: #7c3aed;
+  --color-accent-on: #ffffff;
 }
 
 html {
@@ -13,12 +23,26 @@ html {
   scrollbar-color: #7c3aed rgba(148, 163, 184, 0.2);
 }
 
-body {
-  min-height: 100vh;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  color: #0f172a;
-  overflow-x: hidden;
-  scrollbar-gutter: stable both-edges;
+* {
+  transition-property: color, background-color, border-color;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fade-up-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up-in {
+  animation: fade-up-in 0.4s ease-in-out both;
 }
 
 html::-webkit-scrollbar,

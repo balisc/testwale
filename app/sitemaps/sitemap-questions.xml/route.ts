@@ -17,16 +17,35 @@ function slugify(s: any) {
 
 function extractKeywords(text: string): string {
   const words = text
-    .replace(/[^\w\s]/g, '')
+    .replace(/[^\n\w\s]/g, '')
     .split(/\s+/)
     .filter((word) => word.length > 0)
-    .slice(0, 6)
-  return words.join('-').toLowerCase()
+    .slice(0, 7)
+
+  return words.length >= 6 ? words.slice(0, 7).join('-') : words.join('-')
+    .toLowerCase()
+}
+
+function stripTopicPrefix(text: string): string {
+  const trimmed = String(text || '').trim()
+  const match = trimmed.match(/^(.+?)\s*[-:|]\s*(.+)$/)
+  if (!match) return trimmed
+
+  const prefix = match[1].trim()
+  const remainder = match[2].trim()
+  const words = prefix.split(/\s+/).filter(Boolean)
+  const questionWords = /^(what|which|who|where|when|why|how|is|are|can|could|should|would|do|does|did|has|have|had|will|shall|क्या|कौन|कहाँ|कैसे|क्यों|कितना|कितनी|क्या|कैसा|कैसी)\b/i
+
+  if (words.length <= 4 && !questionWords.test(prefix)) {
+    return remainder || trimmed
+  }
+
+  return trimmed
 }
 
 function generateQuestionSlug(questionText: string, questionId: string): string {
-  const keywords = extractKeywords(questionText)
-  return `${keywords}-q${questionId}`
+  const keywords = extractKeywords(stripTopicPrefix(questionText))
+  return `${keywords}-${questionId}`
 }
 
 function decodeCursor(token?: string) {
@@ -69,10 +88,12 @@ export async function GET(req: NextRequest) {
         if (error) throw error
 
         for (const doc of data || []) {
-          const slug = doc.question && typeof doc.question === 'object' 
-            ? generateQuestionSlug(doc.question.en || doc.question, doc.id)
-            : generateQuestionSlug(doc.topic || doc.id, doc.id)
-          const urlp = `${SITE_URL}/question/${doc.id}/${slug}`
+          const subjectKey = slugify(doc.subject || doc.topic || '')
+          const questionText = doc.question && typeof doc.question === 'object'
+            ? doc.question.en || doc.question.hi || JSON.stringify(doc.question)
+            : String(doc.question || doc.topic || '')
+          const slug = generateQuestionSlug(questionText, doc.id)
+          const urlp = `${SITE_URL}/question/${slug}`
           const lastmod = doc.created_at ? new Date(doc.created_at).toISOString() : now
           const entry = `  <url>\n    <loc>${urlp}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`
           controller.enqueue(new TextEncoder().encode(entry))

@@ -61,7 +61,7 @@ function slugify(value) {
 
 function getText(value, locale = 'en') {
   if (typeof value === 'string') return value
-  return (value && value[locale]) || (value && value.en) || ''
+  return (value && value[locale]) || (value && value.en) || (value && value.hi) || (value && Object.values(value)[0]) || ''
 }
 
 function extractKeywords(text) {
@@ -69,14 +69,33 @@ function extractKeywords(text) {
     .replace(/[^\n\w\s]/g, '')
     .split(/\s+/)
     .filter((word) => word.length > 0)
-    .slice(0, 6)
-  return words.join('-').toLowerCase()
+    .slice(0, 7)
+
+  return words.length >= 6 ? words.slice(0, 7).join('-') : words.join('-')
+    .toLowerCase()
+}
+
+function stripTopicPrefix(text) {
+  const trimmed = String(text || '').trim()
+  const match = trimmed.match(/^(.+?)\s*[-:|]\s*(.+)$/)
+  if (!match) return trimmed
+
+  const prefix = match[1].trim()
+  const remainder = match[2].trim()
+  const words = prefix.split(/\s+/).filter(Boolean)
+  const questionWords = /^(what|which|who|where|when|why|how|is|are|can|could|should|would|do|does|did|has|have|had|will|shall|क्या|कौन|कहाँ|कैसे|क्यों|कितना|कितनी|क्या|कैसा|कैसी)\b/i
+
+  if (words.length <= 4 && !questionWords.test(prefix)) {
+    return remainder || trimmed
+  }
+
+  return trimmed
 }
 
 function generateQuestionSlug(questionText, questionId) {
-  const text = getText(questionText, 'en')
+  const text = stripTopicPrefix(getText(questionText, 'en'))
   const keywords = extractKeywords(text || `question-${questionId}`)
-  return `${keywords}-q${questionId}`
+  return `${keywords}-${questionId}`
 }
 
 function getTopicValue(row) {
@@ -87,11 +106,11 @@ function getTopicValue(row) {
 }
 
 function buildSubjectPath(subjectKey) {
-  return `/questions/${slugify(subjectKey)}`
+  return `/subjects/${slugify(subjectKey)}`
 }
 
 function buildTopicPath(subjectKey, topic) {
-  return `/subjects/${slugify(subjectKey)}/${encodeURIComponent(String(topic).trim())}`
+  return `/subjects/${slugify(subjectKey)}`
 }
 
 function getSupabaseClient() {
@@ -180,7 +199,7 @@ module.exports = {
 
       if (id && questionText) {
         const quizSlug = generateQuestionSlug(questionText, id)
-        urls.push({ loc: `${config.siteUrl}/question/${id}/${quizSlug}`, lastmod: new Date().toISOString(), changefreq: 'weekly', priority: 0.7 })
+        urls.push({ loc: `${config.siteUrl}/question/${quizSlug}`, lastmod: new Date().toISOString(), changefreq: 'weekly', priority: 0.7 })
       }
 
       if (subjectKey) {

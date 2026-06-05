@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import Navbar from './components/Navbar';
+import { slugifySubject } from '@/lib/slugGenerator';
+import LoadingTestPage from './loading-test/page';
 import SubjectGrid from './components/SubjectGrid';
-import Footer from './components/Footer';
 import { useLanguage } from '../lib/LanguageContext';
 
 type Language = 'en' | 'hi';
@@ -111,6 +111,9 @@ export default function HomePage() {
   const [loadingSiteStats, setLoadingSiteStats] = useState(true);
   const [siteStatsError, setSiteStatsError] = useState<string | null>(null);
   const [animatedSiteStats, setAnimatedSiteStats] = useState({ questions: 0, subjects: 0, topics: 0 });
+  const [subjectCounts, setSubjectCounts] = useState<Record<string, number> | null>(null);
+  const [loadingSubjectCounts, setLoadingSubjectCounts] = useState(true);
+  const [subjectCountsError, setSubjectCountsError] = useState(false);
   const statsDirectionRef = useRef(1);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -150,7 +153,7 @@ export default function HomePage() {
     async function loadSiteStats() {
       try {
         setLoadingSiteStats(true);
-        const response = await fetch('/api/site-stats');
+        const response = await fetch('/api/site-stats', { cache: 'no-store' });
         if (!response.ok) {
           throw new Error('Unable to load site statistics');
         }
@@ -170,6 +173,42 @@ export default function HomePage() {
 
     loadSiteStats();
   }, []);
+
+  const loadSubjectCounts = useCallback(async () => {
+    try {
+      setLoadingSubjectCounts(true);
+      setSubjectCountsError(false);
+      const response = await fetch('/api/subject-counts', { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error('Unable to load subject counts');
+      }
+      const data = await response.json();
+      setSubjectCounts(data ?? {});
+    } catch (error) {
+      console.error('Subject counts load error:', error);
+      setSubjectCountsError(true);
+    } finally {
+      setLoadingSubjectCounts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSubjectCounts();
+  }, [loadSubjectCounts]);
+
+  useEffect(() => {
+    if (!subjectCountsError) {
+      return;
+    }
+
+    const retryTimer = window.setTimeout(() => {
+      loadSubjectCounts();
+    }, 5000);
+
+    return () => {
+      window.clearTimeout(retryTimer);
+    };
+  }, [subjectCountsError, loadSubjectCounts]);
 
   useEffect(() => {
     let interval: number | undefined;
@@ -298,12 +337,12 @@ export default function HomePage() {
 
   const navigateToSuggestion = (item: Suggestion) => {
     if (item.type === 'subject') {
-      router.push(`/subjects/${item.subjectKey}?v=${Date.now()}`);
+      router.push(`/${item.subjectKey}`);
       return;
     }
 
-    const topicLabel = language === 'hi' && item.topicHi ? item.topicHi : item.topicEn;
-    router.push(`/subjects/${item.subjectKey}/${encodeURIComponent(topicLabel)}?v=${Date.now()}`);
+    const topicSlug = slugifySubject(item.topicEn || item.topicHi);
+    router.push(`/${item.subjectKey}/topics/${topicSlug}`);
   };
 
   const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -320,7 +359,7 @@ export default function HomePage() {
     );
 
     if (matchedSubject) {
-      router.push(`/subjects/${matchedSubject.id}?v=${Date.now()}`);
+      router.push(`/${matchedSubject.id}`);
       return;
     }
 
@@ -331,8 +370,8 @@ export default function HomePage() {
     );
 
     if (matchedTopic) {
-      const topicLabel = language === 'hi' && matchedTopic.topicHi ? matchedTopic.topicHi : matchedTopic.topicEn;
-      router.push(`/subjects/${matchedTopic.subjectKey}/${encodeURIComponent(topicLabel)}?v=${Date.now()}`);
+      const topicSlug = slugifySubject(matchedTopic.topicEn || matchedTopic.topicHi);
+      router.push(`/${matchedTopic.subjectKey}/topics/${topicSlug}`);
       return;
     }
 
@@ -390,15 +429,13 @@ export default function HomePage() {
     return value.toLocaleString();
   };
 
-  if (!mounted) {
-    return <div className="min-h-screen bg-white" />;
+  if (loadingSiteStats || !mounted || loadingSubjectCounts || subjectCountsError) {
+    return <LoadingTestPage />;
   }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
-      <Navbar />
-
-      <main className="w-full pt-24">
+      <main className="w-full pt-16">
         <div className="max-w-6xl mx-auto px-4">
         {/* Hero Section */}
         <section className="w-full rounded-[2rem] border border-slate-200/70 bg-white shadow-soft px-6 py-10 md:px-12 md:py-14 flex justify-center">
@@ -623,12 +660,10 @@ export default function HomePage() {
 
         <section className="w-full px-4 py-20 bg-surface">
           <div className="max-w-6xl mx-auto">
-            <SubjectGrid />
+            <SubjectGrid counts={subjectCounts ?? undefined} />
           </div>
         </section>
         </div>
-
-        <Footer />
       </main>
     </div>
   );

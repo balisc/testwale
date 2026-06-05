@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import questionsData from '@/data/questions.json';
 import supabase from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -16,16 +17,25 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Topic is required' }, { status: 400 });
     }
 
+    const escapedTopic = escapeForLike(topic);
     const { data, error } = await supabase
       .from('history_questions')
       .select('*')
-      .or(`topic->>en.ilike.%${escapeForLike(topic)}%,topic->>hi.ilike.%${escapeForLike(topic)}%`);
+      .or(`topic->>en.ilike.%${escapedTopic}%,topic->>hi.ilike.%${escapedTopic}%,topic.ilike.%${escapedTopic}%`);
 
     if (error) {
-      throw new Error(error.message);
+      console.warn('History questions API fallback to local JSON:', error.message);
+      const filteredQuestions = questionsData
+        .filter((row: any) => {
+          const topicText = typeof row.topic === 'string' ? row.topic : row.topic?.en || row.topic?.hi || '';
+          return topicText.toLowerCase().includes(topic.toLowerCase());
+        })
+        .map((row: any, index) => ({ id: row.id ?? String(index), ...row }));
+
+      return NextResponse.json({ questions: filteredQuestions });
     }
 
-    const questions = (data ?? []).map((row, index) => ({
+    const questions = (data ?? []).map((row: any, index: number) => ({
       id: row.id ?? String(index),
       ...row,
     }));

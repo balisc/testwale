@@ -9,18 +9,47 @@ const SUPABASE_KEY = (
   process.env.SUPABASE_ANON_KEY
 )?.trim();
 
-if (!SUPABASE_URL) {
-  throw new Error('Supabase URL is missing. Set NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL in .env.local');
+const SUPABASE_AVAILABLE = Boolean(SUPABASE_URL && SUPABASE_KEY);
+
+function createNoopQuery() {
+  const fallback = {
+    data: null,
+    error: { message: 'Supabase is not configured in this environment.' },
+  };
+
+  const noOp: any = {
+    select: () => noOp,
+    order: () => noOp,
+    not: () => noOp,
+    eq: () => noOp,
+    filter: () => noOp,
+    single: () => noOp,
+    limit: () => noOp,
+    or: () => noOp,
+    then(onFulfilled: any) {
+      return Promise.resolve(fallback).then(onFulfilled);
+    },
+    catch(onRejected: any) {
+      return Promise.resolve(fallback).catch(onRejected);
+    },
+  };
+
+  return noOp;
 }
 
-if (!SUPABASE_KEY) {
-  throw new Error('Supabase key is missing. Set NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_KEY, or SUPABASE_ANON_KEY in .env.local');
-}
+const supabase: any = SUPABASE_AVAILABLE
+  ? createClient(SUPABASE_URL!, SUPABASE_KEY!, {
+      auth: {
+        persistSession: false,
+      },
+    })
+  : {
+      from: () => createNoopQuery(),
+    };
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: {
-    persistSession: false,
-  },
-});
+if (!SUPABASE_AVAILABLE) {
+  console.warn('Supabase is not configured. Falling back to local JSON and preventing runtime errors.');
+}
 
 export default supabase;
+export { SUPABASE_AVAILABLE };

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useLanguage } from '../../lib/LanguageContext';
+import { slugifySubject } from '@/lib/slugGenerator';
 
 type TopicItem = {
   en: string;
@@ -18,9 +19,9 @@ export default function TopicList({ topics, subjectKey }: TopicListProps) {
 
   return (
     <div className="space-y-4">
-      {topics.map((topic) => {
+      {topics.map((topic, idx) => {
         const topicText = language === 'hi' ? topic.hi || topic.en : topic.en || topic.hi;
-        const topicHref = `/subjects/${subjectKey}/${encodeURIComponent(topicText)}?v=${Date.now()}`;
+        const topicHref = `/${subjectKey}/topics/${slugifySubject(topicText)}`;
 
         return (
           <Link

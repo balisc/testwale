@@ -1,18 +1,6 @@
 import { NextResponse } from 'next/server';
-import supabase from '@/lib/supabase';
 import questionsData from '@/data/questions.json';
-
-const SUBJECT_TABLES: Record<string, string> = {
-  history: 'history_questions',
-  science: 'science_questions',
-  polity: 'polity_questions',
-  economics: 'economics_questions',
-  geography: 'geography_questions',
-  'general-knowledge': 'general_knowledge_questions',
-  math: 'math_questions',
-  'current-affairs': 'current_affairs_questions',
-  reasoning: 'reasoning_questions',
-};
+import { SUBJECT_TABLES, getActiveQuestionCount, fetchActiveTopicCandidates } from '@/lib/questionCounts';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,30 +18,30 @@ export async function GET() {
         .toLowerCase();
 
     for (const [subject, table] of Object.entries(SUBJECT_TABLES)) {
-      // First get an exact row count using id-count so we don't rely on potentially-truncated data arrays.
-      const countResult = await supabase.from(table).select('id', { count: 'exact' });
+      let tableCount = 0;
+      let topicData: any[] = [];
 
-      if (countResult.error) {
-        const notFound = /Could not find the table/i.test(countResult.error.message) || /relation ".*" does not exist/i.test(countResult.error.message);
+      try {
+        tableCount = await getActiveQuestionCount(table);
+      } catch (error: any) {
+        const message = String(error?.message ?? '');
+        const notFound = /Could not find the table/i.test(message) || /relation ".*" does not exist/i.test(message);
         if (notFound) {
           missingTableCount += 1;
           continue;
         }
-        throw new Error(`Failed to count rows for ${table}: ${countResult.error.message}`);
+        throw error;
       }
 
-      const tableCount = typeof countResult.count === 'number' ? countResult.count : (countResult.data?.length ?? 0);
       if (tableCount > 0) {
         totalSubjects += 1;
       }
       totalQuestions += tableCount;
 
-      // Now fetch topics for unique topic calculation (select possible topic fields).
-      const { data: topicData, error: topicError } = await supabase
-        .from(table)
-        .select('*');
-      if (topicError) {
-        continue;
+      try {
+        topicData = await fetchActiveTopicCandidates(table);
+      } catch (error) {
+        topicData = [];
       }
 
       for (const row of topicData ?? []) {
@@ -107,12 +95,51 @@ export async function GET() {
     );
   } catch (error) {
     console.error('Site stats API error:', error);
+
+    let totalQuestions = 0;
+    const fallbackSubjects = new Set<string>();
+    const uniqueTopics = new Set<string>();
+
+    const normalizeTopic = (value: string) =>
+      value
+        .trim()
+        .replace(/\s+/g, ' ')
+        .toLowerCase();
+
+    for (const question of questionsData) {
+      totalQuestions += 1;
+      fallbackSubjects.add(String(question.subject || '').trim().toLowerCase());
+
+      const topicValue = question.topic as any;
+      const topicEn = String(
+        typeof topicValue === 'object' && topicValue !== null
+          ? topicValue.en ?? question.topic ?? ''
+          : topicValue ?? ''
+      ).trim();
+      const topicHi = String(
+        typeof topicValue === 'object' && topicValue !== null
+          ? topicValue.hi ?? ''
+          : ''
+      ).trim();
+
+      const canonicalTopic = normalizeTopic(topicEn || topicHi);
+      if (canonicalTopic) {
+        uniqueTopics.add(canonicalTopic);
+      }
+    }
+
     return NextResponse.json(
       {
-        error: 'Unable to load site stats from the database.',
-        details: error instanceof Error ? error.message : String(error),
+        questions: totalQuestions,
+        subjects: fallbackSubjects.size,
+        topics: uniqueTopics.size,
+        fallback: true,
       },
-      { status: 500 }
+      {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
     );
   }
 }

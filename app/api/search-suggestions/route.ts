@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import questionsData from '@/data/questions.json';
 import supabase from '@/lib/supabase';
 
 const SUBJECT_TABLES: Record<string, string> = {
@@ -23,16 +24,16 @@ export async function GET() {
     for (const [subjectKey, table] of Object.entries(SUBJECT_TABLES)) {
       const { data, error } = await supabase.from(table).select('topic');
       if (error) {
-        console.error(`Search suggestions error for ${table}:`, error.message);
+        console.warn(`Search suggestions fallback for ${table}:`, error.message);
         continue;
       }
 
       for (const row of data ?? []) {
-        const topicValue = row.topic;
+        const topicValue = (row as any).topic;
         const topicEn = String(
           typeof topicValue === 'string'
             ? topicValue
-            : topicValue?.en ?? row.topic ?? ''
+            : topicValue?.en ?? (row as any).topic ?? ''
         ).trim();
         const topicHi = String(
           typeof topicValue === 'string'
@@ -46,6 +47,28 @@ export async function GET() {
         if (seenTopicKeys.has(topicKey)) continue;
         seenTopicKeys.add(topicKey);
 
+        suggestions.push({ subjectKey, topicEn, topicHi });
+      }
+    }
+
+    if (suggestions.length === 0) {
+      const fallbackSubjects = new Set<string>();
+      for (const question of questionsData) {
+        const subjectKey = String((question as any).subject || '').trim().toLowerCase();
+        if (!subjectKey) continue;
+
+        const topicValue = (question as any).topic;
+        const topicEn = String(
+          typeof topicValue === 'string' ? topicValue : topicValue?.en ?? (question as any).topic ?? ''
+        ).trim();
+        const topicHi = String(
+          typeof topicValue === 'string' ? '' : topicValue?.hi ?? ''
+        ).trim();
+        if (!topicEn && !topicHi) continue;
+
+        const topicKey = `${subjectKey}||${topicEn.toLowerCase()}||${topicHi.toLowerCase()}`;
+        if (fallbackSubjects.has(topicKey)) continue;
+        fallbackSubjects.add(topicKey);
         suggestions.push({ subjectKey, topicEn, topicHi });
       }
     }
