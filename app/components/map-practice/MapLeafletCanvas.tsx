@@ -122,8 +122,8 @@ export default function MapLeafletCanvas({
       className="h-[420px] w-full rounded-lg border border-slate-200 bg-slate-50 md:h-[500px]"
     >
       <TileLayer
-        attribution="&copy; OpenStreetMap contributors &copy; CARTO"
-        url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
+        attribution="Tiles &copy; Esri"
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
       />
 
       <MapClickHandler canSelect={canSelect} onSelectPoint={onSelectPoint} />
