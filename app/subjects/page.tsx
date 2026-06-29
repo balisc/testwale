@@ -1,8 +1,17 @@
 import SubjectGrid from '../components/SubjectGrid';
+import { canonical } from '@/lib/seo';
 
 export const metadata = {
-  title: 'Subjects | Questionwale',
+  title: 'Subjects',
   description: 'Explore Questionwale subjects and start practicing with curated topics.',
+  ...canonical('/subjects'),
+  openGraph: {
+    title: 'Subjects',
+    description: 'Explore Questionwale subjects and start practicing with curated topics.',
+    url: '/subjects',
+    type: 'website',
+    siteName: 'Questionwale',
+  },
 };
 
 export default function SubjectsPage() {

@@ -1,9 +1,19 @@
-import { redirect } from 'next/navigation';
+import { permanentRedirect, redirect } from 'next/navigation';
+import questionsData from '@/data/questions.json';
 import ClientQuiz from '@/app/subjects/[subject]/[topicSlug]/ClientQuiz';
-import supabase from '../../../../lib/supabase';
-import { buildSubjectMetadata } from '@/lib/seo';
+import supabase, { SUPABASE_AVAILABLE } from '@/lib/supabase';
+import { subCategoryMatches, topicMatches } from '@/lib/topicMatching';
+import { BASE_URL, buildQuizMetadata } from '@/lib/seo';
 import { slugifySubject } from '@/lib/slugGenerator';
-import { buildTopicCountKey, fetchExactTopicCounts } from '@/lib/topicCounts';
+
+const PAGE_SIZE = 1000;
+const FAST_QUERY_LIMIT = 3000;
+import { BASE_QUESTION_COLUMNS, HISTORY_QUESTION_COLUMNS } from '@/lib/questionColumns';
+const HISTORY_SUBCATEGORY_HI: Record<string, string> = {
+  ancient: 'प्राचीन',
+  medieval: 'मध्यकालीन',
+  modern: 'आधुनिक',
+};
 
 const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
   history: { table: 'history_questions', label: 'History' },
@@ -17,14 +27,7 @@ const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
   reasoning: { table: 'reasoning_questions', label: 'Reasoning' },
 };
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
-type TopicItem = {
-  en: string;
-  hi: string;
-  count: number;
-};
+export const revalidate = 3600;
 
 type SearchParams = {
   q?: string | string[];
@@ -57,13 +60,133 @@ const normalizeText = (value: unknown) => {
   }
 
   return String(text)
-    .replace(/[^a-zA-Z0-9\s]+/g, ' ')
+    .normalize('NFKC')
+    .replace(/[^\p{L}\p{N}\s]+/gu, ' ')
     .trim()
     .replace(/\s+/g, ' ')
     .toLowerCase();
 };
 
-const escapeForLike = (value: string) => value.replace(/([%_\\])/g, '\\$1');
+function escapeForLike(value: string) {
+  return value.replace(/([%_\\])/g, '\\$1');
+}
+
+function getTopicSearchTokens(topic: string) {
+  const normalized = normalizeText(topic);
+  if (!normalized) return [];
+  const words = normalized.split(/\s+/).filter(Boolean);
+  const unique = Array.from(new Set(words));
+  return unique.filter((word) => word.length >= 3).slice(0, 5);
+}
+
+function getHistorySubCategoryKey(topic: string) {
+  const normalized = normalizeText(topic);
+  if (!normalized) return '';
+  if (normalized.includes('modern')) return 'modern';
+  if (normalized.includes('medieval')) return 'medieval';
+  if (normalized.includes('ancient')) return 'ancient';
+  return '';
+}
+
+function addGenericSubjectFilter(query: any, subject: string) {
+  const escaped = escapeForLike(subject);
+  const spaced = escapeForLike(subject.replace(/-/g, ' '));
+  return query.or(
+    `subject->>en.ilike.%${escaped}%,subject->>hi.ilike.%${escaped}%,subject->>en.ilike.%${spaced}%,subject->>hi.ilike.%${spaced}%`
+  );
+}
+
+async function fetchCandidateQuestionsFromSupabase(tableName: string, subject: string, normalizedTopic: string) {
+  const columns = tableName === 'history_questions' ? HISTORY_QUESTION_COLUMNS : BASE_QUESTION_COLUMNS;
+  let query: any = supabase.from(tableName).select(columns).order('id', { ascending: true });
+
+  if (tableName === 'questions') {
+    query = addGenericSubjectFilter(query, subject);
+  }
+
+  const historySubCategoryKey = subject === 'history' ? getHistorySubCategoryKey(normalizedTopic) : '';
+  if (historySubCategoryKey) {
+    const hiValue = HISTORY_SUBCATEGORY_HI[historySubCategoryKey];
+    const escapedEn = escapeForLike(historySubCategoryKey);
+    const escapedHi = escapeForLike(hiValue);
+    query = query.or(
+      `sub_category->>en.eq.${historySubCategoryKey},sub_category->>en.ilike.%${escapedEn}%,sub_category->>hi.ilike.%${escapedHi}%`
+    );
+  } else {
+    const terms = [normalizedTopic, ...getTopicSearchTokens(normalizedTopic)];
+    const escapedTerms = Array.from(new Set(terms.map((term) => escapeForLike(term.trim())).filter(Boolean)));
+    if (!escapedTerms.length) {
+      return [];
+    }
+
+    const filters: string[] = [];
+    for (const term of escapedTerms) {
+      filters.push(`topic->>en.ilike.%${term}%`);
+      filters.push(`topic->>hi.ilike.%${term}%`);
+    }
+    query = query.or(filters.join(','));
+  }
+
+  const result: any = await query.range(0, FAST_QUERY_LIMIT - 1);
+  if (result.error) {
+    throw result.error;
+  }
+
+  return (result.data ?? []) as any[];
+}
+
+const subjectMatches = (rawSubject: unknown, subjectKey: string) => {
+  if (rawSubject === null || rawSubject === undefined) {
+    return false;
+  }
+
+  let value = '';
+  if (typeof rawSubject === 'string') {
+    value = rawSubject.trim();
+  } else if (typeof rawSubject === 'object') {
+    if (Array.isArray(rawSubject)) {
+      value = rawSubject.map((item) => String(item).trim()).join(' ');
+    } else {
+      value = String((rawSubject as any).en ?? (rawSubject as any).hi ?? Object.values(rawSubject).join(' ')).trim();
+    }
+  } else {
+    value = String(rawSubject).trim();
+  }
+
+  if (!value) {
+    return false;
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed && typeof parsed === 'object') {
+      value = String((parsed as any).en ?? (parsed as any).hi ?? Object.values(parsed).join(' ')).trim();
+    }
+  } catch {
+    // ignore invalid JSON
+  }
+
+  const normalizedValue = normalizeText(value);
+  const normalizedKey = normalizeText(subjectKey);
+
+  if (normalizedValue.includes(normalizedKey)) {
+    return true;
+  }
+
+  const aliasMap: Record<string, string[]> = {
+    history: ['history', 'indian history', 'history questions'],
+    science: ['science', 'general science'],
+    polity: ['polity', 'indian polity'],
+    economics: ['economics'],
+    geography: ['geography', 'indian geography'],
+    math: ['math', 'mathematics'],
+    'general-knowledge': ['general knowledge', 'gk'],
+    'current-affairs': ['current affairs', 'current affairs'],
+    reasoning: ['reasoning', 'logical reasoning'],
+  };
+
+  return (aliasMap[subjectKey] ?? []).some((alias) => normalizedValue.includes(alias));
+};
 
 const extractTopicValues = (row: any) => {
   const rawTopic = row.topic;
@@ -100,56 +223,73 @@ const extractTopicValues = (row: any) => {
   };
 };
 
-const topicMatches = (topicText: string, targetText: string) => {
-  const normalizedTopic = normalizeText(topicText);
-  const normalizedTarget = normalizeText(targetText);
-  if (!normalizedTopic || !normalizedTarget) return false;
-  if (normalizedTopic === normalizedTarget) return true;
-  if (normalizedTopic.includes(normalizedTarget) || normalizedTarget.includes(normalizedTopic)) return true;
+function isQuestionVisible(row: any) {
+  const status = typeof row?.status === 'string' ? row.status.trim().toLowerCase() : '';
+  return !status || status === 'active' || status === 'published';
+}
 
-  const targetWords = normalizedTarget.split(' ').filter(Boolean);
-  const topicWords = new Set(normalizedTopic.split(' ').filter(Boolean));
-  if (!targetWords.length || !topicWords.size) return false;
-
-  const matchedWords = targetWords.filter((word) => topicWords.has(word)).length;
-  const overlapRatio = matchedWords / Math.min(targetWords.length, topicWords.size);
-
-  return overlapRatio >= 0.6;
-};
-
-async function fetchTopics(tableName: string) {
-  const { data, error } = await supabase.from(tableName).select('*').limit('all');
-  if (error) {
-    console.error('❌ SUPABASE ERROR:', error.message);
-    throw new Error(error.message);
+function questionMatchesTopic(row: any, subject: string, normalizedTopic: string) {
+  if (!subjectMatches(row.subject, subject)) {
+    return false;
   }
 
-  const rows = (data ?? []) as Array<{
-    id: string;
-    topic?: { en?: string; hi?: string } | null;
-    topic_en?: string | null;
-    topic_hi?: string | null;
-  }>;
+  const { topicEn, topicHi, topicRaw } = extractTopicValues(row);
+  const candidateTexts = [topicEn, topicHi, topicRaw, row.sub_category, row.sub_category?.en, row.sub_category?.hi]
+    .map((value) => (typeof value === 'string' ? value : extractTopicValues({ topic: value }).topicRaw))
+    .filter(Boolean);
 
-  const seen = new Set<string>();
-  const topicItems: TopicItem[] = [];
-
-  for (const row of rows) {
-    const { topicEn, topicHi } = extractTopicValues(row);
-    const key = `${topicEn}||${topicHi}`;
-    if (!topicEn && !topicHi) continue;
-    if (seen.has(key)) continue;
-
-    seen.add(key);
-    topicItems.push({ en: topicEn, hi: topicHi, count: 0 });
+  if (candidateTexts.some((text) => topicMatches(text, normalizedTopic))) {
+    return true;
   }
 
-  const exactCounts = await fetchExactTopicCounts(tableName, topicItems);
+  const subCategoryValue = row.sub_category ?? row.sub_category_en ?? row.sub_category_hi;
+  return subCategoryMatches(subCategoryValue, normalizedTopic);
+}
 
-  return topicItems.map((topic) => ({
-    ...topic,
-    count: exactCounts.get(buildTopicCountKey(topic)) ?? 0,
-  }));
+async function fetchQuestionsFromSupabaseTable(tableName: string, subject: string, normalizedTopic: string) {
+  try {
+    const fastCandidates = await fetchCandidateQuestionsFromSupabase(tableName, subject, normalizedTopic);
+    const fastMatched = fastCandidates
+      .filter(isQuestionVisible)
+      .filter((row: any) => questionMatchesTopic(row, subject, normalizedTopic));
+    if (fastMatched.length) {
+      return fastMatched;
+    }
+
+    const collected: any[] = [];
+    let offset = 0;
+
+    while (true) {
+      const query: any = supabase
+        .from(tableName)
+        .select(tableName === 'history_questions' ? HISTORY_QUESTION_COLUMNS : BASE_QUESTION_COLUMNS)
+        .order('id', { ascending: true })
+        .range(offset, offset + PAGE_SIZE - 1);
+
+      const result: any = await query;
+      if (result.error) {
+        throw result.error;
+      }
+
+      const chunk = (result.data ?? []) as any[];
+      const rows = chunk
+        .filter(isQuestionVisible)
+        .filter((row: any) => questionMatchesTopic(row, subject, normalizedTopic));
+
+      collected.push(...rows);
+
+      if (chunk.length < PAGE_SIZE) {
+        break;
+      }
+
+      offset += PAGE_SIZE;
+    }
+
+    return collected;
+  } catch (error) {
+    console.warn(`Topic questions query failed for ${tableName}:`, error instanceof Error ? error.message : error);
+    return [];
+  }
 }
 
 async function fetchQuizQuestions(subject: string, decodedTopic: string) {
@@ -158,140 +298,93 @@ async function fetchQuizQuestions(subject: string, decodedTopic: string) {
     throw new Error(`Invalid subject table for ${subject}`);
   }
 
-  let data: any = null;
-  let lastError: any = null;
-  let questions: any[] = [];
+  let data: any[] = [];
   let fetchError: string | null = null;
 
   try {
     const normalizedTopic = decodedTopic.trim();
-    const escapedTopic = escapeForLike(normalizedTopic);
-    const queryBuilders = [
-      supabase.from(quizTable).select('*').filter('sub_category->>en', 'eq', normalizedTopic).limit('all'),
-      supabase.from(quizTable).select('*').ilike('topic_en', `%${escapedTopic}%`).limit('all'),
-      supabase.from(quizTable).select('*').ilike('topic_hi', `%${escapedTopic}%`).limit('all'),
-      supabase.from(quizTable).select('*').filter('topic->>en', 'ilike', `%${escapedTopic}%`).limit('all'),
-      supabase.from(quizTable).select('*').filter('topic->>hi', 'ilike', `%${escapedTopic}%`).limit('all'),
-    ];
 
-    for (const query of queryBuilders) {
-      const result = await query;
-      if (result.error) {
-        lastError = result.error;
-        continue;
-      }
-
-      if (Array.isArray(result.data) && result.data.length > 0) {
-        data = result.data;
-        lastError = null;
-        break;
-      }
-    }
-
-    if ((!data || data.length === 0)) {
-      const result = await supabase.from(quizTable).select('*').order('id', { ascending: true }).limit('all');
-      if (result.error) {
-        lastError = result.error;
-      } else {
-        data = (result.data as any[]) ?? [];
-        data = data.filter((row: any) => {
-          const { topicEn, topicHi, topicRaw } = extractTopicValues(row);
-          return [topicEn, topicHi, topicRaw].some((text) => topicMatches(text, normalizedTopic));
-        });
-      }
-    }
-
-    if (lastError) {
-      console.error('❌ SUPABASE ERROR:', lastError.message ?? lastError);
-      fetchError = String(lastError.message ?? lastError);
+    if (!SUPABASE_AVAILABLE) {
+      data = (questionsData as any[]).filter((row: any) => questionMatchesTopic(row, subject, normalizedTopic));
     } else {
-      questions = (data ?? []) as any[];
-      if (!questions.length) {
-        fetchError = `No questions found for ${decodedTopic}.`;
+      for (const tableName of [quizTable, 'questions']) {
+        data = await fetchQuestionsFromSupabaseTable(tableName, subject, normalizedTopic);
+        if (data.length) {
+          break;
+        }
       }
+    }
+
+    if (!data.length) {
+      fetchError = `No questions found for ${decodedTopic}.`;
     }
   } catch (err) {
     console.error('❌ QUIZ FETCH ERROR:', err);
     fetchError = 'An unexpected error occurred while fetching quiz questions.';
   }
 
-  return { questions, fetchError };
+  return { questions: data, fetchError };
 }
 
-export async function generateMetadata({ params }: { params: { subject: string; topicSlug: string } }) {
-  const subjectKey = String(params.subject).toLowerCase();
+export async function generateMetadata({ params }: { params: Promise<{ subject: string; topicSlug: string }> }) {
+  const { subject, topicSlug: rawTopicSlug } = await params;
+  const subjectKey = String(subject).toLowerCase();
   const subjectConfig = SUBJECT_TABLES[subjectKey];
 
   if (!subjectConfig) {
-    return { title: 'Topic not found | Questionwale' };
+    return {
+      title: 'Topic not found',
+      robots: { index: false, follow: true },
+    };
   }
 
-  const topicSlug = decodeTopicSlug(params.topicSlug);
+  const topicSlug = decodeTopicSlug(rawTopicSlug);
   const topic = topicSlug.replace(/-/g, ' ');
 
-  return {
-    title: `${subjectConfig.label}: ${topic} Quiz`,
-    description: `Practice ${topic} questions for ${subjectConfig.label}.`,
-  };
+  return buildQuizMetadata(subjectConfig.label, topic, `/${subjectKey}/topics/${slugifySubject(topicSlug)}`);
 }
 
-export default async function TopicPage({ params }: { params: { subject: string; topicSlug: string } }) {
-  const subjectKey = String(params.subject).toLowerCase();
+export default async function TopicPage({ params }: { params: Promise<{ subject: string; topicSlug: string }> }) {
+  const { subject, topicSlug: rawTopicSlug } = await params;
+  const subjectKey = String(subject).toLowerCase();
   const subjectConfig = SUBJECT_TABLES[subjectKey];
 
   if (!subjectConfig) {
     return redirect('/subjects');
   }
 
-  const topicSlug = decodeTopicSlug(String(params.topicSlug ?? '').trim());
+  const topicSlug = decodeTopicSlug(String(rawTopicSlug ?? '').trim());
   const normalizedTopicSlug = slugifySubject(topicSlug);
-
-  let topics: TopicItem[] = [];
-  try {
-    topics = await fetchTopics(subjectConfig.table);
-  } catch (error) {
-    console.error('Error fetching topics for', subjectKey, error);
-    return redirect(`/${subjectKey}`);
-  }
-
-  const findTopicBySlug = (slug: string) => {
-    const exact = topics.find((topic) => slugifySubject(topic.en || topic.hi) === slug);
-    if (exact) return exact;
-
-    const fuzzy = topics.find((topic) => {
-      const topicSlugs = [topic.en, topic.hi]
-        .filter(Boolean)
-        .map((value) => slugifySubject(value));
-
-      return topicSlugs.some((topicSlugValue) =>
-        topicSlugValue === slug || slug.includes(topicSlugValue) || topicSlugValue.includes(slug)
-      );
-    });
-    if (fuzzy) return fuzzy;
-
-    const slugWords = slug.split('-').filter(Boolean);
-    return topics.find((topic) => {
-      const combined = `${topic.en} ${topic.hi}`.toLowerCase();
-      const matchedWords = slugWords.filter((word) => combined.includes(word));
-      return matchedWords.length >= Math.max(3, Math.floor(slugWords.length * 0.6));
-    });
-  };
-
-  const topicItem = findTopicBySlug(normalizedTopicSlug);
-  const decodedTopic = topicItem?.en || topicItem?.hi || topicSlug.replace(/-/g, ' ');
+  const decodedTopic = normalizedTopicSlug.replace(/-/g, ' ').trim();
 
   if (!decodedTopic) {
-    return redirect(`/${subjectKey}`);
+    return permanentRedirect(`/${subjectKey}`);
   }
 
   const { questions, fetchError } = await fetchQuizQuestions(subjectKey, decodedTopic);
+  const topicPath = `/${subjectKey}/topics/${slugifySubject(decodedTopic)}`;
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: BASE_URL },
+      { '@type': 'ListItem', position: 2, name: subjectConfig.label, item: `${BASE_URL}/${subjectKey}` },
+      { '@type': 'ListItem', position: 3, name: decodedTopic, item: `${BASE_URL}${topicPath}` },
+    ],
+  };
 
   return (
-    <ClientQuiz
-      questions={questions ?? []}
-      decodedTopic={decodedTopic}
-      subject={subjectKey}
-      fetchError={fetchError}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <ClientQuiz
+        questions={questions ?? []}
+        decodedTopic={decodedTopic}
+        subject={subjectKey}
+        fetchError={fetchError}
+      />
+    </>
   );
 }

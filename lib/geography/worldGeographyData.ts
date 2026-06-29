@@ -1,0 +1,228 @@
+import type { StructuredTopicGroup } from '@/lib/geography/physicalGeographyData';
+
+export const WORLD_GEOGRAPHY_DATA: StructuredTopicGroup[] = [
+  {
+    id: 1,
+    title: 'Continents | महाद्वीप',
+    subtopics: [
+      'Asia | एशिया',
+      'Europe | यूरोप',
+      'Africa | अफ्रीका',
+      'North America | उत्तरी अमेरिका',
+      'South America | दक्षिण अमेरिका',
+      'Australia & Oceania | ऑस्ट्रेलिया और ओशियानिया',
+      'Antarctica | अंटार्कटिका',
+    ],
+  },
+  {
+    id: 2,
+    title: 'Mountains & Plateaus | पर्वत और पठार',
+    subtopics: [
+      'Major Mountain Ranges | प्रमुख पर्वत श्रेणियाँ',
+      'Important Peaks | महत्वपूर्ण शिखर',
+      'Major Plateaus | प्रमुख पठार',
+      'Mountain Passes | पर्वतीय दर्रे',
+      'Highlands | उच्चभूमि',
+    ],
+  },
+  {
+    id: 3,
+    title: 'Plains, Deserts & Grasslands | मैदान, मरुस्थल और घास के मैदान',
+    subtopics: [
+      'Major Plains | प्रमुख मैदान',
+      'Major Deserts | प्रमुख मरुस्थल',
+      'Grasslands | घास के मैदान',
+      'Steppes | स्टेपी',
+      'Tundra Regions | टुंड्रा क्षेत्र',
+    ],
+  },
+  {
+    id: 4,
+    title: 'Rivers & Lakes | नदियाँ और झीलें',
+    subtopics: [
+      'Major Rivers | प्रमुख नदियाँ',
+      'River Basins | नदी बेसिन',
+      'Important Lakes | महत्वपूर्ण झीलें',
+      'Inland Seas | अंतर्देशीय समुद्र',
+      'Waterfalls | जलप्रपात',
+    ],
+  },
+  {
+    id: 5,
+    title: 'Oceans & Seas | महासागर और समुद्र',
+    subtopics: [
+      'Major Oceans | प्रमुख महासागर',
+      'Major Seas | प्रमुख समुद्र',
+      'Gulfs & Bays | खाड़ियाँ और अखाड़े',
+      'Important Oceanic Features | महत्वपूर्ण महासागरीय विशेषताएँ',
+    ],
+  },
+  {
+    id: 6,
+    title: 'Islands, Peninsulas & Landforms | द्वीप, प्रायद्वीप और भू-आकृतियाँ',
+    subtopics: [
+      'Major Islands | प्रमुख द्वीप',
+      'Island Groups | द्वीप समूह',
+      'Peninsulas | प्रायद्वीप',
+      'Isthmuses | स्थलसंधि',
+      'Capes | अग्र',
+    ],
+  },
+  {
+    id: 7,
+    title: 'Climate Regions | जलवायु क्षेत्र',
+    subtopics: [
+      'Equatorial Climate | भूमध्यरेखीय जलवायु',
+      'Tropical Climate | उष्णकटिबंधीय जलवायु',
+      'Desert Climate | मरुस्थलीय जलवायु',
+      'Mediterranean Climate | भूमध्यसागरीय जलवायु',
+      'Temperate Climate | समशीतोष्ण जलवायु',
+      'Polar Climate | ध्रुवीय जलवायु',
+      'Highland Climate | पर्वतीय जलवायु',
+    ],
+  },
+  {
+    id: 8,
+    title: 'Natural Vegetation | प्राकृतिक वनस्पति',
+    subtopics: [
+      'Tropical Rainforests | उष्णकटिबंधीय वर्षावन',
+      'Tropical Deciduous Forests | उष्णकटिबंधीय पर्णपाती वन',
+      'Temperate Forests | समशीतोष्ण वन',
+      'Coniferous Forests (Taiga) | शंकुधारी वन (टाइगा)',
+      'Mediterranean Vegetation | भूमध्यसागरीय वनस्पति',
+      'Grasslands | घास के मैदान',
+      'Desert Vegetation | मरुस्थलीय वनस्पति',
+      'Tundra Vegetation | टुंड्रा वनस्पति',
+    ],
+  },
+  {
+    id: 9,
+    title: 'World Agriculture | विश्व कृषि',
+    subtopics: [
+      'Agricultural Regions | कृषि क्षेत्र',
+      'Farming Systems | कृषि प्रणालियाँ',
+      'Major Food Crops | प्रमुख खाद्य फसलें',
+      'Cash Crops | नकदी फसलें',
+      'Plantation Agriculture | बागान कृषि',
+      'Commercial Farming | वाणिज्यिक कृषि',
+      'Livestock & Fisheries | पशुपालन और मत्स्य पालन',
+    ],
+  },
+  {
+    id: 10,
+    title: 'Mineral Resources & Mining | खनिज संसाधन और खनन',
+    subtopics: [
+      'Metallic Minerals | धात्विक खनिज',
+      'Non-Metallic Minerals | अधात्विक खनिज',
+      'Major Mining Regions | प्रमुख खनन क्षेत्र',
+      'Mineral Distribution | खनिज वितरण',
+      'Mineral Producing Countries | खनिज उत्पादक देश',
+    ],
+  },
+  {
+    id: 11,
+    title: 'Energy Resources | ऊर्जा संसाधन',
+    subtopics: [
+      'Coal | कोयला',
+      'Petroleum | पेट्रोलियम',
+      'Natural Gas | प्राकृतिक गैस',
+      'Hydropower | जल विद्युत',
+      'Nuclear Energy | परमाणु ऊर्जा',
+      'Renewable Energy | नवीकरणीय ऊर्जा',
+    ],
+  },
+  {
+    id: 12,
+    title: 'World Industries | विश्व उद्योग',
+    subtopics: [
+      'Iron & Steel Industry | लोहा और इस्पात उद्योग',
+      'Textile Industry | वस्त्र उद्योग',
+      'Automobile Industry | ऑटोमोबाइल उद्योग',
+      'IT Industry | सूचना प्रौद्योगिकी उद्योग',
+      'Petrochemical Industry | पेट्रो-रसायन उद्योग',
+      'Major Industrial Regions | प्रमुख औद्योगिक क्षेत्र',
+    ],
+  },
+  {
+    id: 13,
+    title: 'Population & Human Settlements | जनसंख्या और मानव बस्तियाँ',
+    subtopics: [
+      'Population Distribution | जनसंख्या वितरण',
+      'Population Density | जनसंख्या घनत्व',
+      'Population Growth | जनसंख्या वृद्धि',
+      'Migration | प्रवास',
+      'Urbanization | शहरीकरण',
+      'Rural Settlements | ग्रामीण बस्तियाँ',
+      'Urban Settlements | शहरी बस्तियाँ',
+    ],
+  },
+  {
+    id: 14,
+    title: 'World Mapping | विश्व मानचित्रण',
+    subtopics: [
+      'Countries & Capitals | देश और राजधानियाँ',
+      'Important Cities | महत्वपूर्ण शहर',
+      'Mountains | पर्वत',
+      'Rivers | नदियाँ',
+      'Lakes | झीलें',
+      'Oceans & Seas | महासागर और समुद्र',
+      'Deserts | मरुस्थल',
+      'Islands | द्वीप',
+      'Important Locations | महत्वपूर्ण स्थान',
+      'Map-based PYQs | मानचित्र आधारित PYQ',
+    ],
+  },
+  {
+    id: 15,
+    title: 'Regional Geography | प्रादेशिक भूगोल',
+    subtopics: [
+      'East Asia | पूर्व एशिया',
+      'South-East Asia | दक्षिण-पूर्व एशिया',
+      'South Asia | दक्षिण एशिया',
+      'Central Asia | मध्य एशिया',
+      'Middle East | मध्य पूर्व',
+      'Europe | यूरोप',
+      'Africa | अफ्रीका',
+      'North America | उत्तरी अमेरिका',
+      'South America | दक्षिण अमेरिका',
+      'Australia & Oceania | ऑस्ट्रेलिया और ओशियानिया',
+    ],
+  },
+  {
+    id: 16,
+    title: 'International Waterways | अंतर्राष्ट्रीय जलमार्ग',
+    subtopics: [
+      'Suez Canal | स्वेज नहर',
+      'Panama Canal | पनामा नहर',
+      'Kiel Canal | कील नहर',
+      'Strait of Malacca | मलक्का जलडमरूमध्य',
+      'Strait of Hormuz | होर्मुज जलडमरूमध्य',
+      'Bosporus Strait | बोस्फोरस जलडमरूमध्य',
+      'Bering Strait | बेरिंग जलडमरूमध्य',
+      'Bab-el-Mandeb | बाब अल मंदeb',
+      'Drake Passage | ड्रेक जलसंधि',
+    ],
+  },
+  {
+    id: 17,
+    title: 'Geopolitical Geography | भू-राजनीतिक भूगोल',
+    subtopics: [
+      'International Boundaries | अंतर्राष्ट्रीय सीमाएँ',
+      'Border Disputes | सीमा विवाद',
+      'Strategic Chokepoints | रणनीतिक संकीर्ण बिंदु',
+      'Exclusive Economic Zone (EEZ) | विशेष आर्थिक क्षेत्र (EEZ)',
+      'Polar Regions | ध्रुवीय क्षेत्र',
+      'World Time Zones | विश्व समय क्षेत्र',
+    ],
+  },
+];
+
+export const WORLD_GEOGRAPHY_PAGE_TITLE = {
+  en: 'World Geography',
+  hi: 'विश्व भूगोल',
+};
+
+export const WORLD_GEOGRAPHY_SECTION_LABEL = {
+  en: 'World Geography Topics',
+  hi: 'विश्व भूगोल के विषय',
+};

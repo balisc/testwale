@@ -1,5 +1,3 @@
-import Script from 'next/script';
-
 type QuizJsonLdProps = {
   quizName: string;
   questionText: string;
@@ -34,7 +32,7 @@ export default function QuizJsonLd({ quizName, questionText, options, correctAns
   };
 
   return (
-    <Script
+    <script
       id="questionwale-quiz-jsonld"
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

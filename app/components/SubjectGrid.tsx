@@ -17,6 +17,7 @@ const translations: Record<Language, Record<string, string>> = {
     economics: 'Economics',
     math: 'Math',
     science: 'Science',
+    generalKnowledge: 'General Knowledge',
     currentAffairs: 'Current Affairs',
     reasoning: 'Reasoning',
     startPractice: 'Start Practice',
@@ -32,6 +33,7 @@ const translations: Record<Language, Record<string, string>> = {
     economics: 'अर्थशास्त्र',
     math: 'गणित',
     science: 'विज्ञान',
+    generalKnowledge: 'सामान्य ज्ञान',
     currentAffairs: 'वर्तमान मामले',
     reasoning: 'तर्क',
     startPractice: 'अभ्यास शुरू करें',
@@ -55,6 +57,7 @@ const subjects: SubjectConfig[] = [
   { id: 'economics', titleKey: 'economics', iconName: 'DollarSign', iconBgColor: 'bg-amber-600', iconColor: 'text-white' },
   { id: 'math', titleKey: 'math', iconName: 'Calculator', iconBgColor: 'bg-orange-600', iconColor: 'text-white' },
   { id: 'science', titleKey: 'science', iconName: 'Microscope', iconBgColor: 'bg-indigo-600', iconColor: 'text-white' },
+  { id: 'general-knowledge', titleKey: 'generalKnowledge', iconName: 'BookOpen', iconBgColor: 'bg-teal-600', iconColor: 'text-white' },
   { id: 'current-affairs', titleKey: 'currentAffairs', iconName: 'Newspaper', iconBgColor: 'bg-rose-600', iconColor: 'text-white' },
   { id: 'reasoning', titleKey: 'reasoning', iconName: 'Brain', iconBgColor: 'bg-cyan-600', iconColor: 'text-white' },
 ];
@@ -116,6 +119,49 @@ export default function SubjectGrid({ counts: initialCounts }: SubjectGridProps)
           const hasTopicCount = !loading && subjectCount !== undefined && subjectCount > 0;
           const displayCount = loading ? '...' : subjectCount !== undefined ? subjectCount : 0;
 
+          const isSpecialSubject = subject.id === 'science' || subject.id === 'history';
+          const href = `/${subject.id}`;
+
+          if (isSpecialSubject) {
+            return (
+              <Link
+                key={subject.id}
+                href={href}
+                className="group w-full text-left"
+              >
+                <div className="bg-white border border-slate-100 p-6 rounded-2xl relative shadow-sm hover:border-purple-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 ease-out cursor-pointer flex items-start gap-4 h-full">
+                  {!loading && !hasTopicCount && (
+                    <div className="absolute top-3 right-3 bg-slate-100 text-slate-500 border border-slate-200/60 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">
+                      Coming Soon
+                    </div>
+                  )}
+
+                  {/* Left Side Icon Box */}
+                  <div className={`${subject.iconBgColor} w-12 h-12 rounded-xl flex items-center justify-center shrink-0`}>
+                    <IconComponent className={`w-6 h-6 ${subject.iconColor}`} />
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="flex-1 flex flex-col">
+                    <h3 className="text-slate-900 font-bold text-lg mb-0.5">
+                      {t[subject.titleKey as keyof typeof t] || subject.titleKey}
+                    </h3>
+                    <p className="text-sm text-slate-500 mb-auto">
+                      {displayCount.toLocaleString()} {t.questions}
+                    </p>
+
+                    <div
+                      className="w-full text-sm font-semibold py-2.5 rounded-xl mt-5 text-center block transition-all duration-200 bg-slate-50 group-hover:bg-purple-600 group-hover:text-white text-slate-700"
+                      aria-label={`${t.startPractice} - ${t[subject.titleKey as keyof typeof t]}`}
+                    >
+                      {t.startPractice}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          }
+
           return (
             <Link
               key={subject.id}
@@ -129,12 +175,10 @@ export default function SubjectGrid({ counts: initialCounts }: SubjectGridProps)
                   </div>
                 )}
 
-                {/* Left Side Icon Box */}
                 <div className={`${subject.iconBgColor} w-12 h-12 rounded-xl flex items-center justify-center shrink-0`}>
                   <IconComponent className={`w-6 h-6 ${subject.iconColor}`} />
                 </div>
 
-                {/* Card Body */}
                 <div className="flex-1 flex flex-col">
                   <h3 className="text-slate-900 font-bold text-lg mb-0.5">
                     {t[subject.titleKey as keyof typeof t] || subject.titleKey}
@@ -143,13 +187,12 @@ export default function SubjectGrid({ counts: initialCounts }: SubjectGridProps)
                     {displayCount.toLocaleString()} {t.questions}
                   </p>
 
-                  <button
-                    className={`w-full text-sm font-semibold py-2.5 rounded-xl mt-5 text-center block transition-all duration-200 ${hasTopicCount ? 'bg-slate-50 group-hover:bg-purple-600 group-hover:text-white text-slate-700' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
+                  <div
+                    className={`w-full text-sm font-semibold py-2.5 rounded-xl mt-5 text-center block transition-all duration-200 ${hasTopicCount ? 'bg-slate-50 group-hover:bg-purple-600 group-hover:text-white text-slate-700' : 'bg-slate-100 text-slate-400'}`}
                     aria-label={`${t.startPractice} - ${t[subject.titleKey as keyof typeof t]}`}
-                    disabled={!hasTopicCount}
                   >
                     {t.startPractice}
-                  </button>
+                  </div>
                 </div>
               </div>
             </Link>

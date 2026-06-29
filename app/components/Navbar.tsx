@@ -71,12 +71,15 @@ export default function Navbar() {
           >
             <Image
               src="/logo/questionwale_logo.webp"
-              alt="Questionwale favicon"
+              alt={`${activeTranslation.brand} logo`}
               width={38}
               height={38}
+              priority
               className="h-9 w-9 px-.9 rounded-full"
             />
-            <span className="truncate">{activeTranslation.brand}</span>
+            <span className="truncate" aria-hidden="true">
+              {activeTranslation.brand}
+            </span>
           </Link>
         </div>
 
@@ -146,6 +149,8 @@ export default function Navbar() {
             onClick={() => setIsOpen((current) => !current)}
             className="md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
             aria-label="Toggle menu"
+            aria-expanded={isOpen}
+            aria-controls="mobile-menu"
           >
             <div className="space-y-1.5">
               <span className={`block w-6 h-0.5 bg-black transition-all ${isOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
@@ -157,7 +162,7 @@ export default function Navbar() {
       </div>
 
       {isOpen && (
-        <div className="md:hidden absolute top-16 left-0 w-full bg-white border-b border-gray-200 shadow-xl py-6 px-6 z-40">
+        <div id="mobile-menu" className="md:hidden absolute top-16 left-0 w-full bg-white border-b border-gray-200 shadow-xl py-6 px-6 z-40">
           <div className="flex flex-col gap-5">
             <Link
               href="/"

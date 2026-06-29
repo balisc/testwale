@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation';
+import { permanentRedirect } from 'next/navigation';
 import { slugifySubject } from '@/lib/slugGenerator';
 
 const decodeTopicSlug = (slug: string) => {
@@ -10,12 +10,12 @@ const decodeTopicSlug = (slug: string) => {
   }
 };
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 3600;
 
-export default function RedirectTopicPage({ params }: { params: { subject: string; topicSlug: string } }) {
-  const subject = String(params.subject ?? '').trim().toLowerCase();
-  const decodedTopic = decodeTopicSlug(String(params.topicSlug ?? '').trim());
+export default async function RedirectTopicPage({ params }: { params: Promise<{ subject: string; topicSlug: string }> }) {
+  const { subject: rawSubject, topicSlug: rawTopicSlug } = await params;
+  const subject = String(rawSubject ?? '').trim().toLowerCase();
+  const decodedTopic = decodeTopicSlug(String(rawTopicSlug ?? '').trim());
   const topicSlug = slugifySubject(decodedTopic);
-  redirect(`/${subject}/topics/${topicSlug}`);
+  permanentRedirect(`/${subject}/topics/${topicSlug}`);
 }

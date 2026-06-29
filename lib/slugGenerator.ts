@@ -128,30 +128,33 @@ export function generateSeoSlug(questionText: LocalizedText, questionId: string,
   return generateQuestionSlug(questionText, questionId, language);
 }
 
-export function buildQuestionUrl(subject: string | LocalizedText, questionId: string, questionText: LocalizedText, language: 'en' | 'hi' = 'en'): string {
+export function buildQuestionUrl(topic: string | LocalizedText, questionId: string, questionText: LocalizedText, language: 'en' | 'hi' = 'en'): string {
+  const topicSlug = slugifySubject(topic);
   const slugKey = generateQuestionSlug(questionText, questionId, language);
-  return `/question/${slugKey}`;
+  return topicSlug ? `/question/${topicSlug}/${slugKey}` : `/question/${slugKey}`;
 }
 
 export const buildQuestionPath = buildQuestionUrl; // backward compatibility alias
 
 export function extractQuestionIdFromSlug(slug: string): string {
-  const decodedSlug = decodeURIComponent(slug);
-  const match = decodedSlug.match(/-?([a-zA-Z0-9_-]+)$/);
-  if (match && match[1]) {
-    const id = match[1];
-    if (/^[0-9]+$/.test(id)) {
-      return id;
-    }
+  const decodedSlug = decodeURIComponent(slug).trim();
+  if (!decodedSlug) return '';
+
+  const uuidMatch = decodedSlug.match(/([0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12})$/i);
+  if (uuidMatch?.[1]) {
+    return uuidMatch[1];
+  }
+
+  const numericMatch = decodedSlug.match(/-(\d+)$/);
+  if (numericMatch?.[1]) {
+    return numericMatch[1];
+  }
+
+  const tokenMatch = decodedSlug.match(/-([a-zA-Z0-9_-]+)$/);
+  if (tokenMatch?.[1]) {
+    return tokenMatch[1];
   }
 
   const parts = decodedSlug.split('-');
-  const lastPart = parts[parts.length - 1];
-
-  if (/^[0-9]+$/.test(lastPart)) {
-    return lastPart;
-  }
-
-  const alnum = lastPart.match(/[a-zA-Z0-9_-]+$/);
-  return alnum ? alnum[0] : lastPart;
+  return parts[parts.length - 1] || decodedSlug;
 }

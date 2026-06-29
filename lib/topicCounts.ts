@@ -16,15 +16,51 @@ export function normalizeTopicValue(value: unknown): string {
   return String(value).trim();
 }
 
-async function countForColumn(tableName: string, column: string, value: string): Promise<number> {
+function escapeForLike(value: string) {
+  return value.replace(/([%_\\])/g, '\\$1');
+}
+
+function normalizeSubjectSearchValue(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[-_]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isUnknownColumnError(error: any) {
+  const message = String(error?.message ?? '').replace(/\s+/g, ' ');
+  return /column .* does not exist|invalid input syntax for type boolean|operator does not exist|Could not find the table|invalid input syntax for type json/i.test(message);
+}
+
+function addSubjectFilter(query: any, subjectKey: string, subjectColumn = 'subject') {
+  const escaped = escapeForLike(subjectKey);
+  const escapedWithSpaces = escapeForLike(normalizeSubjectSearchValue(subjectKey));
+  return query.or(
+    `${subjectColumn}->>en.ilike.%${escaped}%,${subjectColumn}->>hi.ilike.%${escaped}%,${subjectColumn}->>en.ilike.%${escapedWithSpaces}%,${subjectColumn}->>hi.ilike.%${escapedWithSpaces}%`
+  );
+}
+
+async function countForColumn(
+  tableName: string,
+  column: string,
+  value: string,
+  subjectKey?: string,
+  subjectColumn = 'subject'
+): Promise<number> {
   if (!value) return 0;
 
-  const result: any = await supabase
-    .from(tableName)
-    .select('*', { count: 'exact', head: true })
-    .eq(column, value);
+  let query: any = supabase.from(tableName).select('*', { count: 'exact', head: true }).eq(column, value);
+  if (subjectKey) {
+    query = addSubjectFilter(query, subjectKey, subjectColumn);
+  }
+
+  const result: any = await query;
 
   if (result.error) {
+    if (isUnknownColumnError(result.error)) {
+      return 0;
+    }
     console.warn(`Topic count query failed for ${column}=${value}:`, result.error.message);
     return 0;
   }
@@ -32,16 +68,55 @@ async function countForColumn(tableName: string, column: string, value: string):
   return typeof result.count === 'number' ? result.count : 0;
 }
 
-async function countForJsonPath(tableName: string, path: string, value: string): Promise<number> {
+async function countForJsonPath(
+  tableName: string,
+  path: string,
+  value: string,
+  subjectKey?: string,
+  subjectColumn = 'subject'
+): Promise<number> {
   if (!value) return 0;
 
-  const result: any = await supabase
-    .from(tableName)
-    .select('*', { count: 'exact', head: true })
-    .filter(path, 'eq', value);
+  let query: any = supabase.from(tableName).select('*', { count: 'exact', head: true }).filter(path, 'eq', value);
+  if (subjectKey) {
+    query = addSubjectFilter(query, subjectKey, subjectColumn);
+  }
+
+  const result: any = await query;
 
   if (result.error) {
+    if (isUnknownColumnError(result.error)) {
+      return 0;
+    }
     console.warn(`Topic count query failed for ${path}=${value}:`, result.error.message);
+    return 0;
+  }
+
+  return typeof result.count === 'number' ? result.count : 0;
+}
+
+async function countForTextLike(
+  tableName: string,
+  column: string,
+  value: string,
+  subjectKey?: string,
+  subjectColumn = 'subject'
+): Promise<number> {
+  if (!value) return 0;
+
+  const escaped = escapeForLike(value);
+  let query: any = supabase.from(tableName).select('*', { count: 'exact', head: true }).filter(column, 'ilike', `%${escaped}%`);
+  if (subjectKey) {
+    query = addSubjectFilter(query, subjectKey, subjectColumn);
+  }
+
+  const result: any = await query;
+
+  if (result.error) {
+    if (isUnknownColumnError(result.error)) {
+      return 0;
+    }
+    console.warn(`Topic count query failed for ${column} LIKE ${value}:`, result.error.message);
     return 0;
   }
 
@@ -50,7 +125,9 @@ async function countForJsonPath(tableName: string, path: string, value: string):
 
 export async function fetchExactTopicCounts(
   tableName: string,
-  topics: TopicCountInput[]
+  topics: TopicCountInput[],
+  subjectKey?: string,
+  subjectColumn = 'subject'
 ): Promise<TopicCountMap> {
   const counts = new Map<string, number>();
 
@@ -66,11 +143,11 @@ export async function fetchExactTopicCounts(
       }
 
       const [topicEnCount, topicHiCount, topicJsonEnCount, topicJsonHiCount, topicRawCount] = await Promise.all([
-        countForColumn(tableName, 'topic_en', normalizedEn),
-        countForColumn(tableName, 'topic_hi', normalizedHi),
-        countForJsonPath(tableName, 'topic->>en', normalizedEn),
-        countForJsonPath(tableName, 'topic->>hi', normalizedHi),
-        countForColumn(tableName, 'topic', normalizedEn || normalizedHi),
+        countForColumn(tableName, 'topic_en', normalizedEn, subjectKey, subjectColumn),
+        countForColumn(tableName, 'topic_hi', normalizedHi, subjectKey, subjectColumn),
+        countForJsonPath(tableName, 'topic->>en', normalizedEn, subjectKey, subjectColumn),
+        countForJsonPath(tableName, 'topic->>hi', normalizedHi, subjectKey, subjectColumn),
+        countForTextLike(tableName, 'topic', normalizedEn || normalizedHi, subjectKey, subjectColumn),
       ]);
 
       counts.set(topicKey, Math.max(topicEnCount, topicHiCount, topicJsonEnCount, topicJsonHiCount, topicRawCount));

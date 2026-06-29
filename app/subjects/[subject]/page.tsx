@@ -1,7 +1,6 @@
-import { redirect } from 'next/navigation';
-import supabase from '../../../lib/supabase';
+import { permanentRedirect } from 'next/navigation';
 import { slugifySubject } from '@/lib/slugGenerator';
-import { buildTopicCountKey, fetchExactTopicCounts } from '@/lib/topicCounts';
+import { fetchTopicsFromQuestions } from '@/lib/questionTopics';
 
 const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
   history: { table: 'history_questions', label: 'History' },
@@ -15,8 +14,7 @@ const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
   reasoning: { table: 'reasoning_questions', label: 'Reasoning' },
 };
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 3600;
 
 type SearchParams = {
   topic?: string | string[];
@@ -29,84 +27,63 @@ function slugifyTopic(topic: string) {
   return encodeURIComponent(slugifySubject(topic));
 }
 
-async function fetchTopics(tableName: string) {
-  const { data, error } = await supabase.from(tableName).select('*').limit('all');
-  if (error) {
-    console.error('❌ SUPABASE ERROR:', error.message);
-    throw new Error(error.message);
-  }
-
-  const rows = (data ?? []) as Array<{
-    topic?: { en?: string; hi?: string } | null;
-    topic_en?: string | null;
-    topic_hi?: string | null;
-  }>;
-
-  const seen = new Set<string>();
-  const topicItems: Array<{ en: string; hi: string; count: number }> = [];
-
-  for (const row of rows) {
-    const topicEn = String(row.topic?.en ?? row.topic_en ?? '').trim();
-    const topicHi = String(row.topic?.hi ?? row.topic_hi ?? '').trim();
-    const key = `${topicEn}||${topicHi}`;
-    if (!topicEn && !topicHi) continue;
-    if (seen.has(key)) continue;
-
-    seen.add(key);
-    topicItems.push({ en: topicEn, hi: topicHi, count: 0 });
-  }
-
-  const exactCounts = await fetchExactTopicCounts(tableName, topicItems);
-
-  return topicItems.map((topic) => ({
-    ...topic,
-    count: exactCounts.get(buildTopicCountKey(topic)) ?? 0,
-  }));
+async function fetchTopics(subjectKey: string) {
+  return fetchTopicsFromQuestions(subjectKey);
 }
 
-export default async function LegacySubjectPage({ params, searchParams }: { params: { subject: string }; searchParams: SearchParams }) {
-  const subjectKey = String(params.subject).toLowerCase();
+export default async function LegacySubjectPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ subject: string }>;
+  searchParams: Promise<SearchParams>;
+}) {
+  const { subject } = await params;
+  const resolvedSearchParams = await searchParams;
+  const subjectKey = String(subject).toLowerCase();
   const subjectConfig = SUBJECT_TABLES[subjectKey];
 
   if (!subjectConfig) {
-    return redirect('/subjects');
+    return permanentRedirect('/subjects');
   }
 
-  const topicKeyParam = Array.isArray(searchParams.topicKey) ? searchParams.topicKey[0] : searchParams.topicKey;
-  const topicParam = Array.isArray(searchParams.topic) ? searchParams.topic[0] : searchParams.topic;
+  const topicKeyParam = Array.isArray(resolvedSearchParams.topicKey)
+    ? resolvedSearchParams.topicKey[0]
+    : resolvedSearchParams.topicKey;
+  const topicParam = Array.isArray(resolvedSearchParams.topic) ? resolvedSearchParams.topic[0] : resolvedSearchParams.topic;
   const topicValue = String(topicParam ?? '').trim();
 
   if (topicKeyParam) {
     const idx = Number.parseInt(String(topicKeyParam), 10);
     if (!Number.isFinite(idx) || idx < 0) {
-      return redirect(`/${subjectKey}`);
+      return permanentRedirect(`/${subjectKey}`);
     }
 
     let topicsList: Array<{ en: string; hi: string }> = [];
     try {
-      topicsList = await fetchTopics(subjectConfig.table);
+      topicsList = await fetchTopics(subjectKey);
     } catch (err) {
-      return redirect(`/${subjectKey}`);
+      return permanentRedirect(`/${subjectKey}`);
     }
 
     const topicItem = topicsList[idx];
     const decodedTopic = topicItem ? (topicItem.en || topicItem.hi || '').trim() : '';
     if (decodedTopic) {
-      return redirect(`/${subjectKey}/topics/${slugifyTopic(decodedTopic)}`);
+      return permanentRedirect(`/${subjectKey}/topics/${slugifyTopic(decodedTopic)}`);
     }
 
-    return redirect(`/${subjectKey}`);
+    return permanentRedirect(`/${subjectKey}`);
   }
 
   if (topicValue) {
-    const slugParam = Array.isArray(searchParams.slug) ? searchParams.slug[0] : searchParams.slug;
+    const slugParam = Array.isArray(resolvedSearchParams.slug) ? resolvedSearchParams.slug[0] : resolvedSearchParams.slug;
     const slugValue = slugParam ? String(slugParam).trim() : '';
     if (slugValue) {
-      return redirect(`/${subjectKey}/${encodeURIComponent(slugValue)}`);
+      return permanentRedirect(`/${subjectKey}/topics/${slugifyTopic(slugValue)}`);
     }
 
-    return redirect(`/${subjectKey}/topics/${slugifyTopic(topicValue)}`);
+    return permanentRedirect(`/${subjectKey}/topics/${slugifyTopic(topicValue)}`);
   }
 
-  return redirect(`/${subjectKey}`);
+  return permanentRedirect(`/${subjectKey}`);
 }

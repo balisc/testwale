@@ -4,60 +4,55 @@ import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import LayoutShell from './components/LayoutShell';
 import { LanguageProvider } from '../lib/LanguageContext';
+import { BASE_URL, siteMetadata, SITE_NAME } from '../lib/seo';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-plus-jakarta-sans', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: {
-    default: 'Questionwale',
-    template: '%s | Questionwale',
-  },
-  description: 'Questionwale exam prep and practice engine. Solve MCQs, topic quizzes, and previous-year questions to boost your competitive exam readiness.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://questionwale.com'),
-  openGraph: {
-    title: 'Questionwale',
-    description: 'Questionwale exam prep and practice engine. Solve MCQs, topic quizzes, and previous-year questions to boost your competitive exam readiness.',
-    type: 'website',
-    siteName: 'Questionwale',
-    images: [
-      {
-        url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://questionwale.com'}/og-image.png`,
-        alt: 'Questionwale exam practice',
-      },
-    ],
-  },
+  ...siteMetadata,
   icons: {
-    icon: '/logo/questionwale_logo.webp',
+    icon: [{ url: '/logo/questionwale_logo.webp', type: 'image/webp' }],
+    shortcut: '/logo/questionwale_logo.webp',
     apple: '/logo/questionwale_logo.webp',
   },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Questionwale',
-    description: 'Questionwale exam prep and practice engine. Solve MCQs, topic quizzes, and previous-year questions to boost your competitive exam readiness.',
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
+};
+
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'EducationalOrganization',
+  name: SITE_NAME,
+  url: BASE_URL,
+  logo: `${BASE_URL}/logo/questionwale_logo.webp`,
+  description: siteMetadata.description,
+  areaServed: 'India',
+  knowsAbout: ['UPSC', 'State PSC', 'Competitive exams', 'MCQ practice', 'General studies'],
+};
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE_NAME,
+  url: BASE_URL,
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: `${BASE_URL}/?search={search_term_string}`,
+    'query-input': 'required name=search_term_string',
   },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${plusJakarta.variable} scroll-auto`}>
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/logo/questionwale_logo.webp" />
-      </head>
       <body suppressHydrationWarning className="min-h-screen bg-[#F8FAFC] text-slate-900 antialiased font-body m-0 p-0 overflow-x-hidden">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <LanguageProvider>
           <LayoutShell>{children}</LayoutShell>
         </LanguageProvider>

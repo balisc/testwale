@@ -3,7 +3,8 @@ import questionsData from '@/data/questions.json';
 import supabase from '@/lib/supabase';
 import { slugifySubject } from '@/lib/slugGenerator';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
+const PUBLIC_CACHE = 'public, s-maxage=300, stale-while-revalidate=600';
 
 function getSubjectText(subject: unknown) {
   if (!subject) return '';
@@ -113,7 +114,7 @@ export async function GET() {
       },
       {
         headers: {
-          'Cache-Control': 'no-store',
+          'Cache-Control': PUBLIC_CACHE,
         },
       }
     );
@@ -144,7 +145,7 @@ export async function GET() {
       },
       {
         headers: {
-          'Cache-Control': 'no-store',
+          'Cache-Control': PUBLIC_CACHE,
         },
       }
     );

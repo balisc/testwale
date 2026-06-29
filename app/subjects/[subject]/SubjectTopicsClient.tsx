@@ -1,10 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLanguage } from '../../../lib/LanguageContext';
 import { slugifySubject } from '@/lib/slugGenerator';
+import { topicMatches } from '@/lib/topicMatching';
+import StructuredTopicGroups from '@/app/components/StructuredTopicGroups';
+import {
+  PHYSICAL_GEOGRAPHY_DATA,
+  PHYSICAL_GEOGRAPHY_PAGE_TITLE,
+  PHYSICAL_GEOGRAPHY_SECTION_LABEL,
+} from '@/lib/geography/physicalGeographyData';
+import {
+  INDIAN_GEOGRAPHY_DATA,
+  INDIAN_GEOGRAPHY_PAGE_TITLE,
+  INDIAN_GEOGRAPHY_SECTION_LABEL,
+} from '@/lib/geography/indianGeographyData';
+import {
+  WORLD_GEOGRAPHY_DATA,
+  WORLD_GEOGRAPHY_PAGE_TITLE,
+  WORLD_GEOGRAPHY_SECTION_LABEL,
+} from '@/lib/geography/worldGeographyData';
+import {
+  ENVIRONMENT_ECOLOGY_DATA,
+  ENVIRONMENT_ECOLOGY_PAGE_TITLE,
+  ENVIRONMENT_ECOLOGY_SECTION_LABEL,
+} from '@/lib/geography/environmentEcologyData';
 
 type TopicItem = {
   en: string;
@@ -260,25 +282,147 @@ const MARATHA_TOPICS = [
   },
 ];
 
+const MODERN_HISTORY_DATA = [
+  {
+    id: 1,
+    title: 'Advent of Europeans & British Expansion (1498–1857) | यूरोपीय शक्तियों का आगमन और ब्रिटिश विस्तार',
+    subtopics: [
+      'Arrival of European Powers (Portuguese, Dutch, French) | यूरोपीय शक्तियों का आगमन (पुर्तगाली, डच, फ्रांसीसी)',
+      'Establishment of the East India Company & Carnatic Wars | ईस्ट इंडिया कंपनी की स्थापना और कर्नाटक युद्ध',
+      'Battle of Wandiwash (1760) | वांडीवाश का युद्ध (1760)',
+      'British Conquest of Bengal (Battles of Plassey & Buxar) | बंगाल पर ब्रिटिश विजय (प्लासी और बक्सर के युद्ध)',
+      'Treaty of Allahabad (1765) & Diwani Rights | इलाहाबाद की संधि (1765) और दीवानी अधिकार',
+      'Anglo-Mysore and Anglo-Maratha Wars | आंग्ल-मैसूर और आंग्ल-मराठा युद्ध',
+      'Annexation of Punjab and Sindh | पंजाब और सिंध का विलय',
+      'Policies of Expansion (Subsidiary Alliance & Doctrine of Lapse) | विस्तार की नीतियाँ (सहायक संधि और व्यपगत का सिद्धांत)',
+    ],
+  },
+  {
+    id: 2,
+    title: 'British Administrative & Economic Policies (1757–1857) | ब्रिटिश प्रशासनिक एवं आर्थिक नीतियाँ',
+    subtopics: [
+      'Land Revenue Systems (Zamindari, Ryotwari, Mahalwari) | भू-राजस्व व्यवस्थाएँ (जमींदारी, रैयतवारी, महालवारी)',
+      'Commercialization of Agriculture & De-industrialization | कृषि का व्यापारीकरण और विऔद्योगीकरण',
+      "The 'Drain of Wealth' Theory (Dadabhai Naoroji, R.C. Dutt) | 'धन का अपवाह' सिद्धांत (दादाभाई नौरोजी, आर.सी. दत्त)",
+      'Development of Civil Services, Police, and Judiciary | सिविल सेवा, पुलिस और न्यायपालिका का विकास',
+      'Development of Press and Modern Education | प्रेस और आधुनिक शिक्षा का विकास',
+      'Development of Railways, Telegraph, and Postal System | रेलवे, तार और डाक व्यवस्था का विकास',
+    ],
+  },
+  {
+    id: 3,
+    title: 'Early Uprisings & The Revolt of 1857 (1763–1860) | प्रारंभिक विद्रोह और 1857 का विद्रोह',
+    subtopics: [
+      'Early Peasant and Zamindari Uprisings | प्रारंभिक किसान और जमींदारी विद्रोह',
+      'Major Tribal Revolts (Santhal, Munda, Kol) | प्रमुख आदिवासी विद्रोह (संथाल, मुंडा, कोल)',
+      'Causes and Origins of the 1857 Revolt | 1857 के विद्रोह के कारण और उत्पत्ति',
+      'Key Leaders and Centers of the 1857 Revolt | 1857 के विद्रोह के प्रमुख नेता और केंद्र',
+      "Impact and Aftermath (Queen's Proclamation 1858 & Govt of India Act 1858) | प्रभाव और परिणाम (महारानी की उद्घोषणा 1858 एवं भारत शासन अधिनियम 1858)",
+      'Indigo Revolt (1859–60) | नील विद्रोह (1859–60)',
+    ],
+  },
+  {
+    id: 4,
+    title: 'Socio-Religious Reform Movements (19th–20th Century) | सामाजिक-धार्मिक सुधार आंदोलन',
+    subtopics: [
+      'Hindu Reform Movements — Brahmo Samaj | हिंदू सुधार आंदोलन — ब्रह्म समाज',
+      'Hindu Reform Movements — Arya Samaj | हिंदू सुधार आंदोलन — आर्य समाज',
+      'Hindu Reform Movements — Ramakrishna Mission | हिंदू सुधार आंदोलन — रामकृष्ण मिशन',
+      'Muslim Reform Movements — Aligarh Movement | मुस्लिम सुधार आंदोलन — अलीगढ़ आंदोलन (सर सैयद अहमद खान)',
+      'Sikh and Parsi Reform Movements | सिख और पारसी सुधार आंदोलन',
+      'Theosophical Society | थियोसोफिकल सोसाइटी',
+      'Lower Caste and Anti-Brahmin Movements (Jyotiba Phule, Periyar, Ambedkar) | निम्न जाति और ब्राह्मणेतर आंदोलन (ज्योतिबा फुले, पेरियार, अंबेडकर)',
+      'Women\'s Upliftment and Social Legislations | महिला उन्नयन और सामाजिक विधान',
+      'Key Reformers and their Literature/Journals | प्रमुख सुधारक और उनके साहित्य/पत्रिकाएँ',
+    ],
+  },
+  {
+    id: 5,
+    title: 'Rise of Nationalism & Moderate Phase (1858–1905) | राष्ट्रवाद का उदय और उदारवादी चरण',
+    subtopics: [
+      'Factors Leading to Indian Nationalism | भारतीय राष्ट्रवाद के उदय के कारक',
+      'Vernacular Press Act (1878) and Ilbert Bill Controversy (1883) | वर्नाक्युलर प्रेस अधिनियम (1878) और इल्बर्ट बिल विवाद (1883)',
+      'Political Associations Before the Indian National Congress | भारतीय राष्ट्रीय कांग्रेस से पूर्व राजनीतिक संगठन',
+      'Foundation of the Indian National Congress (1885) | भारतीय राष्ट्रीय कांग्रेस की स्थापना (1885)',
+      'Ideology, Demands, and Methods of the Moderates | उदारवादियों की विचारधारा, मांगें और तरीके',
+      'Indian Councils Act of 1892 | भारतीय परिषद अधिनियम 1892',
+    ],
+  },
+  {
+    id: 6,
+    title: 'Extremist Phase & Revolutionary Nationalism (1905–1918) | उग्रवादी चरण और क्रांतिकारी राष्ट्रवाद',
+    subtopics: [
+      'Partition of Bengal and the Swadeshi Movement | बंगाल विभाजन और स्वदेशी आंदोलन',
+      'Surat Split and the Rise of Extremism (1907) | सूरत विभाजन और उग्रवाद का उदय (1907), लाल-बाल-पाल त्रिमूर्ति',
+      'Formation of the Muslim League (1906) | मुस्लिम लीग की स्थापना (1906)',
+      'Early Revolutionary Activities (Mitra Mela, Anushilan Samiti, Ghadar Party) | प्रारंभिक क्रांतिकारी गतिविधियाँ (मित्र मेला, अनुशीलन समिति, गदर पार्टी)',
+      'Morley-Minto Reforms (1909) and the Home Rule League Movement | मॉर्ले-मिंटो सुधार (1909) और होम रूल लीग आंदोलन',
+    ],
+  },
+  {
+    id: 7,
+    title: 'The Gandhian Era & Mass Movements (1915–1947) | गांधीवादी युग और जन आंदोलन',
+    subtopics: [
+      'Early Satyagrahas (Champaran, Kheda, Ahmedabad Mill Strike) | प्रारंभिक सत्याग्रह (चंपारण, खेड़ा, अहमदाबाद मिल हड़ताल)',
+      'Lucknow Pact (1916) | लखनऊ पैक्ट (1916)',
+      'Rowlatt Act, Jallianwala Bagh, and the Khilafat Movement | रॉलेट एक्ट, जलियाँवाला बाग और खिलाफत आंदोलन',
+      'Non-Cooperation Movement and the Swaraj Party | असहयोग आंदोलन और स्वराज पार्टी',
+      'Simon Commission and the Nehru Report | साइमन कमीशन और नेहरू रिपोर्ट',
+      'Civil Disobedience Movement & Round Table Conferences | सविनय अवज्ञा आंदोलन और गोलमेज सम्मेलन',
+      'Poona Pact (1932) | पूना पैक्ट (1932)',
+      'Quit India Movement (1942) and the Indian National Army (INA) | भारत छोड़ो आंदोलन (1942) और आजाद हिंद फौज (INA)',
+    ],
+  },
+  {
+    id: 8,
+    title: 'Constitutional Developments & Partition (1773–1947) | संवैधानिक विकास और विभाजन',
+    subtopics: [
+      "Regulating Act (1773) & Pitt's India Act (1784) | रेगुलेटिंग एक्ट (1773) और पिट्स इंडिया एक्ट (1784)",
+      'Charter Acts of 1813 and 1833 | चार्टर एक्ट (1813 और 1833)',
+      'Charter Act of 1853 | चार्टर एक्ट (1853)',
+      'Crown Rule Acts (Govt of India Acts 1858, 1919, 1935) | क्राउन शासन अधिनियम (भारत शासन अधिनियम 1858, 1919, 1935)',
+      'August Offer, Cripps Mission, and the Cabinet Mission Plan | अगस्त प्रस्ताव, क्रिप्स मिशन और कैबिनेट मिशन योजना',
+      'Growth of Communalism and the Demand for Pakistan | साम्प्रदायिकता का विकास और पाकिस्तान की मांग',
+      'Mountbatten Plan and the Indian Independence Act 1947 | माउंटबेटन योजना और भारतीय स्वतंत्रता अधिनियम 1947',
+    ],
+  },
+];
+
+function splitBilingualText(value: string) {
+  const [enPart, hiPart] = String(value)
+    .split('|')
+    .map((part) => part.trim());
+  const en = enPart || hiPart || '';
+  const hi = hiPart || enPart || '';
+  return { en, hi };
+}
+
 const normalizeText = (text: string) =>
   text
+    .normalize('NFKC')
     .toLowerCase()
     .replace(/\s+/g, ' ')
-    .replace(/[^a-z0-9 ]/g, '')
+    .replace(/[^\p{L}\p{N} ]/gu, '')
     .trim();
 
 function getTopicLabel(topic: { label: { en: string; hi: string } }, lang: 'en' | 'hi') {
   return lang === 'hi' ? topic.label.hi || topic.label.en : topic.label.en || topic.label.hi;
 }
 
+function getTopicCountText(count: number, labels: (typeof TEXT)['en']) {
+  return `${count} ${labels.questionsAvailable}`;
+}
+
 export default function SubjectTopicsClient({
   subjectKey,
   topics,
   subCategory,
+  category,
 }: {
   subjectKey: string;
   topics: TopicItem[];
   subCategory?: string;
+  category?: string;
 }) {
   const { language } = useLanguage();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -287,10 +431,34 @@ export default function SubjectTopicsClient({
   const [isBhaktiSufiOpen, setIsBhaktiSufiOpen] = useState(false);
   const [isMughalOpen, setIsMughalOpen] = useState(false);
   const [isMarathaOpen, setIsMarathaOpen] = useState(false);
+  const [modernHistoryData] = useState(MODERN_HISTORY_DATA);
+  const [openModernCardId, setOpenModernCardId] = useState<number | null>(MODERN_HISTORY_DATA[0]?.id ?? null);
   const lang = language;
   const labels = TEXT[lang];
   const subjectLabel = SUBJECT_LABELS[subjectKey]?.[lang] ?? SUBJECT_LABELS[subjectKey]?.en ?? subjectKey;
   const isEarlyMedieval = subjectKey === 'history' && subCategory === 'medieval';
+  const isModernHistory = subjectKey === 'history' && subCategory === 'modern';
+  const isPhysicalGeography = subjectKey === 'geography' && category === 'physical-geography';
+  const isIndianGeography = subjectKey === 'geography' && category === 'indian-geography';
+  const isWorldGeography = subjectKey === 'geography' && category === 'world-geography';
+  const isEnvironmentEcology = subjectKey === 'geography' && category === 'environment-ecology';
+  const pageHeading = isPhysicalGeography
+    ? lang === 'hi'
+      ? PHYSICAL_GEOGRAPHY_PAGE_TITLE.hi
+      : PHYSICAL_GEOGRAPHY_PAGE_TITLE.en
+    : isIndianGeography
+    ? lang === 'hi'
+      ? INDIAN_GEOGRAPHY_PAGE_TITLE.hi
+      : INDIAN_GEOGRAPHY_PAGE_TITLE.en
+    : isWorldGeography
+    ? lang === 'hi'
+      ? WORLD_GEOGRAPHY_PAGE_TITLE.hi
+      : WORLD_GEOGRAPHY_PAGE_TITLE.en
+    : isEnvironmentEcology
+    ? lang === 'hi'
+      ? ENVIRONMENT_ECOLOGY_PAGE_TITLE.hi
+      : ENVIRONMENT_ECOLOGY_PAGE_TITLE.en
+    : labels.pageTitle(subjectLabel);
 
   const getTopicCount = (label: string) => {
     const normalizedLabel = normalizeText(label);
@@ -408,10 +576,88 @@ export default function SubjectTopicsClient({
   const bhaktiSufiTotalQuestions = bhaktiSufiItems.reduce((sum, item) => sum + item.count, 0);
   const mughalTotalQuestions = mughalItems.reduce((sum, item) => sum + item.count, 0);
   const marathaTotalQuestions = marathaItems.reduce((sum, item) => sum + item.count, 0);
+  const modernHistoryCounts = useMemo(() => {
+    const subtopicCounts = new Map<string, number>();
+    const groupTotals = new Map<number, number>();
+    const flatSubtopics: Array<{
+      key: string;
+      groupId: number;
+      en: string;
+      hi: string;
+    }> = [];
+
+    for (const topicGroup of modernHistoryData) {
+      groupTotals.set(topicGroup.id, 0);
+      topicGroup.subtopics.forEach((subtopic, index) => {
+        const parsed = splitBilingualText(subtopic);
+        const key = `${topicGroup.id}-${index}`;
+        flatSubtopics.push({ key, groupId: topicGroup.id, en: parsed.en, hi: parsed.hi });
+        subtopicCounts.set(key, 0);
+      });
+    }
+
+    // Assign each DB topic count to at most one best-matching subtopic.
+    for (const topic of topics) {
+      const sourceTexts = [topic.en, topic.hi].filter(Boolean);
+      if (!sourceTexts.length) continue;
+
+      let bestKey = '';
+      let bestGroupId = 0;
+      let bestScore = 0;
+
+      for (const subtopic of flatSubtopics) {
+        const targetTexts = [subtopic.en, subtopic.hi].filter(Boolean);
+        if (!targetTexts.length) continue;
+
+        let score = 0;
+        for (const source of sourceTexts) {
+          const sourceNorm = normalizeText(source);
+          for (const target of targetTexts) {
+            const targetNorm = normalizeText(target);
+            if (!sourceNorm || !targetNorm) continue;
+
+            if (sourceNorm === targetNorm) {
+              score = Math.max(score, 1);
+              continue;
+            }
+
+            if (
+              topicMatches(source, target) ||
+              topicMatches(target, source) ||
+              sourceNorm.includes(targetNorm) ||
+              targetNorm.includes(sourceNorm)
+            ) {
+              score = Math.max(score, 0.75);
+            }
+          }
+        }
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestKey = subtopic.key;
+          bestGroupId = subtopic.groupId;
+        }
+      }
+
+      if (bestKey) {
+        const topicCount = Number(topic.count ?? 0);
+        subtopicCounts.set(bestKey, (subtopicCounts.get(bestKey) ?? 0) + topicCount);
+        groupTotals.set(bestGroupId, (groupTotals.get(bestGroupId) ?? 0) + topicCount);
+      }
+    }
+
+    const grandTotal = topics.reduce((sum, topic) => sum + Number(topic.count ?? 0), 0);
+    return { subtopicCounts, groupTotals, grandTotal };
+  }, [modernHistoryData, topics]);
+
+  const modernHistoryTotalQuestions = modernHistoryCounts.grandTotal;
+  const totalQuestionsDisplay = isModernHistory
+    ? modernHistoryTotalQuestions
+    : topics.reduce((sum, topic) => sum + Number(topic.count ?? 0), 0);
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <main className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto px-4 pt-6 pb-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto px-4 pt-6 pb-8 items-start">
         <aside className="hidden lg:block lg:col-span-4 lg:sticky lg:top-24 lg:h-[calc(100vh-7rem)] overflow-hidden">
           <div className="h-full bg-gradient-to-b from-slate-50 to-white border border-slate-200/60 p-6 rounded-3xl shadow-sm">
             <div className="space-y-4">
@@ -430,7 +676,9 @@ export default function SubjectTopicsClient({
                   </div>
                   <div className="pt-2 border-t border-slate-100">
                     <div className="text-xs text-slate-500 uppercase tracking-[0.18em] font-semibold">{labels.totalQuestionsLabel}</div>
-                    <div className="mt-2 text-2xl font-extrabold text-slate-900">{topics.reduce((s, t) => s + (t.count ?? 0), 0).toLocaleString()}</div>
+                    <div className="mt-2 text-2xl font-extrabold text-slate-900">
+                      {(isModernHistory || isPhysicalGeography || isIndianGeography || isWorldGeography || isEnvironmentEcology ? totalQuestionsDisplay : topics.reduce((s, t) => s + (t.count ?? 0), 0)).toLocaleString()}
+                    </div>
                   </div>
                 </div>
             </div>
@@ -439,15 +687,139 @@ export default function SubjectTopicsClient({
 
         <section className="lg:col-span-8 col-span-1 w-full min-h-screen pb-20">
           <div className="mb-8">
-            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-              {labels.pageTitle(subjectLabel)}
-            </h2>
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              {pageHeading}
+            </h1>
             <p className="mt-3 text-sm text-slate-500 max-w-2xl leading-7">
               {labels.topicSubtitle}
             </p>
           </div>
 
           <div className="space-y-4">
+            {isEnvironmentEcology && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={ENVIRONMENT_ECOLOGY_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={ENVIRONMENT_ECOLOGY_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isIndianGeography && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={INDIAN_GEOGRAPHY_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={INDIAN_GEOGRAPHY_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isWorldGeography && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={WORLD_GEOGRAPHY_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={WORLD_GEOGRAPHY_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isPhysicalGeography && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={PHYSICAL_GEOGRAPHY_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={PHYSICAL_GEOGRAPHY_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isModernHistory && (
+              <div className="space-y-4">
+                {modernHistoryData.map((topicGroup) => {
+                  const isOpen = openModernCardId === topicGroup.id;
+                  const parsedTitle = splitBilingualText(topicGroup.title);
+                  const displayTitle = lang === 'hi' ? parsedTitle.hi : parsedTitle.en;
+                  return (
+                    <div
+                      key={topicGroup.id}
+                      className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setOpenModernCardId((prev) => (prev === topicGroup.id ? null : topicGroup.id))}
+                        className="w-full flex items-start justify-between gap-4 px-6 py-5 text-left"
+                      >
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.32em] text-slate-500 font-semibold">
+                            {lang === 'hi' ? 'आधुनिक भारत के विषय' : 'Modern India Topics'}
+                          </p>
+                          <h3 className="mt-2 text-lg font-semibold text-slate-900">{displayTitle}</h3>
+                          <p className="mt-2 text-sm text-slate-500 max-w-2xl leading-6">
+                            {lang === 'hi'
+                              ? 'उपविषयों को खोलने और प्रश्न संख्या देखने के लिए क्लिक करें।'
+                              : 'Click to open the subtopics and review question counts.'}
+                          </p>
+                          <p className="mt-3 text-sm text-slate-500">
+                            {lang === 'hi'
+                              ? `${topicGroup.subtopics.length} विषय · ${(modernHistoryCounts.groupTotals.get(topicGroup.id) ?? 0).toLocaleString()} कुल प्रश्न`
+                              : `${topicGroup.subtopics.length} topics · ${(modernHistoryCounts.groupTotals.get(topicGroup.id) ?? 0).toLocaleString()} questions total`}
+                          </p>
+                        </div>
+                        <span className="mt-1 flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 shrink-0">
+                          <ChevronDown className={`h-5 w-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                        </span>
+                      </button>
+
+                      <div
+                        className={`grid transition-all duration-300 ease-in-out ${
+                          isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                        }`}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="space-y-3 px-6 pb-5">
+                            {topicGroup.subtopics.map((subtopic, index) => {
+                              const parsedSubtopic = splitBilingualText(subtopic);
+                              const displaySubtopic = lang === 'hi' ? parsedSubtopic.hi : parsedSubtopic.en;
+                              const realCount = modernHistoryCounts.subtopicCounts.get(`${topicGroup.id}-${index}`) ?? 0;
+                              const topicHref = `/${subjectKey}/topics/${slugifySubject(parsedSubtopic.en || displaySubtopic)}`;
+                              return (
+                                <Link
+                                  key={`${topicGroup.id}-${index}`}
+                                  href={topicHref}
+                                  className="block rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-purple-300 hover:bg-white"
+                                >
+                                  <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                      <p className="text-sm font-semibold text-slate-900">
+                                        {lang === 'hi' ? `विषय ${index + 1}: ${displaySubtopic}` : `Topic ${index + 1}: ${displaySubtopic}`}
+                                      </p>
+                                      <p className="mt-1 text-xs text-slate-500">{`${realCount.toLocaleString()} ${labels.questionsAvailable}`}</p>
+                                    </div>
+                                    <ChevronRight className="h-5 w-5 text-slate-400" />
+                                  </div>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {isEarlyMedieval && (
               <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 <button
@@ -487,7 +859,7 @@ export default function SubjectTopicsClient({
                           <div className="flex items-center justify-between gap-4">
                             <div>
                               <p className="text-sm font-semibold text-slate-900">{`Topic ${item.index}: ${displayLabel}`}</p>
-                              <p className="mt-1 text-xs text-slate-500">{`${item.count} ${labels.questionsAvailable}`}</p>
+                              <p className="mt-1 text-xs text-slate-500">{getTopicCountText(item.count, labels)}</p>
                             </div>
                             <ChevronRight className="h-5 w-5 text-slate-400" />
                           </div>
@@ -538,7 +910,7 @@ export default function SubjectTopicsClient({
                           <div className="flex items-center justify-between gap-4">
                             <div>
                               <p className="text-sm font-semibold text-slate-900">{`Topic ${item.index}: ${displayLabel}`}</p>
-                              <p className="mt-1 text-xs text-slate-500">{`${item.count} ${labels.questionsAvailable}`}</p>
+                              <p className="mt-1 text-xs text-slate-500">{getTopicCountText(item.count, labels)}</p>
                             </div>
                             <ChevronRight className="h-5 w-5 text-slate-400" />
                           </div>
@@ -589,7 +961,7 @@ export default function SubjectTopicsClient({
                           <div className="flex items-center justify-between gap-4">
                             <div>
                               <p className="text-sm font-semibold text-slate-900">{`Topic ${item.index}: ${displayLabel}`}</p>
-                              <p className="mt-1 text-xs text-slate-500">{`${item.count} ${labels.questionsAvailable}`}</p>
+                              <p className="mt-1 text-xs text-slate-500">{getTopicCountText(item.count, labels)}</p>
                             </div>
                             <ChevronRight className="h-5 w-5 text-slate-400" />
                           </div>
@@ -640,7 +1012,7 @@ export default function SubjectTopicsClient({
                           <div className="flex items-center justify-between gap-4">
                             <div>
                               <p className="text-sm font-semibold text-slate-900">{`Topic ${item.index}: ${displayLabel}`}</p>
-                              <p className="mt-1 text-xs text-slate-500">{`${item.count} ${labels.questionsAvailable}`}</p>
+                              <p className="mt-1 text-xs text-slate-500">{getTopicCountText(item.count, labels)}</p>
                             </div>
                             <ChevronRight className="h-5 w-5 text-slate-400" />
                           </div>
@@ -691,7 +1063,7 @@ export default function SubjectTopicsClient({
                           <div className="flex items-center justify-between gap-4">
                             <div>
                               <p className="text-sm font-semibold text-slate-900">{`Topic ${item.index}: ${displayLabel}`}</p>
-                              <p className="mt-1 text-xs text-slate-500">{`${item.count} ${labels.questionsAvailable}`}</p>
+                              <p className="mt-1 text-xs text-slate-500">{getTopicCountText(item.count, labels)}</p>
                             </div>
                             <ChevronRight className="h-5 w-5 text-slate-400" />
                           </div>
@@ -742,7 +1114,7 @@ export default function SubjectTopicsClient({
                           <div className="flex items-center justify-between gap-4">
                             <div>
                               <p className="text-sm font-semibold text-slate-900">{`Topic ${item.index}: ${displayLabel}`}</p>
-                              <p className="mt-1 text-xs text-slate-500">{`${item.count} ${labels.questionsAvailable}`}</p>
+                              <p className="mt-1 text-xs text-slate-500">{getTopicCountText(item.count, labels)}</p>
                             </div>
                             <ChevronRight className="h-5 w-5 text-slate-400" />
                           </div>
@@ -754,7 +1126,7 @@ export default function SubjectTopicsClient({
               </div>
             )}
 
-            {topics.map((topic, index) => {
+            {!isModernHistory && !isPhysicalGeography && !isIndianGeography && !isWorldGeography && !isEnvironmentEcology && topics.map((topic, index) => {
               const topicLabel = lang === 'hi' ? topic.hi || topic.en : topic.en || topic.hi;
               const normalizedTopicLabel = normalizeText(topicLabel);
               if (
@@ -793,7 +1165,7 @@ export default function SubjectTopicsClient({
             })}
           </div>
         </section>
-      </main>
+      </div>
     </div>
   );
 }

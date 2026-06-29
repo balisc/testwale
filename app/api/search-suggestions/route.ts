@@ -3,7 +3,8 @@ import questionsData from '@/data/questions.json';
 import supabase from '@/lib/supabase';
 import { slugifySubject } from '@/lib/slugGenerator';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
+const PUBLIC_CACHE = 'public, s-maxage=300, stale-while-revalidate=600';
 
 function getSubjectText(subject: unknown) {
   if (!subject) return '';
@@ -59,7 +60,7 @@ export async function GET() {
 
     if (!Array.isArray(data) || data.length === 0) {
       console.log('no data found');
-      return NextResponse.json({ suggestions: [] }, { headers: { 'Cache-Control': 'no-store' } });
+      return NextResponse.json({ suggestions: [] }, { headers: { 'Cache-Control': PUBLIC_CACHE } });
     }
 
     const suggestions: Array<{ subjectKey: string; topicEn: string; topicHi: string }> = [];
@@ -81,7 +82,7 @@ export async function GET() {
       suggestions.push({ subjectKey, topicEn, topicHi });
     }
 
-    return NextResponse.json({ suggestions }, { headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json({ suggestions }, { headers: { 'Cache-Control': PUBLIC_CACHE } });
   } catch (error: any) {
     console.error('Search suggestions API error:', error?.message ?? error);
 
@@ -106,6 +107,6 @@ export async function GET() {
       if (suggestions.length >= 10) break;
     }
 
-    return NextResponse.json({ suggestions }, { headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json({ suggestions }, { headers: { 'Cache-Control': PUBLIC_CACHE } });
   }
 }

@@ -44,16 +44,6 @@ const supabase: any = SUPABASE_AVAILABLE
       auth: {
         persistSession: false,
       },
-      global: {
-        fetch: (input: string | URL | Request, init?: RequestInit) => {
-          const nextInit = {
-            ...(init as RequestInit),
-            cache: 'no-store' as RequestCache,
-          };
-
-          return fetch(input, nextInit as RequestInit);
-        },
-      },
     })
   : {
       from: () => createNoopQuery(),

@@ -1,9 +1,12 @@
-import { redirect } from 'next/navigation';
+import { permanentRedirect, redirect } from 'next/navigation';
 import SubjectTopicsClient from '@/app/subjects/[subject]/SubjectTopicsClient';
-import supabase from '@/lib/supabase';
 import { slugifySubject } from '@/lib/slugGenerator';
-import { buildTopicCountKey, fetchExactTopicCounts } from '@/lib/topicCounts';
-import { buildSubjectMetadata } from '@/lib/seo';
+import { fetchTopicsFromQuestions } from '@/lib/questionTopics';
+import { PHYSICAL_GEOGRAPHY_PAGE_TITLE } from '@/lib/geography/physicalGeographyData';
+import { INDIAN_GEOGRAPHY_PAGE_TITLE } from '@/lib/geography/indianGeographyData';
+import { WORLD_GEOGRAPHY_PAGE_TITLE } from '@/lib/geography/worldGeographyData';
+import { ENVIRONMENT_ECOLOGY_PAGE_TITLE } from '@/lib/geography/environmentEcologyData';
+import { canonical } from '@/lib/seo';
 
 const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
   history: { table: 'history_questions', label: 'History' },
@@ -22,12 +25,7 @@ const VALID_SUB_CATEGORIES = new Set(['ancient', 'medieval', 'modern']);
 type SearchParams = {
   sub_category?: string | string[];
   topic?: string | string[];
-};
-
-type TopicItem = {
-  en: string;
-  hi: string;
-  count: number;
+  category?: string | string[];
 };
 
 function parseSearchValue(value: unknown): string {
@@ -94,108 +92,68 @@ function extractTopicValues(row: any) {
   };
 }
 
-async function fetchTopics(tableName: string, subCategory?: string) {
-  let query = supabase
-    .from(tableName)
-    .select('id, topic, topic_en, topic_hi, sub_category')
-    .not('topic', 'is', null)
-    .order('id', { ascending: true })
-    .limit('all');
-  let data: any = null;
-  let error: any = null;
-
-  if (subCategory) {
-    const result = await query.or(`sub_category->>en.eq.${subCategory},sub_category.eq.${subCategory}`);
-    data = result.data;
-    error = result.error;
-
-    if (error) {
-      console.warn('Subcategory JSONB filter failed, falling back to client-side filtering:', error.message);
-      const fallbackResult = await supabase.from(tableName).select('*').not('topic', 'is', null).order('id', { ascending: true }).limit('all');
-      data = fallbackResult.data;
-      error = fallbackResult.error;
-
-      if (!error && Array.isArray(data)) {
-        data = (data as any[]).filter((row) => {
-          const rawSubCategory = row.sub_category;
-          let subCategoryValue = '';
-
-          if (rawSubCategory && typeof rawSubCategory === 'object') {
-            subCategoryValue = String(rawSubCategory.en ?? rawSubCategory.hi ?? '').trim();
-          } else if (typeof rawSubCategory === 'string') {
-            subCategoryValue = rawSubCategory.trim();
-            try {
-              const parsed = JSON.parse(subCategoryValue);
-              if (parsed && typeof parsed === 'object') {
-                subCategoryValue = String(parsed.en ?? parsed.hi ?? subCategoryValue).trim();
-              }
-            } catch {
-              // keep original string value
-            }
-          }
-
-          return subCategoryValue.toLowerCase() === subCategory.toLowerCase();
-        });
-      }
-    }
-  } else {
-    const result = await query;
-    data = result.data;
-    error = result.error;
-  }
-
-  if (error) {
-    console.error('❌ SUPABASE ERROR:', error.message);
-    throw new Error(error.message);
-  }
-
-  const rows = (data ?? []) as Array<{
-    topic?: { en?: string; hi?: string } | null;
-    topic_en?: string | null;
-    topic_hi?: string | null;
-  }>;
-
-  const seen = new Set<string>();
-  const topicItems: TopicItem[] = [];
-
-  for (const row of rows) {
-    const { topicEn, topicHi } = extractTopicValues(row);
-    const key = `${topicEn}||${topicHi}`;
-    if (!topicEn && !topicHi) continue;
-    if (seen.has(key)) continue;
-
-    seen.add(key);
-    topicItems.push({ en: topicEn, hi: topicHi, count: 0 });
-  }
-
-  const exactCounts = await fetchExactTopicCounts(tableName, topicItems);
-
-  return topicItems.map((topic) => ({
-    ...topic,
-    count: exactCounts.get(buildTopicCountKey(topic)) ?? 0,
-  }));
+async function fetchTopics(subjectKey: string, subCategory?: string) {
+  return fetchTopicsFromQuestions(subjectKey, subCategory);
 }
 
-export async function generateMetadata({ params, searchParams }: { params: { subject: string }; searchParams: SearchParams }) {
-  const subjectKey = String(params.subject).toLowerCase();
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ subject: string }>;
+  searchParams: Promise<SearchParams>;
+}) {
+  const { subject } = await params;
+  const resolvedSearchParams = await searchParams;
+  const subjectKey = String(subject).toLowerCase();
   const subjectConfig = SUBJECT_TABLES[subjectKey];
 
   if (!subjectConfig) {
-    return { title: 'Topic not found | Questionwale' };
+    return {
+      title: 'Topic not found',
+      robots: { index: false, follow: true },
+    };
   }
 
-  const rawSubCategory = Array.isArray(searchParams.sub_category)
-    ? searchParams.sub_category[0]
-    : searchParams.sub_category;
+  const rawSubCategory = Array.isArray(resolvedSearchParams.sub_category)
+    ? resolvedSearchParams.sub_category[0]
+    : resolvedSearchParams.sub_category;
+  const rawCategory = Array.isArray(resolvedSearchParams.category)
+    ? resolvedSearchParams.category[0]
+    : resolvedSearchParams.category;
+  const category = rawCategory ? normalizeCategory(parseSearchValue(rawCategory)) : '';
   const subCategory = rawSubCategory ? normalizeCategory(parseSearchValue(rawSubCategory)) : '';
 
-  return {
-    title: subCategory
+  const pageTitle =
+    subjectKey === 'geography' && category === 'physical-geography'
+      ? PHYSICAL_GEOGRAPHY_PAGE_TITLE.en
+      : subjectKey === 'geography' && category === 'indian-geography'
+      ? INDIAN_GEOGRAPHY_PAGE_TITLE.en
+      : subjectKey === 'geography' && category === 'world-geography'
+      ? WORLD_GEOGRAPHY_PAGE_TITLE.en
+      : subjectKey === 'geography' && category === 'environment-ecology'
+      ? ENVIRONMENT_ECOLOGY_PAGE_TITLE.en
+      : subCategory
       ? `${subjectConfig.label} - ${subCategory.charAt(0).toUpperCase() + subCategory.slice(1)} Topics`
-      : `${subjectConfig.label} Topics`,
+      : `${subjectConfig.label} Topics`;
+
+  return {
+    title: pageTitle,
     description: subCategory
       ? `Browse ${subCategory} ${subjectConfig.label} topics and practice questions.`
       : `Browse ${subjectConfig.label} topics and practice questions.`,
+    ...canonical(`/${subjectKey}/topics`),
+    openGraph: {
+      title: subCategory
+        ? `${subjectConfig.label} - ${subCategory.charAt(0).toUpperCase() + subCategory.slice(1)} Topics`
+        : `${subjectConfig.label} Topics`,
+      description: subCategory
+        ? `Browse ${subCategory} ${subjectConfig.label} topics and practice questions.`
+        : `Browse ${subjectConfig.label} topics and practice questions.`,
+      url: `/${subjectKey}/topics`,
+      type: 'website',
+      siteName: 'Questionwale',
+    },
   };
 }
 
@@ -203,36 +161,51 @@ export default async function TopicPage({
   params,
   searchParams,
 }: {
-  params: { subject: string };
-  searchParams: SearchParams;
+  params: Promise<{ subject: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
-  const subjectKey = String(params.subject).toLowerCase();
+  const { subject } = await params;
+  const resolvedSearchParams = await searchParams;
+  const subjectKey = String(subject).toLowerCase();
   const subjectConfig = SUBJECT_TABLES[subjectKey];
 
   if (!subjectConfig) {
     return redirect('/subjects');
   }
 
-  const rawSubCategory = Array.isArray(searchParams.sub_category)
-    ? searchParams.sub_category[0]
-    : searchParams.sub_category;
-  const rawTopic = Array.isArray(searchParams.topic) ? searchParams.topic[0] : searchParams.topic;
+  const rawSubCategory = Array.isArray(resolvedSearchParams.sub_category)
+    ? resolvedSearchParams.sub_category[0]
+    : resolvedSearchParams.sub_category;
+  const rawCategory = Array.isArray(resolvedSearchParams.category)
+    ? resolvedSearchParams.category[0]
+    : resolvedSearchParams.category;
+  const rawTopic = Array.isArray(resolvedSearchParams.topic) ? resolvedSearchParams.topic[0] : resolvedSearchParams.topic;
 
   const subCategory = rawSubCategory ? normalizeCategory(parseSearchValue(rawSubCategory)) : '';
+  const category = rawCategory ? normalizeCategory(parseSearchValue(rawCategory)) : '';
   const topicValue = rawTopic ? parseSearchValue(rawTopic) : '';
+
+  if (subjectKey === 'geography' && category === 'maps-geographic-locations') {
+    return permanentRedirect('/map-practice');
+  }
 
   if (topicValue && !subCategory) {
     const normalizedSlug = slugifySubject(topicValue);
-    return redirect(`/${subjectKey}/topics/${encodeURIComponent(normalizedSlug)}`);
+    return permanentRedirect(`/${subjectKey}/topics/${encodeURIComponent(normalizedSlug)}`);
   }
 
   const validSubCategory = VALID_SUB_CATEGORIES.has(subCategory) ? subCategory : undefined;
-  const topics = await fetchTopics(subjectConfig.table, validSubCategory);
+  const topics = await fetchTopics(subjectKey, validSubCategory);
 
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
       <div className="max-w-7xl mx-auto px-4 pt-8 sm:px-6 lg:px-8 space-y-8">
-        <SubjectTopicsClient subjectKey={subjectKey} topics={topics} subCategory={validSubCategory} />
+        <SubjectTopicsClient
+          subjectKey={subjectKey}
+          topics={topics}
+          subCategory={validSubCategory}
+          category={category || undefined}
+        />
       </div>
     </div>
   );

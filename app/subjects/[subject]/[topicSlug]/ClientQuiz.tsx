@@ -4,7 +4,12 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useLanguage } from '../../../../lib/LanguageContext';
-import { buildQuestionPath, generateQuestionSlug } from '@/lib/slugGenerator';
+import {
+  buildQuestionPath,
+  extractQuestionIdFromSlug,
+  generateQuestionSlug,
+  slugifySubject,
+} from '@/lib/slugGenerator';
 
 type QuestionRow = Record<string, any>;
 
@@ -52,15 +57,70 @@ function getOptionTexts(rawOptions: any, lang: 'en' | 'hi'): string[] {
   return [];
 }
 
-function resolveCorrectAnswerText(correctAnswerField: any, lang: 'en' | 'hi', finalOptions: string[]): string {
-  const extracted = extractText(correctAnswerField, lang).trim();
-
-  if (typeof extracted === 'string' && extracted.length === 1 && /^[a-dA-D]$/.test(extracted)) {
-    const answerIndex = extracted.toUpperCase().charCodeAt(0) - 65;
-    return finalOptions[answerIndex]?.trim() ?? '';
+function resolveCorrectAnswerIndex(
+  correctAnswerField: any,
+  lang: 'en' | 'hi',
+  finalOptions: string[],
+  rawOptions: any
+): number {
+  if (correctAnswerField === null || correctAnswerField === undefined || finalOptions.length === 0) {
+    return -1;
   }
 
-  return extracted;
+  const extracted = extractText(correctAnswerField, lang).trim();
+  if (!extracted) {
+    return -1;
+  }
+
+  if (/^[a-eA-E]$/.test(extracted)) {
+    const letterIndex = extracted.toUpperCase().charCodeAt(0) - 65;
+    if (letterIndex >= 0 && letterIndex < finalOptions.length) {
+      return letterIndex;
+    }
+  }
+
+  if (/^\d+$/.test(extracted)) {
+    const numericValue = Number.parseInt(extracted, 10);
+    if (numericValue >= 1 && numericValue <= finalOptions.length) {
+      return numericValue - 1;
+    }
+    if (numericValue >= 0 && numericValue < finalOptions.length) {
+      return numericValue;
+    }
+  }
+
+  if (rawOptions && typeof rawOptions === 'object' && !Array.isArray(rawOptions)) {
+    const optionKeys = Object.keys(rawOptions)
+      .filter((key) => !['en', 'hi'].includes(key))
+      .sort((keyA, keyB) => keyA.localeCompare(keyB, undefined, { numeric: true }));
+
+    const keyIndex = optionKeys.findIndex((key) => key.toUpperCase() === extracted.toUpperCase());
+    if (keyIndex >= 0 && keyIndex < finalOptions.length) {
+      return keyIndex;
+    }
+  }
+
+  const exactIndex = finalOptions.findIndex((option) => option.trim() === extracted);
+  if (exactIndex >= 0) {
+    return exactIndex;
+  }
+
+  const normalizedExtracted = extracted.toLowerCase();
+  return finalOptions.findIndex((option) => option.trim().toLowerCase() === normalizedExtracted);
+}
+
+function resolveCorrectAnswerText(
+  correctAnswerField: any,
+  lang: 'en' | 'hi',
+  finalOptions: string[],
+  rawOptions: any
+): string {
+  const correctIndex = resolveCorrectAnswerIndex(correctAnswerField, lang, finalOptions, rawOptions);
+  if (correctIndex >= 0) {
+    return finalOptions[correctIndex]?.trim() ?? '';
+  }
+
+  return extractText(correctAnswerField, lang).trim();
 }
 
 function getQuestionId(row: any, fallbackIndex: number) {
@@ -81,12 +141,112 @@ function getQuestionSlug(row: any, fallbackIndex: number, lang: 'en' | 'hi') {
   return generateQuestionSlug(questionText, questionId, lang).trim();
 }
 
+const QUIZ_CURRENT_QUESTION_PREFIX = 'quiz-current-question';
+
+function sortQuestionsById(questions: QuestionRow[]): QuestionRow[] {
+  return [...questions].sort((a, b) =>
+    getQuestionId(a, 0).localeCompare(getQuestionId(b, 0), undefined, { numeric: true })
+  );
+}
+
+function getQuizCacheKey(subject: string, topic: string) {
+  return `${subject}:${slugifySubject(topic)}`;
+}
+
+function getCurrentQuestionStorageKey(cacheKey: string) {
+  return `${QUIZ_CURRENT_QUESTION_PREFIX}:${cacheKey}`;
+}
+
+function findQuestionIndexById(orderedQuestions: QuestionRow[], targetId: string): number {
+  const normalizedTargetId = String(targetId).trim();
+  if (!normalizedTargetId) return -1;
+
+  return orderedQuestions.findIndex(
+    (row, index) => getQuestionId(row, index) === normalizedTargetId
+  );
+}
+
+function readStoredQuestionId(cacheKey: string): string | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const storedId = window.sessionStorage.getItem(getCurrentQuestionStorageKey(cacheKey));
+    return storedId?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredQuestionId(cacheKey: string, questionId: string) {
+  if (typeof window === 'undefined' || !questionId) return;
+
+  try {
+    window.sessionStorage.setItem(getCurrentQuestionStorageKey(cacheKey), questionId);
+  } catch {
+    // Ignore storage failures in private browsing or quota errors.
+  }
+}
+
+function resolveInitialQuestionIndex(
+  orderedQuestions: QuestionRow[],
+  options: {
+    initialQuestionId?: string;
+    initialQuestionSlug?: string;
+    qParam?: string | null;
+  }
+): number {
+  const candidateIds = [
+    options.initialQuestionId,
+    options.initialQuestionSlug ? extractQuestionIdFromSlug(options.initialQuestionSlug) : '',
+  ]
+    .map((value) => String(value ?? '').trim())
+    .filter(Boolean);
+
+  for (const targetId of candidateIds) {
+    const matchIndex = findQuestionIndexById(orderedQuestions, targetId);
+    if (matchIndex >= 0) {
+      return matchIndex;
+    }
+  }
+
+  if (options.qParam !== null && options.qParam !== undefined) {
+    const qIndex = Number.parseInt(options.qParam, 10);
+    if (!Number.isNaN(qIndex) && qIndex >= 0 && qIndex < orderedQuestions.length) {
+      return qIndex;
+    }
+  }
+
+  return 0;
+}
+
+function buildQuizState(
+  questions: QuestionRow[],
+  options: {
+    initialQuestionId?: string;
+    initialQuestionSlug?: string;
+    qParam?: string | null;
+  }
+) {
+  const orderedQuestions = sortQuestionsById(Array.isArray(questions) ? questions : []);
+  const startIndex =
+    orderedQuestions.length === 0
+      ? 0
+      : resolveInitialQuestionIndex(orderedQuestions, {
+          initialQuestionId: options.initialQuestionId,
+          initialQuestionSlug: options.initialQuestionSlug,
+          qParam: options.qParam,
+        });
+
+  return { orderedQuestions, startIndex };
+}
+
 export default function ClientQuiz({
   questions,
   decodedTopic,
   subject,
   fetchError,
   initialQuestionSlug,
+  initialQuestionId,
   topSection,
 }: {
   questions: QuestionRow[];
@@ -94,13 +254,22 @@ export default function ClientQuiz({
   subject: string;
   fetchError?: string | null;
   initialQuestionSlug?: string;
+  initialQuestionId?: string;
   topSection?: ReactNode;
 }) {
   const { language: lang } = useLanguage();
   const searchParams = useSearchParams();
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const initialIndexLoaded = useRef(false);
-  const [shuffledQuestions, setShuffledQuestions] = useState<QuestionRow[]>(questions ?? []);
+  const initialQueryIndex = searchParams.get('q');
+  const quizCacheKey = getQuizCacheKey(subject, decodedTopic);
+  const initialQuizStateRef = useRef(
+    buildQuizState(questions, {
+      initialQuestionId,
+      initialQuestionSlug,
+      qParam: initialQueryIndex,
+    })
+  );
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(initialQuizStateRef.current.startIndex);
+  const [shuffledQuestions, setShuffledQuestions] = useState(initialQuizStateRef.current.orderedQuestions);
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState(false);
@@ -149,49 +318,29 @@ export default function ClientQuiz({
     document.title = `${questionText} | ${subject} | Questionwale`;
   }, [currentQuestionIndex, shuffledQuestions, lang, subject]);
 
-  // Shuffle questions on client mount so each refresh shows a different order
+  // Restore the last viewed question when refreshing a topic URL without slug/q params.
   useEffect(() => {
-    function shuffle<T>(arr: T[]) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        const tmp = arr[i];
-        arr[i] = arr[j];
-        arr[j] = tmp;
-      }
-      return arr;
+    if (initialQuestionId || initialQuestionSlug || initialQueryIndex) {
+      return;
     }
 
-    const nextQuestions = Array.isArray(questions) ? [...questions] : [];
-    const nextShuffled = nextQuestions.length > 0 ? shuffle(nextQuestions) : [];
-    let startIndex = 0;
-
-    if (!initialIndexLoaded.current && nextShuffled.length > 0) {
-      const qParam = searchParams.get('q');
-      const qIndex = qParam !== null ? parseInt(qParam, 10) : NaN;
-      if (initialQuestionSlug) {
-        const matchingIndex = nextShuffled.findIndex((row, rowIndex) => {
-          return getQuestionSlug(row, rowIndex, lang) === initialQuestionSlug;
-        });
-        if (matchingIndex >= 0) {
-          startIndex = matchingIndex;
-        } else if (!isNaN(qIndex) && qIndex >= 0 && qIndex < nextShuffled.length) {
-          startIndex = qIndex;
-        }
-      } else if (!isNaN(qIndex) && qIndex >= 0 && qIndex < nextShuffled.length) {
-        startIndex = qIndex;
-      }
-
-      initialIndexLoaded.current = true;
+    const storedId = readStoredQuestionId(quizCacheKey);
+    if (!storedId) {
+      return;
     }
 
-    setShuffledQuestions(nextShuffled);
-    setCurrentQuestionIndex(startIndex);
-    setSelectedOptionIndex(null);
-    setIsAnswered(false);
-    setIsAnswerCorrect(false);
-    setQuizCompleted(false);
-    setTimeLeft(30);
-  }, [questions, initialQuestionSlug]);
+    const matchIndex = findQuestionIndexById(shuffledQuestions, storedId);
+    if (matchIndex >= 0) {
+      setCurrentQuestionIndex(matchIndex);
+    }
+  }, [initialQuestionId, initialQuestionSlug, initialQueryIndex, quizCacheKey, shuffledQuestions]);
+
+  useEffect(() => {
+    const currentQuestion = shuffledQuestions[currentQuestionIndex];
+    if (!currentQuestion) return;
+
+    writeStoredQuestionId(quizCacheKey, getQuestionId(currentQuestion, currentQuestionIndex));
+  }, [currentQuestionIndex, shuffledQuestions, quizCacheKey]);
 
   // Update URL when question changes
   useEffect(() => {
@@ -200,7 +349,7 @@ export default function ClientQuiz({
 
     const questionId = getQuestionId(currentQuestion, currentQuestionIndex);
     const questionText = getQuestionText(currentQuestion, lang);
-    const newPathname = buildQuestionPath(subject, questionId, questionText);
+    const newPathname = buildQuestionPath(decodedTopic, questionId, questionText);
 
     const url = new URL(window.location.href);
     const newQValue = String(currentQuestionIndex);
@@ -216,7 +365,7 @@ export default function ClientQuiz({
 
     const normalizedUrl = url.toString();
     window.history.replaceState({ q: currentQuestionIndex }, '', normalizedUrl);
-  }, [currentQuestionIndex, shuffledQuestions.length, subject, lang]);
+  }, [currentQuestionIndex, shuffledQuestions, decodedTopic, lang]);
 
   useEffect(() => {
     return () => {
@@ -317,10 +466,17 @@ export default function ClientQuiz({
   const askedInText = extractText(currentQuestion.asked_in ?? currentQuestion.askedIn ?? currentQuestion.askedInText, lang);
 
   const correctAnswerField = currentQuestion.correct_answer ?? currentQuestion.answer;
-  const correctAnswerText = resolveCorrectAnswerText(correctAnswerField, lang, finalOptions);
+  const correctAnswerIndex = resolveCorrectAnswerIndex(
+    correctAnswerField,
+    lang,
+    finalOptions,
+    rawOptions
+  );
+  const correctAnswerText =
+    correctAnswerIndex >= 0
+      ? finalOptions[correctAnswerIndex]?.trim() ?? ''
+      : resolveCorrectAnswerText(correctAnswerField, lang, finalOptions, rawOptions);
   const explanationText = extractText(currentQuestion.explanation ?? currentQuestion.explanation_text, lang);
-
-  const correctAnswerIndex = finalOptions.findIndex((option) => option.trim() === correctAnswerText.trim());
 
   const handleOptionClick = (clickedIndex: number) => {
     if (isAnswered) return;

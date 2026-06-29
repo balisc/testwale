@@ -106,11 +106,17 @@ function getTopicValue(row) {
 }
 
 function buildSubjectPath(subjectKey) {
-  return `/subjects/${slugify(subjectKey)}`
+  return `/${slugify(subjectKey)}`
 }
 
 function buildTopicPath(subjectKey, topic) {
-  return `/subjects/${slugify(subjectKey)}`
+  return `/${slugify(subjectKey)}/topics/${slugify(topic)}`
+}
+
+function buildQuestionPath(topic, questionText, id) {
+  const topicSlug = slugify(topic)
+  const questionSlug = generateQuestionSlug(questionText, id)
+  return topicSlug ? `/question/${topicSlug}/${questionSlug}` : `/question/${questionSlug}`
 }
 
 function getSupabaseClient() {
@@ -174,13 +180,13 @@ async function fetchAllQuestions() {
 
 module.exports = {
   siteUrl: 'https://questionwale.com',
-  generateRobotsTxt: true,
+  generateRobotsTxt: false,
   changefreq: 'weekly',
   priority: 0.7,
   sitemapSize: 7000,
   exclude: ['/api/*', '/admin/*', '/scripts/*'],
   robotsTxtOptions: {
-    policies: [{ userAgent: '*', allow: '/' }],
+    policies: [{ userAgent: '*', allow: '/', disallow: ['/api/', '/loading-test/', '/examples/'] }],
   },
   additionalPaths: async (config) => {
     const urls = []
@@ -198,12 +204,7 @@ module.exports = {
       const topic = getTopicValue(q)
 
       if (id && questionText) {
-        const quizSlug = generateQuestionSlug(questionText, id)
-        urls.push({ loc: `${config.siteUrl}/question/${quizSlug}`, lastmod: new Date().toISOString(), changefreq: 'weekly', priority: 0.7 })
-      }
-
-      if (subjectKey) {
-        urls.push({ loc: `${config.siteUrl}/questions/${subjectKey}`, changefreq: 'weekly', priority: 0.8 })
+        urls.push({ loc: `${config.siteUrl}${buildQuestionPath(topic, questionText, id)}`, lastmod: new Date().toISOString(), changefreq: 'weekly', priority: 0.7 })
       }
 
       if (subjectKey && topic) {

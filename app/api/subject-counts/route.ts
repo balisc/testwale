@@ -3,7 +3,8 @@ import questionsData from '@/data/questions.json';
 import supabase from '@/lib/supabase';
 import { slugifySubject } from '@/lib/slugGenerator';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
+const PUBLIC_CACHE = 'public, s-maxage=300, stale-while-revalidate=600';
 
 const SUBJECT_KEYS = [
   'history',
@@ -79,7 +80,7 @@ export async function GET() {
 
     return NextResponse.json(counts, {
       headers: {
-        'Cache-Control': 'no-store',
+        'Cache-Control': PUBLIC_CACHE,
       },
     });
   } catch (error: any) {
@@ -97,7 +98,7 @@ export async function GET() {
 
     return NextResponse.json(fallbackCounts, {
       headers: {
-        'Cache-Control': 'no-store',
+        'Cache-Control': PUBLIC_CACHE,
       },
     });
   }
