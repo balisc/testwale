@@ -4,6 +4,8 @@ import SubjectPageClient from './SubjectPageClient';
 import GeographyClient from '../geography/GeographyClient';
 import EconomicsClient from '../economics/EconomicsClient';
 import MathClient from '../math/MathClient';
+import ScienceClient from '../science/ScienceClient';
+import HistoryClient from '../history/HistoryClient';
 import { buildSubjectMetadata } from '@/lib/seo';
 import { fetchTopicsFromQuestions, TopicItem } from '@/lib/questionTopics';
 
@@ -60,6 +62,14 @@ export default async function SubjectPage({ params }: { params: Promise<{ subjec
 
   if (subjectKey === 'math') {
     return <MathClient />;
+  }
+
+  if (subjectKey === 'science') {
+    return <ScienceClient />;
+  }
+
+  if (subjectKey === 'history') {
+    return <HistoryClient />;
   }
 
   let topics: TopicItem[] = [];

@@ -51,6 +51,11 @@ export default function StructuredTopicGroups({
                   {lang === 'hi' ? sectionLabel.hi : sectionLabel.en}
                 </p>
                 <h3 className="mt-2 text-lg font-semibold text-slate-900">{displayTitle}</h3>
+                {topicGroup.note ? (
+                  <p className="mt-2 max-w-2xl rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                    {splitBilingualText(topicGroup.note)[lang === 'hi' ? 'hi' : 'en']}
+                  </p>
+                ) : null}
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
                   {lang === 'hi'
                     ? 'उपविषयों को खोलने और प्रश्न संख्या देखने के लिए क्लिक करें।'

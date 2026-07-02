@@ -27,6 +27,132 @@ import {
   ENVIRONMENT_ECOLOGY_PAGE_TITLE,
   ENVIRONMENT_ECOLOGY_SECTION_LABEL,
 } from '@/lib/geography/environmentEcologyData';
+import {
+  ECONOMIC_FUNDAMENTALS_DATA,
+  ECONOMIC_FUNDAMENTALS_PAGE_TITLE,
+  ECONOMIC_FUNDAMENTALS_SCOPE,
+  ECONOMIC_FUNDAMENTALS_SECTION_LABEL,
+} from '@/lib/economics/economicFundamentalsData';
+import {
+  NATIONAL_INCOME_MACROECONOMICS_DATA,
+  NATIONAL_INCOME_MACROECONOMICS_PAGE_TITLE,
+  NATIONAL_INCOME_MACROECONOMICS_SCOPE,
+  NATIONAL_INCOME_MACROECONOMICS_SECTION_LABEL,
+} from '@/lib/economics/nationalIncomeMacroeconomicsData';
+import {
+  MONEY_BANKING_FINANCIAL_SYSTEM_DATA,
+  MONEY_BANKING_FINANCIAL_SYSTEM_PAGE_TITLE,
+  MONEY_BANKING_FINANCIAL_SYSTEM_SCOPE,
+  MONEY_BANKING_FINANCIAL_SYSTEM_SECTION_LABEL,
+} from '@/lib/economics/moneyBankingFinancialSystemData';
+import {
+  PUBLIC_FINANCE_DATA,
+  PUBLIC_FINANCE_PAGE_TITLE,
+  PUBLIC_FINANCE_SCOPE,
+  PUBLIC_FINANCE_SECTION_LABEL,
+} from '@/lib/economics/publicFinanceData';
+import {
+  INDIAN_ECONOMY_SECTORS_DATA,
+  INDIAN_ECONOMY_SECTORS_PAGE_TITLE,
+  INDIAN_ECONOMY_SECTORS_SCOPE,
+  INDIAN_ECONOMY_SECTORS_SECTION_LABEL,
+} from '@/lib/economics/indianEconomySectorsData';
+import {
+  ECONOMIC_PLANNING_DEVELOPMENT_DATA,
+  ECONOMIC_PLANNING_DEVELOPMENT_PAGE_TITLE,
+  ECONOMIC_PLANNING_DEVELOPMENT_SCOPE,
+  ECONOMIC_PLANNING_DEVELOPMENT_SECTION_LABEL,
+} from '@/lib/economics/economicPlanningDevelopmentData';
+import {
+  EXTERNAL_SECTOR_DATA,
+  EXTERNAL_SECTOR_PAGE_TITLE,
+  EXTERNAL_SECTOR_SCOPE,
+  EXTERNAL_SECTOR_SECTION_LABEL,
+} from '@/lib/economics/externalSectorData';
+import {
+  INFLATION_EMPLOYMENT_POVERTY_DATA,
+  INFLATION_EMPLOYMENT_POVERTY_PAGE_TITLE,
+  INFLATION_EMPLOYMENT_POVERTY_SCOPE,
+  INFLATION_EMPLOYMENT_POVERTY_SECTION_LABEL,
+} from '@/lib/economics/inflationEmploymentPovertyData';
+import {
+  INTERNATIONAL_ECONOMIC_ORGANIZATIONS_DATA,
+  INTERNATIONAL_ECONOMIC_ORGANIZATIONS_PAGE_TITLE,
+  INTERNATIONAL_ECONOMIC_ORGANIZATIONS_SCOPE,
+  INTERNATIONAL_ECONOMIC_ORGANIZATIONS_SECTION_LABEL,
+} from '@/lib/economics/internationalEconomicOrganizationsData';
+import {
+  NUMBER_SYSTEM_DATA,
+  NUMBER_SYSTEM_PAGE_TITLE,
+  NUMBER_SYSTEM_SCOPE,
+  NUMBER_SYSTEM_SECTION_LABEL,
+} from '@/lib/math/numberSystemData';
+import {
+  ARITHMETIC_DATA,
+  ARITHMETIC_PAGE_TITLE,
+  ARITHMETIC_SCOPE,
+  ARITHMETIC_SECTION_LABEL,
+} from '@/lib/math/arithmeticData';
+import {
+  ALGEBRA_DATA,
+  ALGEBRA_PAGE_TITLE,
+  ALGEBRA_SCOPE,
+  ALGEBRA_SECTION_LABEL,
+} from '@/lib/math/algebraData';
+import {
+  GEOMETRY_MENSURATION_DATA,
+  GEOMETRY_MENSURATION_PAGE_TITLE,
+  GEOMETRY_MENSURATION_SCOPE,
+  GEOMETRY_MENSURATION_SECTION_LABEL,
+} from '@/lib/math/geometryMensurationData';
+import {
+  TRIGONOMETRY_DATA,
+  TRIGONOMETRY_PAGE_TITLE,
+  TRIGONOMETRY_SCOPE,
+  TRIGONOMETRY_SECTION_LABEL,
+} from '@/lib/math/trigonometryData';
+import {
+  DATA_INTERPRETATION_DATA,
+  DATA_INTERPRETATION_PAGE_TITLE,
+  DATA_INTERPRETATION_SCOPE,
+  DATA_INTERPRETATION_SECTION_LABEL,
+} from '@/lib/math/dataInterpretationData';
+import {
+  STATISTICS_PROBABILITY_DATA,
+  STATISTICS_PROBABILITY_PAGE_TITLE,
+  STATISTICS_PROBABILITY_SCOPE,
+  STATISTICS_PROBABILITY_SECTION_LABEL,
+} from '@/lib/math/statisticsProbabilityData';
+import {
+  ADVANCED_MATHEMATICS_DATA,
+  ADVANCED_MATHEMATICS_PAGE_TITLE,
+  ADVANCED_MATHEMATICS_SCOPE,
+  ADVANCED_MATHEMATICS_SECTION_LABEL,
+} from '@/lib/math/advancedMathematicsData';
+import {
+  PHYSICS_DATA,
+  PHYSICS_PAGE_TITLE,
+  PHYSICS_SCOPE,
+  PHYSICS_SECTION_LABEL,
+} from '@/lib/science/physicsData';
+import {
+  CHEMISTRY_DATA,
+  CHEMISTRY_PAGE_TITLE,
+  CHEMISTRY_SCOPE,
+  CHEMISTRY_SECTION_LABEL,
+} from '@/lib/science/chemistryData';
+import {
+  BIOLOGY_DATA,
+  BIOLOGY_PAGE_TITLE,
+  BIOLOGY_SCOPE,
+  BIOLOGY_SECTION_LABEL,
+} from '@/lib/science/biologyData';
+import {
+  GENERAL_SCIENCE_DATA,
+  GENERAL_SCIENCE_PAGE_TITLE,
+  GENERAL_SCIENCE_SCOPE,
+  GENERAL_SCIENCE_SECTION_LABEL,
+} from '@/lib/science/generalScienceData';
 
 type TopicItem = {
   en: string;
@@ -442,6 +568,51 @@ export default function SubjectTopicsClient({
   const isIndianGeography = subjectKey === 'geography' && category === 'indian-geography';
   const isWorldGeography = subjectKey === 'geography' && category === 'world-geography';
   const isEnvironmentEcology = subjectKey === 'geography' && category === 'environment-ecology';
+  const isEconomicFundamentals = subjectKey === 'economics' && category === 'economic-fundamentals';
+  const isNationalIncomeMacroeconomics =
+    subjectKey === 'economics' && category === 'national-income-macroeconomics';
+  const isMoneyBankingFinancialSystem =
+    subjectKey === 'economics' && category === 'money-banking-financial-system';
+  const isPublicFinance = subjectKey === 'economics' && category === 'public-finance';
+  const isIndianEconomySectors = subjectKey === 'economics' && category === 'indian-economy-sectors';
+  const isEconomicPlanningDevelopment =
+    subjectKey === 'economics' && category === 'economic-planning-development';
+  const isExternalSector = subjectKey === 'economics' && category === 'external-sector';
+  const isInflationEmploymentPoverty =
+    subjectKey === 'economics' && category === 'inflation-employment-poverty';
+  const isInternationalEconomicOrganizations =
+    subjectKey === 'economics' && category === 'international-economic-organizations';
+  const isNumberSystem = subjectKey === 'math' && category === 'number-system';
+  const isArithmetic = subjectKey === 'math' && category === 'arithmetic';
+  const isAlgebra = subjectKey === 'math' && category === 'algebra';
+  const isGeometryMensuration = subjectKey === 'math' && category === 'geometry-mensuration';
+  const isTrigonometry = subjectKey === 'math' && category === 'trigonometry';
+  const isDataInterpretation = subjectKey === 'math' && category === 'data-interpretation';
+  const isStatisticsProbability = subjectKey === 'math' && category === 'statistics-probability';
+  const isAdvancedMathematics = subjectKey === 'math' && category === 'advanced-mathematics';
+  const isPhysics = subjectKey === 'science' && category === 'physics';
+  const isChemistry = subjectKey === 'science' && category === 'chemistry';
+  const isBiology = subjectKey === 'science' && category === 'biology';
+  const isGeneralScience = subjectKey === 'science' && category === 'general-science';
+  const isStructuredMath =
+    isNumberSystem ||
+    isArithmetic ||
+    isAlgebra ||
+    isGeometryMensuration ||
+    isTrigonometry ||
+    isDataInterpretation ||
+    isStatisticsProbability ||
+    isAdvancedMathematics;
+  const isStructuredEconomics =
+    isEconomicFundamentals ||
+    isNationalIncomeMacroeconomics ||
+    isMoneyBankingFinancialSystem ||
+    isPublicFinance ||
+    isIndianEconomySectors ||
+    isEconomicPlanningDevelopment ||
+    isExternalSector ||
+    isInflationEmploymentPoverty ||
+    isInternationalEconomicOrganizations;
   const pageHeading = isPhysicalGeography
     ? lang === 'hi'
       ? PHYSICAL_GEOGRAPHY_PAGE_TITLE.hi
@@ -458,6 +629,90 @@ export default function SubjectTopicsClient({
     ? lang === 'hi'
       ? ENVIRONMENT_ECOLOGY_PAGE_TITLE.hi
       : ENVIRONMENT_ECOLOGY_PAGE_TITLE.en
+    : isEconomicFundamentals
+    ? lang === 'hi'
+      ? ECONOMIC_FUNDAMENTALS_PAGE_TITLE.hi
+      : ECONOMIC_FUNDAMENTALS_PAGE_TITLE.en
+    : isNationalIncomeMacroeconomics
+    ? lang === 'hi'
+      ? NATIONAL_INCOME_MACROECONOMICS_PAGE_TITLE.hi
+      : NATIONAL_INCOME_MACROECONOMICS_PAGE_TITLE.en
+    : isMoneyBankingFinancialSystem
+    ? lang === 'hi'
+      ? MONEY_BANKING_FINANCIAL_SYSTEM_PAGE_TITLE.hi
+      : MONEY_BANKING_FINANCIAL_SYSTEM_PAGE_TITLE.en
+    : isPublicFinance
+    ? lang === 'hi'
+      ? PUBLIC_FINANCE_PAGE_TITLE.hi
+      : PUBLIC_FINANCE_PAGE_TITLE.en
+    : isIndianEconomySectors
+    ? lang === 'hi'
+      ? INDIAN_ECONOMY_SECTORS_PAGE_TITLE.hi
+      : INDIAN_ECONOMY_SECTORS_PAGE_TITLE.en
+    : isEconomicPlanningDevelopment
+    ? lang === 'hi'
+      ? ECONOMIC_PLANNING_DEVELOPMENT_PAGE_TITLE.hi
+      : ECONOMIC_PLANNING_DEVELOPMENT_PAGE_TITLE.en
+    : isExternalSector
+    ? lang === 'hi'
+      ? EXTERNAL_SECTOR_PAGE_TITLE.hi
+      : EXTERNAL_SECTOR_PAGE_TITLE.en
+    : isInflationEmploymentPoverty
+    ? lang === 'hi'
+      ? INFLATION_EMPLOYMENT_POVERTY_PAGE_TITLE.hi
+      : INFLATION_EMPLOYMENT_POVERTY_PAGE_TITLE.en
+    : isInternationalEconomicOrganizations
+    ? lang === 'hi'
+      ? INTERNATIONAL_ECONOMIC_ORGANIZATIONS_PAGE_TITLE.hi
+      : INTERNATIONAL_ECONOMIC_ORGANIZATIONS_PAGE_TITLE.en
+    : isNumberSystem
+    ? lang === 'hi'
+      ? NUMBER_SYSTEM_PAGE_TITLE.hi
+      : NUMBER_SYSTEM_PAGE_TITLE.en
+    : isArithmetic
+    ? lang === 'hi'
+      ? ARITHMETIC_PAGE_TITLE.hi
+      : ARITHMETIC_PAGE_TITLE.en
+    : isAlgebra
+    ? lang === 'hi'
+      ? ALGEBRA_PAGE_TITLE.hi
+      : ALGEBRA_PAGE_TITLE.en
+    : isGeometryMensuration
+    ? lang === 'hi'
+      ? GEOMETRY_MENSURATION_PAGE_TITLE.hi
+      : GEOMETRY_MENSURATION_PAGE_TITLE.en
+    : isTrigonometry
+    ? lang === 'hi'
+      ? TRIGONOMETRY_PAGE_TITLE.hi
+      : TRIGONOMETRY_PAGE_TITLE.en
+    : isDataInterpretation
+    ? lang === 'hi'
+      ? DATA_INTERPRETATION_PAGE_TITLE.hi
+      : DATA_INTERPRETATION_PAGE_TITLE.en
+    : isStatisticsProbability
+    ? lang === 'hi'
+      ? STATISTICS_PROBABILITY_PAGE_TITLE.hi
+      : STATISTICS_PROBABILITY_PAGE_TITLE.en
+    : isAdvancedMathematics
+    ? lang === 'hi'
+      ? ADVANCED_MATHEMATICS_PAGE_TITLE.hi
+      : ADVANCED_MATHEMATICS_PAGE_TITLE.en
+    : isPhysics
+    ? lang === 'hi'
+      ? PHYSICS_PAGE_TITLE.hi
+      : PHYSICS_PAGE_TITLE.en
+    : isChemistry
+    ? lang === 'hi'
+      ? CHEMISTRY_PAGE_TITLE.hi
+      : CHEMISTRY_PAGE_TITLE.en
+    : isBiology
+    ? lang === 'hi'
+      ? BIOLOGY_PAGE_TITLE.hi
+      : BIOLOGY_PAGE_TITLE.en
+    : isGeneralScience
+    ? lang === 'hi'
+      ? GENERAL_SCIENCE_PAGE_TITLE.hi
+      : GENERAL_SCIENCE_PAGE_TITLE.en
     : labels.pageTitle(subjectLabel);
 
   const getTopicCount = (label: string) => {
@@ -677,7 +932,7 @@ export default function SubjectTopicsClient({
                   <div className="pt-2 border-t border-slate-100">
                     <div className="text-xs text-slate-500 uppercase tracking-[0.18em] font-semibold">{labels.totalQuestionsLabel}</div>
                     <div className="mt-2 text-2xl font-extrabold text-slate-900">
-                      {(isModernHistory || isPhysicalGeography || isIndianGeography || isWorldGeography || isEnvironmentEcology ? totalQuestionsDisplay : topics.reduce((s, t) => s + (t.count ?? 0), 0)).toLocaleString()}
+                      {(isModernHistory || isPhysicalGeography || isIndianGeography || isWorldGeography || isEnvironmentEcology || isStructuredEconomics || isStructuredMath || isPhysics || isChemistry || isBiology || isGeneralScience ? totalQuestionsDisplay : topics.reduce((s, t) => s + (t.count ?? 0), 0)).toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -691,11 +946,347 @@ export default function SubjectTopicsClient({
               {pageHeading}
             </h1>
             <p className="mt-3 text-sm text-slate-500 max-w-2xl leading-7">
-              {labels.topicSubtitle}
+              {isEconomicFundamentals
+                ? lang === 'hi'
+                  ? ECONOMIC_FUNDAMENTALS_SCOPE.hi
+                  : ECONOMIC_FUNDAMENTALS_SCOPE.en
+                : isNationalIncomeMacroeconomics
+                ? lang === 'hi'
+                  ? NATIONAL_INCOME_MACROECONOMICS_SCOPE.hi
+                  : NATIONAL_INCOME_MACROECONOMICS_SCOPE.en
+                : isMoneyBankingFinancialSystem
+                ? lang === 'hi'
+                  ? MONEY_BANKING_FINANCIAL_SYSTEM_SCOPE.hi
+                  : MONEY_BANKING_FINANCIAL_SYSTEM_SCOPE.en
+                : isPublicFinance
+                ? lang === 'hi'
+                  ? PUBLIC_FINANCE_SCOPE.hi
+                  : PUBLIC_FINANCE_SCOPE.en
+                : isIndianEconomySectors
+                ? lang === 'hi'
+                  ? INDIAN_ECONOMY_SECTORS_SCOPE.hi
+                  : INDIAN_ECONOMY_SECTORS_SCOPE.en
+                : isEconomicPlanningDevelopment
+                ? lang === 'hi'
+                  ? ECONOMIC_PLANNING_DEVELOPMENT_SCOPE.hi
+                  : ECONOMIC_PLANNING_DEVELOPMENT_SCOPE.en
+                : isExternalSector
+                ? lang === 'hi'
+                  ? EXTERNAL_SECTOR_SCOPE.hi
+                  : EXTERNAL_SECTOR_SCOPE.en
+                : isInflationEmploymentPoverty
+                ? lang === 'hi'
+                  ? INFLATION_EMPLOYMENT_POVERTY_SCOPE.hi
+                  : INFLATION_EMPLOYMENT_POVERTY_SCOPE.en
+                : isInternationalEconomicOrganizations
+                ? lang === 'hi'
+                  ? INTERNATIONAL_ECONOMIC_ORGANIZATIONS_SCOPE.hi
+                  : INTERNATIONAL_ECONOMIC_ORGANIZATIONS_SCOPE.en
+                : isNumberSystem
+                ? lang === 'hi'
+                  ? NUMBER_SYSTEM_SCOPE.hi
+                  : NUMBER_SYSTEM_SCOPE.en
+                : isArithmetic
+                ? lang === 'hi'
+                  ? ARITHMETIC_SCOPE.hi
+                  : ARITHMETIC_SCOPE.en
+                : isAlgebra
+                ? lang === 'hi'
+                  ? ALGEBRA_SCOPE.hi
+                  : ALGEBRA_SCOPE.en
+                : isGeometryMensuration
+                ? lang === 'hi'
+                  ? GEOMETRY_MENSURATION_SCOPE.hi
+                  : GEOMETRY_MENSURATION_SCOPE.en
+                : isTrigonometry
+                ? lang === 'hi'
+                  ? TRIGONOMETRY_SCOPE.hi
+                  : TRIGONOMETRY_SCOPE.en
+                : isDataInterpretation
+                ? lang === 'hi'
+                  ? DATA_INTERPRETATION_SCOPE.hi
+                  : DATA_INTERPRETATION_SCOPE.en
+                : isStatisticsProbability
+                ? lang === 'hi'
+                  ? STATISTICS_PROBABILITY_SCOPE.hi
+                  : STATISTICS_PROBABILITY_SCOPE.en
+                : isAdvancedMathematics
+                ? lang === 'hi'
+                  ? ADVANCED_MATHEMATICS_SCOPE.hi
+                  : ADVANCED_MATHEMATICS_SCOPE.en
+                : isPhysics
+                ? lang === 'hi'
+                  ? PHYSICS_SCOPE.hi
+                  : PHYSICS_SCOPE.en
+                : isChemistry
+                ? lang === 'hi'
+                  ? CHEMISTRY_SCOPE.hi
+                  : CHEMISTRY_SCOPE.en
+                : isBiology
+                ? lang === 'hi'
+                  ? BIOLOGY_SCOPE.hi
+                  : BIOLOGY_SCOPE.en
+                : isGeneralScience
+                ? lang === 'hi'
+                  ? GENERAL_SCIENCE_SCOPE.hi
+                  : GENERAL_SCIENCE_SCOPE.en
+                : labels.topicSubtitle}
             </p>
           </div>
 
           <div className="space-y-4">
+            {isGeneralScience && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={GENERAL_SCIENCE_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={GENERAL_SCIENCE_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isBiology && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={BIOLOGY_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={BIOLOGY_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isChemistry && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={CHEMISTRY_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={CHEMISTRY_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isPhysics && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={PHYSICS_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={PHYSICS_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isAdvancedMathematics && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={ADVANCED_MATHEMATICS_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={ADVANCED_MATHEMATICS_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isStatisticsProbability && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={STATISTICS_PROBABILITY_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={STATISTICS_PROBABILITY_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isDataInterpretation && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={DATA_INTERPRETATION_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={DATA_INTERPRETATION_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isTrigonometry && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={TRIGONOMETRY_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={TRIGONOMETRY_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isGeometryMensuration && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={GEOMETRY_MENSURATION_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={GEOMETRY_MENSURATION_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isAlgebra && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={ALGEBRA_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={ALGEBRA_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isArithmetic && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={ARITHMETIC_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={ARITHMETIC_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isNumberSystem && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={NUMBER_SYSTEM_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={NUMBER_SYSTEM_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isInternationalEconomicOrganizations && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={INTERNATIONAL_ECONOMIC_ORGANIZATIONS_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={INTERNATIONAL_ECONOMIC_ORGANIZATIONS_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isInflationEmploymentPoverty && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={INFLATION_EMPLOYMENT_POVERTY_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={INFLATION_EMPLOYMENT_POVERTY_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isExternalSector && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={EXTERNAL_SECTOR_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={EXTERNAL_SECTOR_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isEconomicPlanningDevelopment && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={ECONOMIC_PLANNING_DEVELOPMENT_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={ECONOMIC_PLANNING_DEVELOPMENT_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isIndianEconomySectors && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={INDIAN_ECONOMY_SECTORS_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={INDIAN_ECONOMY_SECTORS_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isPublicFinance && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={PUBLIC_FINANCE_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={PUBLIC_FINANCE_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isMoneyBankingFinancialSystem && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={MONEY_BANKING_FINANCIAL_SYSTEM_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={MONEY_BANKING_FINANCIAL_SYSTEM_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isNationalIncomeMacroeconomics && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={NATIONAL_INCOME_MACROECONOMICS_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={NATIONAL_INCOME_MACROECONOMICS_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
+            {isEconomicFundamentals && (
+              <StructuredTopicGroups
+                subjectKey={subjectKey}
+                topicGroups={ECONOMIC_FUNDAMENTALS_DATA}
+                topics={topics}
+                lang={lang}
+                sectionLabel={ECONOMIC_FUNDAMENTALS_SECTION_LABEL}
+                questionsAvailableLabel={labels.questionsAvailable}
+                defaultOpenId={1}
+              />
+            )}
+
             {isEnvironmentEcology && (
               <StructuredTopicGroups
                 subjectKey={subjectKey}
@@ -1126,7 +1717,7 @@ export default function SubjectTopicsClient({
               </div>
             )}
 
-            {!isModernHistory && !isPhysicalGeography && !isIndianGeography && !isWorldGeography && !isEnvironmentEcology && topics.map((topic, index) => {
+            {!isModernHistory && !isPhysicalGeography && !isIndianGeography && !isWorldGeography && !isEnvironmentEcology && !isStructuredEconomics && !isStructuredMath && !isPhysics && !isChemistry && !isBiology && !isGeneralScience && topics.map((topic, index) => {
               const topicLabel = lang === 'hi' ? topic.hi || topic.en : topic.en || topic.hi;
               const normalizedTopicLabel = normalizeText(topicLabel);
               if (

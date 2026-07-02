@@ -6,6 +6,27 @@ import { PHYSICAL_GEOGRAPHY_PAGE_TITLE } from '@/lib/geography/physicalGeography
 import { INDIAN_GEOGRAPHY_PAGE_TITLE } from '@/lib/geography/indianGeographyData';
 import { WORLD_GEOGRAPHY_PAGE_TITLE } from '@/lib/geography/worldGeographyData';
 import { ENVIRONMENT_ECOLOGY_PAGE_TITLE } from '@/lib/geography/environmentEcologyData';
+import { ECONOMIC_FUNDAMENTALS_PAGE_TITLE } from '@/lib/economics/economicFundamentalsData';
+import { NATIONAL_INCOME_MACROECONOMICS_PAGE_TITLE } from '@/lib/economics/nationalIncomeMacroeconomicsData';
+import { MONEY_BANKING_FINANCIAL_SYSTEM_PAGE_TITLE } from '@/lib/economics/moneyBankingFinancialSystemData';
+import { PUBLIC_FINANCE_PAGE_TITLE } from '@/lib/economics/publicFinanceData';
+import { INDIAN_ECONOMY_SECTORS_PAGE_TITLE } from '@/lib/economics/indianEconomySectorsData';
+import { ECONOMIC_PLANNING_DEVELOPMENT_PAGE_TITLE } from '@/lib/economics/economicPlanningDevelopmentData';
+import { EXTERNAL_SECTOR_PAGE_TITLE } from '@/lib/economics/externalSectorData';
+import { INFLATION_EMPLOYMENT_POVERTY_PAGE_TITLE } from '@/lib/economics/inflationEmploymentPovertyData';
+import { INTERNATIONAL_ECONOMIC_ORGANIZATIONS_PAGE_TITLE } from '@/lib/economics/internationalEconomicOrganizationsData';
+import { NUMBER_SYSTEM_PAGE_TITLE } from '@/lib/math/numberSystemData';
+import { ARITHMETIC_PAGE_TITLE } from '@/lib/math/arithmeticData';
+import { ALGEBRA_PAGE_TITLE } from '@/lib/math/algebraData';
+import { GEOMETRY_MENSURATION_PAGE_TITLE } from '@/lib/math/geometryMensurationData';
+import { TRIGONOMETRY_PAGE_TITLE } from '@/lib/math/trigonometryData';
+import { DATA_INTERPRETATION_PAGE_TITLE } from '@/lib/math/dataInterpretationData';
+import { STATISTICS_PROBABILITY_PAGE_TITLE } from '@/lib/math/statisticsProbabilityData';
+import { ADVANCED_MATHEMATICS_PAGE_TITLE } from '@/lib/math/advancedMathematicsData';
+import { PHYSICS_PAGE_TITLE } from '@/lib/science/physicsData';
+import { CHEMISTRY_PAGE_TITLE } from '@/lib/science/chemistryData';
+import { BIOLOGY_PAGE_TITLE } from '@/lib/science/biologyData';
+import { GENERAL_SCIENCE_PAGE_TITLE } from '@/lib/science/generalScienceData';
 import { canonical } from '@/lib/seo';
 
 const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
@@ -133,6 +154,48 @@ export async function generateMetadata({
       ? WORLD_GEOGRAPHY_PAGE_TITLE.en
       : subjectKey === 'geography' && category === 'environment-ecology'
       ? ENVIRONMENT_ECOLOGY_PAGE_TITLE.en
+      : subjectKey === 'economics' && category === 'economic-fundamentals'
+      ? ECONOMIC_FUNDAMENTALS_PAGE_TITLE.en
+      : subjectKey === 'economics' && category === 'national-income-macroeconomics'
+      ? NATIONAL_INCOME_MACROECONOMICS_PAGE_TITLE.en
+      : subjectKey === 'economics' && category === 'money-banking-financial-system'
+      ? MONEY_BANKING_FINANCIAL_SYSTEM_PAGE_TITLE.en
+      : subjectKey === 'economics' && category === 'public-finance'
+      ? PUBLIC_FINANCE_PAGE_TITLE.en
+      : subjectKey === 'economics' && category === 'indian-economy-sectors'
+      ? INDIAN_ECONOMY_SECTORS_PAGE_TITLE.en
+      : subjectKey === 'economics' && category === 'economic-planning-development'
+      ? ECONOMIC_PLANNING_DEVELOPMENT_PAGE_TITLE.en
+      : subjectKey === 'economics' && category === 'external-sector'
+      ? EXTERNAL_SECTOR_PAGE_TITLE.en
+      : subjectKey === 'economics' && category === 'inflation-employment-poverty'
+      ? INFLATION_EMPLOYMENT_POVERTY_PAGE_TITLE.en
+      : subjectKey === 'economics' && category === 'international-economic-organizations'
+      ? INTERNATIONAL_ECONOMIC_ORGANIZATIONS_PAGE_TITLE.en
+      : subjectKey === 'math' && category === 'number-system'
+      ? NUMBER_SYSTEM_PAGE_TITLE.en
+      : subjectKey === 'math' && category === 'arithmetic'
+      ? ARITHMETIC_PAGE_TITLE.en
+      : subjectKey === 'math' && category === 'algebra'
+      ? ALGEBRA_PAGE_TITLE.en
+      : subjectKey === 'math' && category === 'geometry-mensuration'
+      ? GEOMETRY_MENSURATION_PAGE_TITLE.en
+      : subjectKey === 'math' && category === 'trigonometry'
+      ? TRIGONOMETRY_PAGE_TITLE.en
+      : subjectKey === 'math' && category === 'data-interpretation'
+      ? DATA_INTERPRETATION_PAGE_TITLE.en
+      : subjectKey === 'math' && category === 'statistics-probability'
+      ? STATISTICS_PROBABILITY_PAGE_TITLE.en
+      : subjectKey === 'math' && category === 'advanced-mathematics'
+      ? ADVANCED_MATHEMATICS_PAGE_TITLE.en
+      : subjectKey === 'science' && category === 'physics'
+      ? PHYSICS_PAGE_TITLE.en
+      : subjectKey === 'science' && category === 'chemistry'
+      ? CHEMISTRY_PAGE_TITLE.en
+      : subjectKey === 'science' && category === 'biology'
+      ? BIOLOGY_PAGE_TITLE.en
+      : subjectKey === 'science' && category === 'general-science'
+      ? GENERAL_SCIENCE_PAGE_TITLE.en
       : subCategory
       ? `${subjectConfig.label} - ${subCategory.charAt(0).toUpperCase() + subCategory.slice(1)} Topics`
       : `${subjectConfig.label} Topics`;

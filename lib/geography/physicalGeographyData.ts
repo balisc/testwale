@@ -2,6 +2,7 @@ export type StructuredTopicGroup = {
   id: number;
   title: string;
   subtopics: string[];
+  note?: string;
 };
 
 export const PHYSICAL_GEOGRAPHY_DATA: StructuredTopicGroup[] = [
