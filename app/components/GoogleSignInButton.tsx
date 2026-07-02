@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 declare global {
   interface Window {
@@ -38,6 +38,7 @@ type GoogleSignInButtonProps = {
   onError?: (message: string) => void;
   disabled?: boolean;
   align?: 'left' | 'center';
+  clientId?: string;
 };
 
 const SCRIPT_ID = 'google-identity-services';
@@ -49,6 +50,10 @@ type ButtonRenderConfig = {
   text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin';
   width: number;
 };
+
+function readBuiltInClientId() {
+  return (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '').trim();
+}
 
 function getButtonRenderConfig(container: HTMLElement): ButtonRenderConfig {
   const width = Math.floor(container.getBoundingClientRect().width);
@@ -87,13 +92,21 @@ export default function GoogleSignInButton({
   onError,
   disabled = false,
   align = 'center',
+  clientId: clientIdProp,
 }: GoogleSignInButtonProps) {
   const buttonRef = useRef<HTMLDivElement>(null);
   const googleInitializedRef = useRef(false);
   const lastRenderKeyRef = useRef('');
   const onCredentialRef = useRef(onCredential);
   const onErrorRef = useRef(onError);
-  const clientId = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '').trim();
+  const [resolvedClientId, setResolvedClientId] = useState(() => {
+    const fromProp = (clientIdProp ?? '').trim();
+    if (fromProp) return fromProp;
+    return readBuiltInClientId();
+  });
+  const [configState, setConfigState] = useState<'loading' | 'ready' | 'missing'>(() =>
+    resolvedClientId ? 'ready' : 'loading',
+  );
 
   useEffect(() => {
     onCredentialRef.current = onCredential;
@@ -104,7 +117,52 @@ export default function GoogleSignInButton({
   }, [onError]);
 
   useEffect(() => {
-    if (!clientId || disabled) return;
+    const fromProp = (clientIdProp ?? '').trim();
+    if (fromProp) {
+      setResolvedClientId(fromProp);
+      setConfigState('ready');
+      return;
+    }
+
+    const builtIn = readBuiltInClientId();
+    if (builtIn) {
+      setResolvedClientId(builtIn);
+      setConfigState('ready');
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadClientId = async () => {
+      try {
+        const response = await fetch('/api/auth/public-config', { cache: 'no-store' });
+        const data = (await response.json()) as { googleClientId?: string | null };
+        if (cancelled) return;
+
+        const id = (data.googleClientId ?? '').trim();
+        if (id) {
+          setResolvedClientId(id);
+          setConfigState('ready');
+          return;
+        }
+      } catch {
+        // fall through to missing state
+      }
+
+      if (!cancelled) {
+        setConfigState('missing');
+      }
+    };
+
+    void loadClientId();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [clientIdProp]);
+
+  useEffect(() => {
+    if (!resolvedClientId || disabled || configState !== 'ready') return;
 
     const container = buttonRef.current;
     if (!container) return;
@@ -153,7 +211,7 @@ export default function GoogleSignInButton({
 
       if (!googleInitializedRef.current) {
         window.google.accounts.id.initialize({
-          client_id: clientId,
+          client_id: resolvedClientId,
           callback: (response) => {
             if (response.credential) {
               onCredentialRef.current(response.credential);
@@ -185,6 +243,9 @@ export default function GoogleSignInButton({
       }
     };
 
+    googleInitializedRef.current = false;
+    lastRenderKeyRef.current = '';
+
     const existingScript = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
     if (existingScript) {
       if (window.google?.accounts?.id) {
@@ -213,13 +274,24 @@ export default function GoogleSignInButton({
       existingScript?.removeEventListener('load', initGoogle);
       lastRenderKeyRef.current = '';
     };
-  }, [clientId, disabled]);
+  }, [resolvedClientId, disabled, configState]);
 
-  if (!clientId) {
+  if (configState === 'loading') {
+    return (
+      <div className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+        <span className="text-[13px] font-medium text-slate-500">Loading Google sign-in...</span>
+      </div>
+    );
+  }
+
+  if (configState === 'missing' || !resolvedClientId) {
     return (
       <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-[11px] leading-6 text-amber-800 min-[360px]:px-4 min-[360px]:text-[13px]">
-        Google sign-in needs <code className="font-semibold">NEXT_PUBLIC_GOOGLE_CLIENT_ID</code> in{' '}
-        <code className="font-semibold">.env.local</code>.
+        Google sign-in is not configured. Add{' '}
+        <code className="font-semibold">NEXT_PUBLIC_GOOGLE_CLIENT_ID</code>,{' '}
+        <code className="font-semibold">GOOGLE_CLIENT_ID</code>, or{' '}
+        <code className="font-semibold">GOOGLE_CLIENT_ID_AUTH</code> in Vercel Environment Variables, then
+        redeploy.
       </div>
     );
   }

@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import LoginClient from './LoginClient';
 import { canonical } from '@/lib/seo';
+import { getGoogleClientId } from '@/lib/googleAuth';
+
+export const dynamic = 'force-dynamic';
 
 const title = 'Sign In - QuestionWale';
 const description =
@@ -13,5 +16,5 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
-  return <LoginClient />;
+  return <LoginClient googleClientId={getGoogleClientId()} />;
 }

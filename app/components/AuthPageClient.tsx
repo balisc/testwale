@@ -107,7 +107,7 @@ const LEFT_ICONS = [Target, FileText, BarChart3] as const;
 const CARD_ICONS = [Shield, Cloud, MonitorSmartphone, Lock] as const;
 const BOTTOM_ICONS = [Target, Languages, BarChart3, FileText] as const;
 
-export default function AuthPageClient() {
+export default function AuthPageClient({ googleClientId = '' }: { googleClientId?: string }) {
   const { language } = useLanguage();
   const lang = language as Lang;
   const c = CONTENT[lang];
@@ -243,6 +243,7 @@ export default function AuthPageClient() {
               <div className="login-action-stack mt-4 w-full min-w-0 min-[360px]:mt-5 sm:mt-6">
                 <div className="flex w-full min-w-0 flex-col gap-4 min-[360px]:gap-5 sm:gap-6">
                   <GoogleSignInButton
+                    clientId={googleClientId}
                     onCredential={handleGoogleCredential}
                     onError={(message) => setFormError(message)}
                     disabled={googleLoading}

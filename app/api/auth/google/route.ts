@@ -22,7 +22,7 @@ export async function POST(request: Request) {
           {
             success: false,
             code: 'googleConfig',
-            message: 'Add NEXT_PUBLIC_GOOGLE_CLIENT_ID to .env.local and restart the dev server.',
+            message: 'Add NEXT_PUBLIC_GOOGLE_CLIENT_ID, GOOGLE_CLIENT_ID, or GOOGLE_CLIENT_ID_AUTH in Vercel and redeploy.',
           },
           { status: 503 },
         );

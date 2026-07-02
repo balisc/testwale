@@ -9,7 +9,13 @@ type GoogleTokenPayload = {
 };
 
 export function getGoogleClientId() {
-  return (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? process.env.GOOGLE_CLIENT_ID ?? '').trim();
+  return (
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ??
+    process.env.GOOGLE_CLIENT_ID ??
+    process.env.GOOGLE_CLIENT_ID_AUTH ??
+    process.env.GOOGLE_CLIEN_ID_AUTH ??
+    ''
+  ).trim();
 }
 
 export async function verifyGoogleCredential(credential: string) {

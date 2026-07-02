@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import SignUpClient from './SignUpClient';
 import { canonical } from '@/lib/seo';
+import { getGoogleClientId } from '@/lib/googleAuth';
+
+export const dynamic = 'force-dynamic';
 
 const title = 'Sign Up - QuestionWale';
 const description =
@@ -21,5 +24,5 @@ export const metadata: Metadata = {
 };
 
 export default function SignUpPage() {
-  return <SignUpClient />;
+  return <SignUpClient googleClientId={getGoogleClientId()} />;
 }
