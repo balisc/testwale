@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import GoogleSignInButton from '@/app/components/GoogleSignInButton';
 
 type HomeGoogleCtaButtonProps = {
@@ -43,6 +44,38 @@ export default function HomeGoogleCtaButton({
   onCredential,
   onError,
 }: HomeGoogleCtaButtonProps) {
+  const [mounted, setMounted] = useState(false);
+  const [ready, setReady] = useState(Boolean(clientId.trim()));
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || clientId.trim()) {
+      if (clientId.trim()) setReady(true);
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch('/api/auth/public-config', { cache: 'no-store' })
+      .then((response) => response.json())
+      .then((data: { googleClientId?: string | null }) => {
+        if (cancelled) return;
+        setReady(Boolean((data.googleClientId ?? '').trim()));
+      })
+      .catch(() => {
+        if (!cancelled) setReady(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId, mounted]);
+
+  const isInteractive = mounted && ready && !disabled;
+
   return (
     <div
       className={`relative h-10 w-full min-w-0 rounded-lg border border-[#DADCE0] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.15)] min-[360px]:h-11 ${disabled ? 'pointer-events-none opacity-60' : ''}`}
@@ -53,16 +86,33 @@ export default function HomeGoogleCtaButton({
           Continue with Google
         </span>
       </div>
-      <div className="absolute inset-0 z-[1] h-full w-full min-w-0 cursor-pointer overflow-hidden rounded-lg opacity-0">
-        <GoogleSignInButton
-          clientId={clientId}
-          align="left"
-          overlay
-          disabled={disabled}
-          onCredential={onCredential}
-          onError={onError}
-        />
+      <div
+        className="absolute inset-0 z-[1] h-full w-full min-w-0 overflow-hidden rounded-lg opacity-[0.011]"
+        suppressHydrationWarning
+      >
+        {isInteractive ? (
+          <GoogleSignInButton
+            clientId={clientId}
+            align="left"
+            overlay
+            disabled={disabled}
+            onCredential={onCredential}
+            onError={onError}
+          />
+        ) : null}
       </div>
+      {mounted && !ready && !disabled ? (
+        <button
+          type="button"
+          className="absolute inset-0 z-[2] h-full w-full cursor-not-allowed rounded-lg opacity-0"
+          onClick={() =>
+            onError(
+              'Google sign-in is not configured. Add NEXT_PUBLIC_GOOGLE_CLIENT_ID to your environment variables.',
+            )
+          }
+          aria-label="Continue with Google"
+        />
+      ) : null}
     </div>
   );
 }

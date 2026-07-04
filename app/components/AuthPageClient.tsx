@@ -111,9 +111,11 @@ const BOTTOM_ICONS = [Target, Languages, BarChart3, FileText] as const;
 export default function AuthPageClient({
   googleClientId = '',
   redirectTo = '/subjects',
+  initialError = '',
 }: {
   googleClientId?: string;
   redirectTo?: string;
+  initialError?: string;
 }) {
   const { language } = useLanguage();
   const lang = language as Lang;
@@ -122,7 +124,7 @@ export default function AuthPageClient({
   const { refreshUser, setUser } = useAuth();
 
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [formError, setFormError] = useState('');
+  const [formError, setFormError] = useState(initialError);
 
   const completeAuth = useCallback(
     async (user: {

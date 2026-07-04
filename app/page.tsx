@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 import HomeClient from './HomeClient';
 import HomeHeroSection from '@/app/components/HomeHeroSection';
 import { canonical } from '@/lib/seo';

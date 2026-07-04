@@ -9,11 +9,13 @@ declare global {
         id: {
           initialize: (config: {
             client_id: string;
-            callback: (response: { credential?: string }) => void;
+            callback?: (response: { credential?: string }) => void;
             auto_select?: boolean;
             cancel_on_tap_outside?: boolean;
             itp_support?: boolean;
             use_fedcm_for_prompt?: boolean;
+            ux_mode?: 'popup' | 'redirect';
+            login_uri?: string;
           }) => void;
           renderButton: (
             element: HTMLElement,
@@ -34,40 +36,53 @@ declare global {
 }
 
 type GoogleSignInButtonProps = {
-  onCredential: (credential: string) => void;
+  onCredential?: (credential: string) => void;
   onError?: (message: string) => void;
   disabled?: boolean;
   align?: 'left' | 'center';
   clientId?: string;
   overlay?: boolean;
+  redirectLoginUri?: string;
 };
 
 const SCRIPT_ID = 'google-identity-services';
 const MAX_BUTTON_WIDTH = 600;
 
-let gsiInitializedClientId: string | null = null;
+let gsiInitializedKey: string | null = null;
 const gsiCredentialHandlers = new Set<(credential: string) => void>();
 const gsiCancelHandlers = new Set<() => void>();
 
-function ensureGoogleIdentityInitialized(clientId: string) {
+function ensureGoogleIdentityInitialized(clientId: string, redirectLoginUri?: string) {
   if (!window.google?.accounts?.id) return false;
-  if (gsiInitializedClientId === clientId) return true;
 
-  window.google.accounts.id.initialize({
-    client_id: clientId,
-    callback: (response) => {
-      if (response.credential) {
-        gsiCredentialHandlers.forEach((handler) => handler(response.credential!));
-        return;
-      }
-      gsiCancelHandlers.forEach((handler) => handler());
-    },
-    auto_select: false,
-    cancel_on_tap_outside: true,
-    itp_support: true,
-  });
+  const initKey = redirectLoginUri ? `${clientId}:redirect:${redirectLoginUri}` : `${clientId}:popup`;
+  if (gsiInitializedKey === initKey) return true;
 
-  gsiInitializedClientId = clientId;
+  if (redirectLoginUri) {
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      ux_mode: 'redirect',
+      login_uri: redirectLoginUri,
+      auto_select: false,
+      itp_support: true,
+    });
+  } else {
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      callback: (response) => {
+        if (response.credential) {
+          gsiCredentialHandlers.forEach((handler) => handler(response.credential!));
+          return;
+        }
+        gsiCancelHandlers.forEach((handler) => handler());
+      },
+      auto_select: false,
+      cancel_on_tap_outside: true,
+      itp_support: true,
+    });
+  }
+
+  gsiInitializedKey = initKey;
   return true;
 }
 
@@ -136,6 +151,7 @@ export default function GoogleSignInButton({
   align = 'center',
   clientId: clientIdProp,
   overlay = false,
+  redirectLoginUri,
 }: GoogleSignInButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
@@ -160,11 +176,15 @@ export default function GoogleSignInButton({
   }, [onError]);
 
   useEffect(() => {
+    if (redirectLoginUri) return;
+
     const handleCredential = (credential: string) => {
-      onCredentialRef.current(credential);
+      onCredentialRef.current?.(credential);
     };
     const handleCancel = () => {
-      onErrorRef.current?.('Google sign-in was cancelled.');
+      onErrorRef.current?.(
+        'Google sign-in was cancelled. If no popup appeared, allow popups for this site in your browser and try again.',
+      );
     };
 
     gsiCredentialHandlers.add(handleCredential);
@@ -174,7 +194,7 @@ export default function GoogleSignInButton({
       gsiCredentialHandlers.delete(handleCredential);
       gsiCancelHandlers.delete(handleCancel);
     };
-  }, []);
+  }, [redirectLoginUri]);
 
   useEffect(() => {
     const fromProp = (clientIdProp ?? '').trim();
@@ -234,6 +254,9 @@ export default function GoogleSignInButton({
     const renderGoogleButton = () => {
       if (!window.google?.accounts?.id || !buttonRef.current || !containerRef.current) return;
 
+      const containerWidth = Math.floor(containerRef.current.getBoundingClientRect().width);
+      if (containerWidth <= 0) return;
+
       const config = getButtonRenderConfig(containerRef.current, overlay);
       const renderKey = configKey(config);
 
@@ -267,15 +290,16 @@ export default function GoogleSignInButton({
     };
 
     const initGoogle = () => {
-      if (!buttonRef.current) return;
-      if (!ensureGoogleIdentityInitialized(resolvedClientId)) return;
+      if (!buttonRef.current || !containerRef.current) return;
+      if (!ensureGoogleIdentityInitialized(resolvedClientId, redirectLoginUri)) return;
 
       renderGoogleButton();
+      requestAnimationFrame(() => renderGoogleButton());
 
       if (typeof ResizeObserver !== 'undefined') {
         resizeObserver = new ResizeObserver(() => {
           if (resizeTimer) clearTimeout(resizeTimer);
-          resizeTimer = setTimeout(renderGoogleButton, 100);
+          resizeTimer = setTimeout(renderGoogleButton, 50);
         });
         resizeObserver.observe(container);
       } else {
@@ -317,7 +341,7 @@ export default function GoogleSignInButton({
       existingScript?.removeEventListener('load', initGoogle);
       lastRenderKeyRef.current = '';
     };
-  }, [resolvedClientId, disabled, configState, overlay]);
+  }, [resolvedClientId, disabled, configState, overlay, redirectLoginUri]);
 
   if (configState === 'loading') {
     if (overlay) {
@@ -353,7 +377,7 @@ export default function GoogleSignInButton({
       >
         <div
           ref={buttonRef}
-          className="h-full w-full overflow-hidden leading-[0] [&>div]:!h-full [&>div]:!max-h-full [&>div]:!w-full [&_iframe]:!block [&_iframe]:!h-full [&_iframe]:!max-h-full [&_iframe]:!w-full"
+          className="flex h-full w-full min-w-0 items-stretch overflow-hidden leading-[0] [&>div]:!h-full [&>div]:!min-h-[40px] [&>div]:!w-full [&>div]:!max-w-full [&_iframe]:!block [&_iframe]:!h-full [&_iframe]:!min-h-[40px] [&_iframe]:!w-full [&_iframe]:!max-w-full"
         />
       </div>
     );
