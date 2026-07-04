@@ -1,22 +1,32 @@
-import DelayedRouteLoader from '../../components/DelayedRouteLoader';
-
 export default function SubjectLoading() {
   return (
-    <DelayedRouteLoader>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/95 px-6 py-10 backdrop-blur-sm">
-        <div className="relative flex w-full max-w-md flex-col items-center gap-6 rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_70px_rgba(15,23,42,0.12)] px-8 py-12">
-          <div className="absolute -top-5 inline-flex items-center rounded-full bg-gradient-to-r from-teal-500 via-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg">
-            Questionwale</div>
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-r from-teal-500 via-blue-600 to-indigo-600 text-white shadow-xl">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
-          </div>
-          <div className="text-center mt-4">
-            <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Loading</p>
-            <h2 className="mt-3 text-2xl font-bold text-slate-900">Fetching topic questions</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Please wait while we load the selected topic and prepare your quiz.</p>
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <div className="mx-auto max-w-[1240px] animate-pulse px-4 pb-14 pt-6 sm:px-6 lg:px-8">
+        <div className="mb-5 h-4 w-48 rounded bg-slate-200" />
+        <div className="rounded-3xl border border-slate-100 bg-white p-8">
+          <div className="h-6 w-40 rounded-full bg-slate-200" />
+          <div className="mt-4 h-10 w-2/3 max-w-md rounded bg-slate-200" />
+          <div className="mt-3 h-4 w-full max-w-xl rounded bg-slate-100" />
+          <div className="mt-6 flex gap-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-8 w-20 rounded-full bg-slate-100" />
+            ))}
           </div>
         </div>
+        <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-slate-100 bg-white p-5">
+              <div className="flex gap-3">
+                <div className="h-11 w-11 rounded-xl bg-slate-100" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-3/4 rounded bg-slate-200" />
+                  <div className="h-3 w-full rounded bg-slate-100" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </DelayedRouteLoader>
+    </div>
   );
 }

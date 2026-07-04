@@ -1,10 +1,13 @@
 ﻿import type { Metadata } from 'next';
 import HomeClient from './HomeClient';
+import HomeHeroSection from '@/app/components/HomeHeroSection';
 import { canonical } from '@/lib/seo';
 import { getHomeData } from '@/lib/homeData';
+import { getServerLang } from '@/lib/serverLang';
 
-const title = 'Questionwale - MCQ Practice for Competitive Exams';
-const description = 'Practice UPSC, PSC, history, polity, geography, economics, science, math, reasoning, and current affairs MCQs with topic-wise quizzes on Questionwale.';
+const title = 'QuestionWale - Practice Smarter. Score Higher.';
+const description =
+  'Master every topic with bilingual MCQs, clear explanations and focused practice for competitive exams on QuestionWale.';
 
 export const metadata: Metadata = {
   title,
@@ -15,7 +18,7 @@ export const metadata: Metadata = {
     description,
     url: '/',
     type: 'website',
-    siteName: 'Questionwale',
+    siteName: 'QuestionWale',
   },
   twitter: {
     card: 'summary_large_image',
@@ -26,23 +29,13 @@ export const metadata: Metadata = {
 
 export const revalidate = 300;
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ search?: string | string[] }>;
-}) {
-  const resolvedSearchParams = (await searchParams) ?? {};
-  const homeData = await getHomeData();
-  const initialSearchQuery = Array.isArray(resolvedSearchParams.search)
-    ? resolvedSearchParams.search[0]
-    : resolvedSearchParams.search;
+export default async function HomePage() {
+  const [homeData, lang] = await Promise.all([getHomeData(), getServerLang()]);
 
   return (
-    <HomeClient
-      initialSiteStats={homeData.stats}
-      initialSubjectCounts={homeData.subjectCounts}
-      initialSuggestions={homeData.suggestions}
-      initialSearchQuery={initialSearchQuery}
-    />
+    <>
+      <HomeHeroSection lang={lang} initialSuggestions={homeData.suggestions} />
+      <HomeClient initialSubjectCounts={homeData.subjectCounts} />
+    </>
   );
 }

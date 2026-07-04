@@ -1,89 +1,91 @@
-import { permanentRedirect } from 'next/navigation';
-import { slugifySubject } from '@/lib/slugGenerator';
-import { fetchTopicsFromQuestions } from '@/lib/questionTopics';
+import { notFound } from 'next/navigation';
+import { getLocalizedText } from '@/lib/localizedText';
+import SubjectPageContent from './SubjectPageContent';
+import {
+  buildExamQuery,
+  getAllExams,
+  getExamWiseTopics,
+  getSubjectBySlug,
+  getTopicsBySubject,
+  resolveExamCodeFromDb,
+} from '@/lib/polity';
+import { resolveSubjectSlug } from '@/lib/subjectRoutes';
+import type { Metadata } from 'next';
+import { buildCatalogSubjectMetadata } from '@/lib/seo';
+import JsonLd from '@/components/JsonLd';
+import { buildBreadcrumbListSchema } from '@/lib/breadcrumbSchema';
 
-const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
-  history: { table: 'history_questions', label: 'History' },
-  science: { table: 'science_questions', label: 'Science' },
-  polity: { table: 'polity_questions', label: 'Polity' },
-  economics: { table: 'economics_questions', label: 'Economics' },
-  geography: { table: 'geography_questions', label: 'Geography' },
-  'general-knowledge': { table: 'general_knowledge_questions', label: 'General Knowledge' },
-  math: { table: 'math_questions', label: 'Math' },
-  'current-affairs': { table: 'current_affairs_questions', label: 'Current Affairs' },
-  reasoning: { table: 'reasoning_questions', label: 'Reasoning' },
-};
+export const dynamic = 'force-dynamic';
 
-export const revalidate = 3600;
-
-type SearchParams = {
-  topic?: string | string[];
-  topicKey?: string | string[];
-  slug?: string | string[];
-  v?: string | string[];
-};
-
-function slugifyTopic(topic: string) {
-  return encodeURIComponent(slugifySubject(topic));
-}
-
-async function fetchTopics(subjectKey: string) {
-  return fetchTopicsFromQuestions(subjectKey);
-}
-
-export default async function LegacySubjectPage({
-  params,
-  searchParams,
-}: {
+type PageProps = {
   params: Promise<{ subject: string }>;
-  searchParams: Promise<SearchParams>;
-}) {
-  const { subject } = await params;
+  searchParams: Promise<{ exam?: string | string[] }>;
+};
+
+function resolveExamParam(raw: string | string[] | undefined): string | null {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return value?.trim() || null;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { subject: routeSubject } = await params;
+  const subjectSlug = resolveSubjectSlug(routeSubject);
+  const subject = await getSubjectBySlug(subjectSlug);
+
+  if (!subject) {
+    return {
+      title: 'Subject not found',
+      description: 'The requested subject does not exist.',
+      robots: { index: false, follow: true },
+    };
+  }
+
+  const titleEn = getLocalizedText(subject.title, 'en');
+  const descEn = getLocalizedText(subject.description, 'en');
+
+  return buildCatalogSubjectMetadata(titleEn, subjectSlug, descEn || undefined);
+}
+
+export default async function SubjectSlugPage({ params, searchParams }: PageProps) {
+  const { subject: routeSubject } = await params;
+  const subjectSlug = resolveSubjectSlug(routeSubject);
   const resolvedSearchParams = await searchParams;
-  const subjectKey = String(subject).toLowerCase();
-  const subjectConfig = SUBJECT_TABLES[subjectKey];
+  const examParam = resolveExamParam(resolvedSearchParams.exam);
+  const examCode = buildExamQuery(examParam);
 
-  if (!subjectConfig) {
-    return permanentRedirect('/subjects');
+  const [subject, exams] = await Promise.all([getSubjectBySlug(subjectSlug), getAllExams()]);
+
+  if (!subject) {
+    notFound();
   }
 
-  const topicKeyParam = Array.isArray(resolvedSearchParams.topicKey)
-    ? resolvedSearchParams.topicKey[0]
-    : resolvedSearchParams.topicKey;
-  const topicParam = Array.isArray(resolvedSearchParams.topic) ? resolvedSearchParams.topic[0] : resolvedSearchParams.topic;
-  const topicValue = String(topicParam ?? '').trim();
+  const dbExamCode = examCode ? resolveExamCodeFromDb(exams, examCode) : undefined;
+  const topics = dbExamCode
+    ? await getExamWiseTopics(subject.id, dbExamCode)
+    : await getTopicsBySubject(subject.id);
 
-  if (topicKeyParam) {
-    const idx = Number.parseInt(String(topicKeyParam), 10);
-    if (!Number.isFinite(idx) || idx < 0) {
-      return permanentRedirect(`/${subjectKey}`);
-    }
+  const topicCount = subject.topic_count ?? topics.length;
+  const questionCount = subject.question_count ?? 0;
+  const titleEn = getLocalizedText(subject.title, 'en');
 
-    let topicsList: Array<{ en: string; hi: string }> = [];
-    try {
-      topicsList = await fetchTopics(subjectKey);
-    } catch (err) {
-      return permanentRedirect(`/${subjectKey}`);
-    }
+  const breadcrumbSchema = buildBreadcrumbListSchema([
+    { name: 'Home', href: '/' },
+    { name: 'Subjects', href: '/subjects' },
+    { name: titleEn },
+  ]);
 
-    const topicItem = topicsList[idx];
-    const decodedTopic = topicItem ? (topicItem.en || topicItem.hi || '').trim() : '';
-    if (decodedTopic) {
-      return permanentRedirect(`/${subjectKey}/topics/${slugifyTopic(decodedTopic)}`);
-    }
-
-    return permanentRedirect(`/${subjectKey}`);
-  }
-
-  if (topicValue) {
-    const slugParam = Array.isArray(resolvedSearchParams.slug) ? resolvedSearchParams.slug[0] : resolvedSearchParams.slug;
-    const slugValue = slugParam ? String(slugParam).trim() : '';
-    if (slugValue) {
-      return permanentRedirect(`/${subjectKey}/topics/${slugifyTopic(slugValue)}`);
-    }
-
-    return permanentRedirect(`/${subjectKey}/topics/${slugifyTopic(topicValue)}`);
-  }
-
-  return permanentRedirect(`/${subjectKey}`);
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
+      <JsonLd data={breadcrumbSchema} />
+      <SubjectPageContent
+        subject={subject}
+        subjectSlug={subjectSlug}
+        topics={topics}
+        exams={exams}
+        examCode={examParam}
+        topicCount={topicCount}
+        questionCount={questionCount}
+      />
+    </div>
+  );
 }

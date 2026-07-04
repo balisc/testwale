@@ -1,18 +1,11 @@
 import SubjectGrid from '../components/SubjectGrid';
-import { canonical } from '@/lib/seo';
+import { buildPageMetadata } from '@/lib/seo';
 
-export const metadata = {
-  title: 'Subjects',
-  description: 'Explore Questionwale subjects and start practicing with curated topics.',
-  ...canonical('/subjects'),
-  openGraph: {
-    title: 'Subjects',
-    description: 'Explore Questionwale subjects and start practicing with curated topics.',
-    url: '/subjects',
-    type: 'website',
-    siteName: 'Questionwale',
-  },
-};
+export const metadata = buildPageMetadata({
+  title: 'Subjects — MCQ Practice',
+  description: 'Explore QuestionWale subjects and start practicing with curated topics for competitive exams.',
+  path: '/subjects',
+});
 
 export default function SubjectsPage() {
   return (

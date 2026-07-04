@@ -11,7 +11,8 @@ import {
 } from '@/lib/questionLookup';
 import { SUBJECT_TABLES } from '@/lib/subjects';
 import { buildQuestionUrl, generateQuestionSlug, slugifySubject } from '@/lib/slugGenerator';
-import { BASE_URL, canonical } from '@/lib/seo';
+import { BASE_URL, canonical, absoluteUrl, SITE_NAME } from '@/lib/seo';
+import JsonLd from '@/components/JsonLd';
 
 export const revalidate = 3600;
 
@@ -69,6 +70,7 @@ type QuestionItem = {
   options?: Record<OptionKey, LocalizedText>;
   answer?: OptionKey;
   explanation?: LocalizedText;
+  year?: number | null;
 };
 
 function isQuestionVisible(row: any) {
@@ -218,6 +220,11 @@ export default async function QuestionPage({
   const correctAnswer = resolvedQuestion.answer && resolvedQuestion.options?.[resolvedQuestion.answer]
     ? getTextValue(resolvedQuestion.options[resolvedQuestion.answer], 'en')
     : getTextValue(resolvedQuestion.explanation, 'en');
+  const orgAuthor = {
+    '@type': 'Organization' as const,
+    name: SITE_NAME,
+    url: BASE_URL,
+  };
   const questionJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'QAPage',
@@ -225,13 +232,23 @@ export default async function QuestionPage({
       '@type': 'Question',
       name: questionText,
       text: questionText,
-      url: `${BASE_URL}${canonicalPath}`,
+      url: absoluteUrl(canonicalPath),
+      datePublished: resolvedQuestion.year
+        ? `${resolvedQuestion.year}-01-01`
+        : new Date().toISOString().slice(0, 10),
+      author: orgAuthor,
       answerCount: options.length,
-      suggestedAnswer: options,
+      suggestedAnswer: options.map((option) => ({
+        '@type': 'Answer',
+        name: option.name,
+        text: option.text,
+        author: orgAuthor,
+      })),
       acceptedAnswer: correctAnswer
         ? {
             '@type': 'Answer',
             text: correctAnswer,
+            author: orgAuthor,
           }
         : undefined,
     },
@@ -239,10 +256,7 @@ export default async function QuestionPage({
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(questionJsonLd) }}
-      />
+      <JsonLd data={questionJsonLd} />
       <QuestionDetailsClient
         initialQuestion={resolvedQuestion}
         initialQuestionId={questionId}

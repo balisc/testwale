@@ -1,21 +1,110 @@
-import { permanentRedirect } from 'next/navigation';
-import { slugifySubject } from '@/lib/slugGenerator';
+import { notFound } from 'next/navigation';
+import { getLocalizedText } from '@/lib/localizedText';
+import TopicPageContent from './TopicPageContent';
+import {
+  buildExamQuery,
+  getAllExams,
+  getSubjectBySlug,
+  getSubtopicsByTopic,
+  getTopicBySlug,
+  resolveExamCodeFromDb,
+} from '@/lib/polity';
+import { resolveSubjectSlug } from '@/lib/subjectRoutes';
+import type { Metadata } from 'next';
+import { buildCatalogTopicMetadata } from '@/lib/seo';
+import JsonLd from '@/components/JsonLd';
+import { buildBreadcrumbListSchema } from '@/lib/breadcrumbSchema';
 
-const decodeTopicSlug = (slug: string) => {
-  try {
-    return decodeURIComponent(slug);
-  } catch (err) {
-    console.error('--- TERMINAL DEBUG: decodeURIComponent failed ---', err);
-    return slug;
-  }
+export const dynamic = 'force-dynamic';
+
+type PageProps = {
+  params: Promise<{ subject: string; topicSlug: string }>;
+  searchParams: Promise<{ exam?: string | string[] }>;
 };
 
-export const revalidate = 3600;
+function resolveExamParam(raw: string | string[] | undefined): string | null {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return value?.trim() || null;
+}
 
-export default async function RedirectTopicPage({ params }: { params: Promise<{ subject: string; topicSlug: string }> }) {
-  const { subject: rawSubject, topicSlug: rawTopicSlug } = await params;
-  const subject = String(rawSubject ?? '').trim().toLowerCase();
-  const decodedTopic = decodeTopicSlug(String(rawTopicSlug ?? '').trim());
-  const topicSlug = slugifySubject(decodedTopic);
-  permanentRedirect(`/${subject}/topics/${topicSlug}`);
+function withExamQuery(path: string, examParam: string | null) {
+  const examCode = buildExamQuery(examParam);
+  if (!examCode) return path;
+  return `${path}?exam=${encodeURIComponent(examCode)}`;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { subject: routeSubject, topicSlug } = await params;
+  const subjectSlug = resolveSubjectSlug(routeSubject);
+  const subject = await getSubjectBySlug(subjectSlug);
+  if (!subject) {
+    return { title: 'Topic not found', robots: { index: false, follow: true } };
+  }
+  const topic = await getTopicBySlug(subject.id, topicSlug);
+  if (!topic) {
+    return { title: 'Topic not found', robots: { index: false, follow: true } };
+  }
+
+  const topicTitle = getLocalizedText(topic.title, 'en');
+  const subjectTitle = getLocalizedText(subject.title, 'en');
+  const topicDesc = getLocalizedText(topic.description, 'en');
+
+  return buildCatalogTopicMetadata(topicTitle, subjectTitle, subjectSlug, topicSlug, topicDesc || undefined);
+}
+
+export default async function TopicPage({ params, searchParams }: PageProps) {
+  const { subject: routeSubject, topicSlug } = await params;
+  const subjectSlug = resolveSubjectSlug(routeSubject);
+  const resolvedSearchParams = await searchParams;
+  const examParam = resolveExamParam(resolvedSearchParams.exam);
+
+  const subject = await getSubjectBySlug(subjectSlug);
+  if (!subject) notFound();
+
+  const topic = await getTopicBySlug(subject.id, topicSlug);
+  if (!topic) notFound();
+
+  const exams = await getAllExams();
+  const normalizedExam = buildExamQuery(examParam);
+  const dbExamCode = normalizedExam ? resolveExamCodeFromDb(exams, normalizedExam) : undefined;
+
+  const subtopics = await getSubtopicsByTopic({
+    topicId: topic.id,
+    examCode: dbExamCode,
+  });
+  const subjectHref = withExamQuery(`/subjects/${subjectSlug}`, examParam);
+  const mixedPracticeHref = withExamQuery(
+    `/subjects/${subjectSlug}/${topicSlug}/practice`,
+    examParam,
+  );
+  const subtopicsWithPracticeHref = subtopics.map((subtopic) => ({
+    ...subtopic,
+    practiceHref: withExamQuery(
+      `/subjects/${subjectSlug}/${topicSlug}/${subtopic.slug}/practice`,
+      examParam,
+    ),
+  }));
+
+  const subjectTitle = getLocalizedText(subject.title, 'en');
+  const topicTitle = getLocalizedText(topic.title, 'en');
+  const breadcrumbSchema = buildBreadcrumbListSchema([
+    { name: 'Home', href: '/' },
+    { name: subjectTitle, href: `/subjects/${subjectSlug}` },
+    { name: topicTitle },
+  ]);
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
+      <JsonLd data={breadcrumbSchema} />
+      <TopicPageContent
+        subject={subject}
+        topic={topic}
+        subtopics={subtopicsWithPracticeHref}
+        subjectSlug={subjectSlug}
+        subjectHref={subjectHref}
+        examParam={examParam}
+        mixedPracticeHref={mixedPracticeHref}
+      />
+    </div>
+  );
 }

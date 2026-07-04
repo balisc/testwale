@@ -5,7 +5,8 @@ import './globals.css';
 import LayoutShell from './components/LayoutShell';
 import { LanguageProvider } from '../lib/LanguageContext';
 import { AuthProvider } from '../lib/AuthContext';
-import { BASE_URL, siteMetadata, SITE_NAME } from '../lib/seo';
+import JsonLd from '@/components/JsonLd';
+import { BASE_URL, siteMetadata, SITE_NAME } from '@/lib/seo';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-plus-jakarta-sans', display: 'swap' });
@@ -46,14 +47,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${plusJakarta.variable} scroll-auto`}>
       <body suppressHydrationWarning className="min-h-screen bg-[#F8FAFC] text-slate-900 antialiased font-body m-0 p-0 overflow-x-hidden">
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
-        />
+        <JsonLd data={organizationJsonLd} />
+        <JsonLd data={websiteJsonLd} />
         <LanguageProvider>
           <AuthProvider>
             <LayoutShell>{children}</LayoutShell>

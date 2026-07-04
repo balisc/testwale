@@ -8,7 +8,11 @@ function getSupabaseUrl() {
 }
 
 function getServiceRoleKey() {
-  return process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? '';
+  return (
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ??
+    process.env.SUPABASE_SERVICE_KEY?.trim() ??
+    ''
+  );
 }
 
 export function getSupabaseAdmin() {

@@ -39,10 +39,37 @@ type GoogleSignInButtonProps = {
   disabled?: boolean;
   align?: 'left' | 'center';
   clientId?: string;
+  overlay?: boolean;
 };
 
 const SCRIPT_ID = 'google-identity-services';
 const MAX_BUTTON_WIDTH = 600;
+
+let gsiInitializedClientId: string | null = null;
+const gsiCredentialHandlers = new Set<(credential: string) => void>();
+const gsiCancelHandlers = new Set<() => void>();
+
+function ensureGoogleIdentityInitialized(clientId: string) {
+  if (!window.google?.accounts?.id) return false;
+  if (gsiInitializedClientId === clientId) return true;
+
+  window.google.accounts.id.initialize({
+    client_id: clientId,
+    callback: (response) => {
+      if (response.credential) {
+        gsiCredentialHandlers.forEach((handler) => handler(response.credential!));
+        return;
+      }
+      gsiCancelHandlers.forEach((handler) => handler());
+    },
+    auto_select: false,
+    cancel_on_tap_outside: true,
+    itp_support: true,
+  });
+
+  gsiInitializedClientId = clientId;
+  return true;
+}
 
 type ButtonRenderConfig = {
   type: 'standard' | 'icon';
@@ -55,8 +82,23 @@ function readBuiltInClientId() {
   return (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '').trim();
 }
 
-function getButtonRenderConfig(container: HTMLElement): ButtonRenderConfig {
+function getButtonRenderConfig(container: HTMLElement, overlay = false): ButtonRenderConfig {
   const width = Math.floor(container.getBoundingClientRect().width);
+  const safeWidth =
+    width > 0 ? Math.min(Math.max(width, 40), MAX_BUTTON_WIDTH) : overlay ? 280 : 168;
+
+  if (overlay) {
+    if (safeWidth < 100) {
+      return { type: 'icon', size: 'medium', width: Math.max(40, safeWidth) };
+    }
+
+    return {
+      type: 'standard',
+      size: safeWidth >= 280 ? 'large' : safeWidth >= 200 ? 'medium' : 'small',
+      text: 'continue_with',
+      width: safeWidth,
+    };
+  }
 
   if (width <= 0) {
     return { type: 'standard', size: 'medium', text: 'signin', width: 168 };
@@ -93,9 +135,10 @@ export default function GoogleSignInButton({
   disabled = false,
   align = 'center',
   clientId: clientIdProp,
+  overlay = false,
 }: GoogleSignInButtonProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
-  const googleInitializedRef = useRef(false);
   const lastRenderKeyRef = useRef('');
   const onCredentialRef = useRef(onCredential);
   const onErrorRef = useRef(onError);
@@ -115,6 +158,23 @@ export default function GoogleSignInButton({
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
+
+  useEffect(() => {
+    const handleCredential = (credential: string) => {
+      onCredentialRef.current(credential);
+    };
+    const handleCancel = () => {
+      onErrorRef.current?.('Google sign-in was cancelled.');
+    };
+
+    gsiCredentialHandlers.add(handleCredential);
+    gsiCancelHandlers.add(handleCancel);
+
+    return () => {
+      gsiCredentialHandlers.delete(handleCredential);
+      gsiCancelHandlers.delete(handleCancel);
+    };
+  }, []);
 
   useEffect(() => {
     const fromProp = (clientIdProp ?? '').trim();
@@ -164,7 +224,7 @@ export default function GoogleSignInButton({
   useEffect(() => {
     if (!resolvedClientId || disabled || configState !== 'ready') return;
 
-    const container = buttonRef.current;
+    const container = containerRef.current;
     if (!container) return;
 
     let resizeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -172,9 +232,9 @@ export default function GoogleSignInButton({
     let handleWindowResize: (() => void) | null = null;
 
     const renderGoogleButton = () => {
-      if (!window.google?.accounts?.id || !buttonRef.current) return;
+      if (!window.google?.accounts?.id || !buttonRef.current || !containerRef.current) return;
 
-      const config = getButtonRenderConfig(buttonRef.current);
+      const config = getButtonRenderConfig(containerRef.current, overlay);
       const renderKey = configKey(config);
 
       if (renderKey === lastRenderKeyRef.current && buttonRef.current.childElementCount > 0) {
@@ -207,24 +267,8 @@ export default function GoogleSignInButton({
     };
 
     const initGoogle = () => {
-      if (!window.google?.accounts?.id || !buttonRef.current) return;
-
-      if (!googleInitializedRef.current) {
-        window.google.accounts.id.initialize({
-          client_id: resolvedClientId,
-          callback: (response) => {
-            if (response.credential) {
-              onCredentialRef.current(response.credential);
-              return;
-            }
-            onErrorRef.current?.('Google sign-in was cancelled.');
-          },
-          auto_select: false,
-          cancel_on_tap_outside: true,
-          itp_support: true,
-        });
-        googleInitializedRef.current = true;
-      }
+      if (!buttonRef.current) return;
+      if (!ensureGoogleIdentityInitialized(resolvedClientId)) return;
 
       renderGoogleButton();
 
@@ -243,7 +287,6 @@ export default function GoogleSignInButton({
       }
     };
 
-    googleInitializedRef.current = false;
     lastRenderKeyRef.current = '';
 
     const existingScript = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
@@ -274,9 +317,12 @@ export default function GoogleSignInButton({
       existingScript?.removeEventListener('load', initGoogle);
       lastRenderKeyRef.current = '';
     };
-  }, [resolvedClientId, disabled, configState]);
+  }, [resolvedClientId, disabled, configState, overlay]);
 
   if (configState === 'loading') {
+    if (overlay) {
+      return <div className="h-full w-full" aria-hidden="true" />;
+    }
     return (
       <div className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
         <span className="text-[13px] font-medium text-slate-500">Loading Google sign-in...</span>
@@ -285,6 +331,9 @@ export default function GoogleSignInButton({
   }
 
   if (configState === 'missing' || !resolvedClientId) {
+    if (overlay) {
+      return null;
+    }
     return (
       <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-[11px] leading-6 text-amber-800 min-[360px]:px-4 min-[360px]:text-[13px]">
         Google sign-in is not configured. Add{' '}
@@ -296,11 +345,28 @@ export default function GoogleSignInButton({
     );
   }
 
+  if (overlay) {
+    return (
+      <div
+        ref={containerRef}
+        className={`h-full w-full ${disabled ? 'pointer-events-none' : ''}`}
+      >
+        <div
+          ref={buttonRef}
+          className="h-full w-full overflow-hidden leading-[0] [&>div]:!h-full [&>div]:!max-h-full [&>div]:!w-full [&_iframe]:!block [&_iframe]:!h-full [&_iframe]:!max-h-full [&_iframe]:!w-full"
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className={`w-full min-w-0 ${disabled ? 'pointer-events-none opacity-60' : ''}`}>
+    <div
+      ref={containerRef}
+      className={`w-full min-w-0 ${disabled ? 'pointer-events-none opacity-60' : ''}`}
+    >
       <div
         ref={buttonRef}
-        className={`flex min-h-[40px] w-full min-w-0 max-w-full overflow-hidden min-[360px]:min-h-[44px] ${align === 'left' ? 'justify-start' : 'justify-center'} [&>div]:!max-w-full [&>div]:!w-full [&_iframe]:!max-w-full`}
+        className={`flex h-[44px] w-full min-w-0 max-w-full overflow-hidden leading-[0] ${align === 'left' ? 'justify-start' : 'justify-center'} [&>div]:!h-[44px] [&>div]:!max-w-full [&>div]:!leading-[0] [&_iframe]:!block [&_iframe]:!h-[44px] [&_iframe]:!max-w-full`}
       />
     </div>
   );

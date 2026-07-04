@@ -1,42 +1,149 @@
 'use client';
 
 import Link from 'next/link';
-import { Heart } from 'lucide-react';
 import { useLanguage } from '../../lib/LanguageContext';
 
-const translations = {
-  en: { tagline: 'Created by student for students' },
-  hi: { tagline: 'Created by student for students' },
+type Lang = 'en' | 'hi';
+
+const COPY: Record<
+  Lang,
+  {
+    brand: string;
+    tagline: string;
+    practice: string;
+    company: string;
+    legal: string;
+    subjects: string;
+    about: string;
+    contact: string;
+    classic: string;
+    terms: string;
+    privacy: string;
+    disclaimer: string;
+    refund: string;
+    rights: string;
+    signIn: string;
+    signUp: string;
+  }
+> = {
+  en: {
+    brand: 'QuestionWale',
+    tagline: 'Focused practice for better exam preparation.',
+    practice: 'Practice',
+    company: 'Company',
+    legal: 'Legal',
+    subjects: 'All Subjects',
+    about: 'About Us',
+    contact: 'Contact',
+    classic: 'Classic Home',
+    terms: 'Terms of Service',
+    privacy: 'Privacy Policy',
+    disclaimer: 'Disclaimer',
+    refund: 'Refund Policy',
+    signIn: 'Sign In',
+    signUp: 'Sign Up',
+    rights: 'All rights reserved.',
+  },
+  hi: {
+    brand: 'QuestionWale',
+    tagline: 'बेहतर परीक्षा तैयारी के लिए केंद्रित अभ्यास।',
+    practice: 'अभ्यास',
+    company: 'कंपनी',
+    legal: 'कानूनी',
+    subjects: 'सभी विषय',
+    about: 'हमारे बारे में',
+    contact: 'संपर्क',
+    classic: 'पुराना होम',
+    terms: 'सेवा की शर्तें',
+    privacy: 'गोपनीयता नीति',
+    signIn: 'साइन इन',
+    signUp: 'साइन अप',
+    disclaimer: 'अस्वीकरण',
+    refund: 'रिफंड नीति',
+    rights: 'सर्वाधिकार सुरक्षित।',
+  },
 };
 
 export default function Footer() {
   const { language } = useLanguage();
-  const t = translations[language];
+  const c = COPY[language as Lang];
+
+  const linkClass =
+    'inline-flex min-h-[44px] items-center text-slate-600 transition hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#EDE9FE]';
 
   return (
-    <footer className="w-full min-w-0 overflow-x-hidden border-t border-slate-200 bg-white px-2 py-8 text-slate-900 shadow-sm min-[360px]:px-4 min-[360px]:py-12">
-      <div className="mx-auto flex max-w-6xl min-w-0 flex-col gap-6 min-[360px]:gap-8 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-3 min-[360px]:space-y-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="break-words text-xl font-extrabold tracking-tight min-[360px]:text-3xl">Questionwale</span>
+    <footer className="mt-auto w-full min-w-0 overflow-x-hidden border-t border-[#DDD6FE] bg-[#EDE9FE] text-slate-700">
+      <div className="mx-auto max-w-[1240px] px-2.5 py-8 min-[360px]:px-5 min-[360px]:py-10 md:px-6 md:py-12">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
+          <div className="min-w-0 sm:col-span-2 lg:col-span-1">
+            <Link
+              href="/"
+              className="inline-flex min-w-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#EDE9FE]"
+              aria-label={`${c.brand} home`}
+            >
+              <span className="truncate text-sm font-extrabold tracking-tight text-[#0F172A] min-[360px]:text-base min-[900px]:text-lg">
+                {c.brand}
+              </span>
+            </Link>
+            <p className="mt-3 max-w-xs break-words text-sm leading-relaxed text-slate-600">{c.tagline}</p>
           </div>
-          <div className="inline-flex max-w-full min-w-0 items-center gap-2 rounded-3xl bg-red-50 px-3 py-2.5 text-xs font-medium text-red-700 shadow-sm ring-1 ring-red-100 min-[360px]:gap-3 min-[360px]:px-4 min-[360px]:py-3 min-[360px]:text-sm">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 min-[360px]:h-8 min-[360px]:w-8">
-              <Heart className="h-4 w-4" />
-            </span>
-            <span className="min-w-0 break-words">{t.tagline}</span>
+
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wide text-[#0F172A]">{c.practice}</h3>
+            <nav className="mt-3 flex flex-col gap-1 text-sm" aria-label="Footer practice links">
+              <Link href="/subjects" className={linkClass}>
+                {c.subjects}
+              </Link>
+              <Link href="/classic" className={linkClass}>
+                {c.classic}
+              </Link>
+            </nav>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wide text-[#0F172A]">{c.company}</h3>
+            <nav className="mt-3 flex flex-col gap-1 text-sm" aria-label="Footer company links">
+              <Link href="/about_us" className={linkClass}>
+                {c.about}
+              </Link>
+              <Link href="/contact" className={linkClass}>
+                {c.contact}
+              </Link>
+            </nav>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wide text-[#0F172A]">{c.legal}</h3>
+            <nav className="mt-3 flex flex-col gap-1 text-sm" aria-label="Footer legal links">
+              <Link href="/terms" className={linkClass}>
+                {c.terms}
+              </Link>
+              <Link href="/privacy" className={linkClass}>
+                {c.privacy}
+              </Link>
+              <Link href="/disclaimer" className={linkClass}>
+                {c.disclaimer}
+              </Link>
+              <Link href="/refund-policy" className={linkClass}>
+                {c.refund}
+              </Link>
+            </nav>
           </div>
         </div>
 
-        <nav aria-label="Footer navigation" className="grid min-w-0 gap-2 text-xs text-slate-600 min-[360px]:gap-3 min-[360px]:text-sm sm:grid-cols-2 sm:gap-x-8">
-          <Link href="/subjects" className="hover:text-slate-900">Subjects</Link>
-          <Link href="/history" className="hover:text-slate-900">History MCQs</Link>
-          <Link href="/general-knowledge" className="hover:text-slate-900">General Knowledge</Link>
-          <Link href="/about_us" className="hover:text-slate-900">About Us</Link>
-          <Link href="/contact" className="hover:text-slate-900">Contact</Link>
-        </nav>
-
-        <p className="min-w-0 break-words text-xs text-slate-500 min-[360px]:text-sm">© 2026 Questionwale. All rights reserved.</p>
+        <div className="mt-8 flex flex-col gap-4 border-t border-[#DDD6FE] pt-6 min-[360px]:mt-10 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-slate-500 min-[360px]:text-sm">
+            © {new Date().getFullYear()} {c.brand}. {c.rights}
+          </p>
+          <div className="flex flex-wrap gap-4 text-sm">
+            <Link href="/login" className={linkClass}>
+              {c.signIn}
+            </Link>
+            <Link href="/signup" className={linkClass}>
+              {c.signUp}
+            </Link>
+          </div>
+        </div>
       </div>
     </footer>
   );

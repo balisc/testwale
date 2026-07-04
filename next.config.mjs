@@ -17,6 +17,11 @@ const nextConfig = {
     optimizeCss: true,
     scrollRestoration: true,
   },
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [384, 580, 640, 750, 828, 1080, 1160, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+  },
   async headers() {
     const securityHeaders = [
       {
@@ -41,6 +46,15 @@ const nextConfig = {
     ];
 
     return [
+      {
+        source: '/home/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
       {
         source: '/:path*',
         headers: securityHeaders,

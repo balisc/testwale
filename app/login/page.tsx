@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import LoginClient from './LoginClient';
 import { canonical } from '@/lib/seo';
 import { getGoogleClientId } from '@/lib/googleAuth';
@@ -16,5 +17,9 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
-  return <LoginClient googleClientId={getGoogleClientId()} />;
+  return (
+    <Suspense fallback={null}>
+      <LoginClient googleClientId={getGoogleClientId()} />
+    </Suspense>
+  );
 }

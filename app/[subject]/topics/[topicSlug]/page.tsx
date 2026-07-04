@@ -4,6 +4,8 @@ import ClientQuiz from '@/app/subjects/[subject]/[topicSlug]/ClientQuiz';
 import supabase, { SUPABASE_AVAILABLE } from '@/lib/supabase';
 import { subCategoryMatches, topicMatches } from '@/lib/topicMatching';
 import { BASE_URL, buildQuizMetadata } from '@/lib/seo';
+import JsonLd from '@/components/JsonLd';
+import { buildBreadcrumbListSchema } from '@/lib/breadcrumbSchema';
 import { slugifySubject } from '@/lib/slugGenerator';
 
 const PAGE_SIZE = 1000;
@@ -363,22 +365,15 @@ export default async function TopicPage({ params }: { params: Promise<{ subject:
 
   const { questions, fetchError } = await fetchQuizQuestions(subjectKey, decodedTopic);
   const topicPath = `/${subjectKey}/topics/${slugifySubject(decodedTopic)}`;
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: BASE_URL },
-      { '@type': 'ListItem', position: 2, name: subjectConfig.label, item: `${BASE_URL}/${subjectKey}` },
-      { '@type': 'ListItem', position: 3, name: decodedTopic, item: `${BASE_URL}${topicPath}` },
-    ],
-  };
+  const breadcrumbJsonLd = buildBreadcrumbListSchema([
+    { name: 'Home', href: '/' },
+    { name: subjectConfig.label, href: `/${subjectKey}` },
+    { name: decodedTopic, href: topicPath },
+  ]);
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
+      <JsonLd data={breadcrumbJsonLd} />
       <ClientQuiz
         questions={questions ?? []}
         decodedTopic={decodedTopic}

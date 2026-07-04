@@ -16,9 +16,10 @@ import {
   Target,
 } from 'lucide-react';
 import AuthHeroIllustration from '@/app/components/AuthHeroIllustration';
-import GoogleSignInButton from '@/app/components/GoogleSignInButton';
+import HomeGoogleCtaButton from '@/app/components/HomeGoogleCtaButton';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/lib/LanguageContext';
+import { getSafeRedirectPath } from '@/lib/safeRedirect';
 import { getSignupErrorMessage } from '@/lib/signupValidation';
 
 type Lang = 'en' | 'hi';
@@ -107,7 +108,13 @@ const LEFT_ICONS = [Target, FileText, BarChart3] as const;
 const CARD_ICONS = [Shield, Cloud, MonitorSmartphone, Lock] as const;
 const BOTTOM_ICONS = [Target, Languages, BarChart3, FileText] as const;
 
-export default function AuthPageClient({ googleClientId = '' }: { googleClientId?: string }) {
+export default function AuthPageClient({
+  googleClientId = '',
+  redirectTo = '/subjects',
+}: {
+  googleClientId?: string;
+  redirectTo?: string;
+}) {
   const { language } = useLanguage();
   const lang = language as Lang;
   const c = CONTENT[lang];
@@ -127,9 +134,9 @@ export default function AuthPageClient({ googleClientId = '' }: { googleClientId
     }) => {
       setUser(user);
       await refreshUser();
-      router.push('/subjects');
+      router.push(getSafeRedirectPath(redirectTo, '/subjects'));
     },
-    [refreshUser, router, setUser],
+    [refreshUser, redirectTo, router, setUser],
   );
 
   const handleGoogleCredential = useCallback(
@@ -242,12 +249,11 @@ export default function AuthPageClient({ googleClientId = '' }: { googleClientId
 
               <div className="login-action-stack mt-4 w-full min-w-0 min-[360px]:mt-5 sm:mt-6">
                 <div className="flex w-full min-w-0 flex-col gap-4 min-[360px]:gap-5 sm:gap-6">
-                  <GoogleSignInButton
+                  <HomeGoogleCtaButton
                     clientId={googleClientId}
                     onCredential={handleGoogleCredential}
                     onError={(message) => setFormError(message)}
                     disabled={googleLoading}
-                    align="left"
                   />
 
                   <div className="flex w-full min-w-0 gap-2 rounded-lg bg-[#F5F3FF] px-2.5 py-3 text-left min-[360px]:gap-3 min-[360px]:rounded-xl min-[360px]:px-4 min-[360px]:py-3.5">
@@ -283,11 +289,11 @@ export default function AuthPageClient({ googleClientId = '' }: { googleClientId
 
               <p className="mt-4 break-words text-left text-[10px] leading-5 text-[#9CA3AF] min-[360px]:mt-5 min-[360px]:text-[12px] min-[360px]:leading-6 sm:mt-6 sm:text-[13px]">
                 {c.termsPrefix}{' '}
-                <Link href="/about_us" className="font-semibold text-[#7C3AED] hover:underline">
+                <Link href="/terms" className="font-semibold text-[#7C3AED] hover:underline">
                   {c.terms}
                 </Link>{' '}
                 {c.and}{' '}
-                <Link href="/contact" className="font-semibold text-[#7C3AED] hover:underline">
+                <Link href="/privacy" className="font-semibold text-[#7C3AED] hover:underline">
                   {c.privacy}
                 </Link>
                 .

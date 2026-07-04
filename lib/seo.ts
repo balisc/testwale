@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
-export const SITE_NAME = 'Questionwale';
+export const SITE_NAME = 'QuestionWale';
 export const DEFAULT_DESCRIPTION =
-  'Questionwale exam prep and practice engine. Solve MCQs, topic quizzes, and previous-year questions to boost your competitive exam readiness.';
+  'QuestionWale exam prep and practice engine. Solve MCQs, topic quizzes, and previous-year questions to boost your competitive exam readiness.';
 export const BASE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://questionwale.com').replace(/\/$/, '');
 export const DEFAULT_OG_IMAGE = '/logo/questionwale_logo.webp';
 
@@ -19,7 +19,12 @@ export function canonical(path = '/') {
   } satisfies Pick<Metadata, 'alternates'>;
 }
 
-function baseSocialMetadata(title: string, description: string, path = '/', type: 'website' | 'article' = 'website'): Metadata {
+function baseSocialMetadata(
+  title: string,
+  description: string,
+  path = '/',
+  type: 'website' | 'article' = 'website',
+): Metadata {
   return {
     openGraph: {
       title,
@@ -40,14 +45,14 @@ function baseSocialMetadata(title: string, description: string, path = '/', type
 
 export const siteMetadata: Metadata = {
   title: {
-    default: SITE_NAME,
+    default: `${SITE_NAME} — MCQ Practice for Competitive Exams`,
     template: `%s | ${SITE_NAME}`,
   },
   description: DEFAULT_DESCRIPTION,
   metadataBase: new URL(BASE_URL),
   ...canonical('/'),
   openGraph: {
-    title: SITE_NAME,
+    title: `${SITE_NAME} — MCQ Practice for Competitive Exams`,
     description: DEFAULT_DESCRIPTION,
     type: 'website',
     url: BASE_URL,
@@ -56,7 +61,7 @@ export const siteMetadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: SITE_NAME,
+    title: `${SITE_NAME} — MCQ Practice for Competitive Exams`,
     description: DEFAULT_DESCRIPTION,
     images: [absoluteUrl(DEFAULT_OG_IMAGE)],
   },
@@ -73,30 +78,41 @@ export const siteMetadata: Metadata = {
   },
 };
 
-export function buildSubjectMetadata(subjectLabel: string, subjectPath?: string): Metadata {
-  const title = `${subjectLabel} Topics`;
-  const description = `Browse ${subjectLabel} topics, practice curated questions, and improve your competitive exam skills on ${SITE_NAME}.`;
-  const path = subjectPath ?? `/${subjectLabel.toLowerCase().replace(/\s+/g, '-')}`;
+/** Page metadata without duplicating the site name suffix (root layout adds it via template). */
+export function buildPageMetadata(options: {
+  title: string;
+  description: string;
+  path: string;
+  type?: 'website' | 'article';
+  noIndex?: boolean;
+}): Metadata {
+  const { title, description, path, type = 'website', noIndex = false } = options;
 
   return {
     title,
     description,
     ...canonical(path),
-    ...baseSocialMetadata(title, description, path),
+    ...baseSocialMetadata(title, description, path, type),
+    ...(noIndex ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
-export function buildTopicMetadata(subjectLabel: string, topicName: string, topicPath?: string): Metadata {
-  const title = `${topicName} Practice Questions | ${subjectLabel}`;
-  const description = `Practice ${topicName} questions for ${subjectLabel} on ${SITE_NAME} and strengthen your exam preparation with real MCQs.`;
-  const path = topicPath ?? `/${subjectLabel.toLowerCase().replace(/\s+/g, '-')}/topics/${topicName.toLowerCase().replace(/\s+/g, '-')}`;
+export function buildSubjectMetadata(subjectLabel: string, subjectPath?: string): Metadata {
+  const title = `${subjectLabel} Topics & MCQ Practice`;
+  const description = `Browse ${subjectLabel} topics, practice curated questions, and improve your competitive exam skills on ${SITE_NAME}.`;
+  const path = subjectPath ?? `/${subjectLabel.toLowerCase().replace(/\s+/g, '-')}`;
 
-  return {
-    title,
-    description,
-    ...canonical(path),
-    ...baseSocialMetadata(title, description, path, 'article'),
-  };
+  return buildPageMetadata({ title, description, path });
+}
+
+export function buildTopicMetadata(subjectLabel: string, topicName: string, topicPath?: string): Metadata {
+  const title = `${topicName} — ${subjectLabel} Practice`;
+  const description = `Practice ${topicName} questions for ${subjectLabel} on ${SITE_NAME} and strengthen your exam preparation with real MCQs.`;
+  const path =
+    topicPath ??
+    `/${subjectLabel.toLowerCase().replace(/\s+/g, '-')}/topics/${topicName.toLowerCase().replace(/\s+/g, '-')}`;
+
+  return buildPageMetadata({ title, description, path, type: 'article' });
 }
 
 export function buildExamMetadata(examName: string, examPath?: string): Metadata {
@@ -104,23 +120,54 @@ export function buildExamMetadata(examName: string, examPath?: string): Metadata
   const description = `Practice previous-year ${examName} questions on ${SITE_NAME} to improve speed, accuracy, and exam confidence.`;
   const path = examPath ?? '/subjects';
 
-  return {
-    title,
-    description,
-    ...canonical(path),
-    ...baseSocialMetadata(title, description, path),
-  };
+  return buildPageMetadata({ title, description, path });
 }
 
 export function buildQuizMetadata(examName: string, topicName: string, quizPath?: string): Metadata {
-  const title = `${topicName} Quiz | ${examName}`;
+  const title = `${topicName} Quiz — ${examName}`;
   const description = `Take a quick ${topicName} quiz for ${examName} on ${SITE_NAME} and validate your exam readiness with realistic practice.`;
   const path = quizPath ?? '/subjects';
 
-  return {
-    title,
-    description,
-    ...canonical(path),
-    ...baseSocialMetadata(title, description, path, 'article'),
-  };
+  return buildPageMetadata({ title, description, path, type: 'article' });
+}
+
+export function buildCatalogSubjectMetadata(
+  subjectTitle: string,
+  subjectSlug: string,
+  description?: string,
+): Metadata {
+  return buildPageMetadata({
+    title: `${subjectTitle} — Topics & MCQ Practice`,
+    description:
+      description ||
+      `Practice ${subjectTitle} topics with exam-wise MCQs for UPSC, SSC, Railway and State exams.`,
+    path: `/subjects/${subjectSlug}`,
+  });
+}
+
+export function buildCatalogTopicMetadata(
+  topicTitle: string,
+  subjectTitle: string,
+  subjectSlug: string,
+  topicSlug: string,
+  description?: string,
+): Metadata {
+  return buildPageMetadata({
+    title: `${topicTitle} — ${subjectTitle}`,
+    description: description || `Practice ${topicTitle} subtopics with MCQs on ${SITE_NAME}.`,
+    path: `/subjects/${subjectSlug}/${topicSlug}`,
+  });
+}
+
+export function buildPracticeMetadata(
+  topicTitle: string,
+  subjectTitle: string,
+  path: string,
+): Metadata {
+  return buildPageMetadata({
+    title: `${topicTitle} — MCQ Practice`,
+    description: `Mixed MCQ practice for ${topicTitle} in ${subjectTitle}.`,
+    path,
+    noIndex: true,
+  });
 }

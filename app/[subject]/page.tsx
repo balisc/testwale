@@ -1,6 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import SubjectPageClient from './SubjectPageClient';
+import { notFound, permanentRedirect } from 'next/navigation';
 import GeographyClient from '../geography/GeographyClient';
 import EconomicsClient from '../economics/EconomicsClient';
 import MathClient from '../math/MathClient';
@@ -8,6 +7,8 @@ import ScienceClient from '../science/ScienceClient';
 import HistoryClient from '../history/HistoryClient';
 import { buildSubjectMetadata } from '@/lib/seo';
 import { fetchTopicsFromQuestions, TopicItem } from '@/lib/questionTopics';
+import { LEGACY_SUBJECT_SLUG_MAP } from '@/lib/subjectRoutes';
+import SubjectPageClient from './SubjectPageClient';
 
 const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
   history: { table: 'history_questions', label: 'History' },
@@ -70,6 +71,10 @@ export default async function SubjectPage({ params }: { params: Promise<{ subjec
 
   if (subjectKey === 'history') {
     return <HistoryClient />;
+  }
+
+  if (subjectKey === 'polity') {
+    permanentRedirect(`/subjects/${LEGACY_SUBJECT_SLUG_MAP.polity}`);
   }
 
   let topics: TopicItem[] = [];

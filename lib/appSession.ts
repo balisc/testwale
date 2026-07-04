@@ -14,8 +14,16 @@ export type SessionUser = {
 type SessionPayload = SessionUser & { exp: number };
 
 function getAuthSecret() {
+  const secret = process.env.AUTH_SECRET?.trim();
+  if (secret) return secret;
+
+  if (process.env.NODE_ENV === 'production') {
+    console.error(
+      '[auth] AUTH_SECRET is not set in production. Set a strong random AUTH_SECRET in Vercel env vars.',
+    );
+  }
+
   return (
-    process.env.AUTH_SECRET ??
     process.env.SUPABASE_SERVICE_ROLE_KEY ??
     process.env.SUPABASE_ANON_KEY ??
     'questionwale-dev-secret'
