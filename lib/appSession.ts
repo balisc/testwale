@@ -82,6 +82,6 @@ export function getSessionCookieOptions() {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
     path: '/',
-    maxAge: AUTH_MAX_AGE_SECONDS,
+    // Session cookie — cleared when the browser session ends (all tabs/windows closed).
   };
 }

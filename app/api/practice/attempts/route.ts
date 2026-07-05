@@ -28,7 +28,7 @@ function unwrapQuestionJoin(value: QuestionJoin | QuestionJoin[] | null | undefi
 export async function POST(request: Request) {
   const { user, admin, error } = await requirePracticeUser();
   if (error === 'unauthorized') return practiceErrorResponse('unauthorized', 401);
-  if (error === 'service_unavailable') return practiceErrorResponse('service_unavailable', 503);
+  if (!admin) return practiceErrorResponse('service_unavailable', 503);
 
   let questionIds: string[] = [];
   try {

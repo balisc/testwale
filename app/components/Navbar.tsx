@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import UserAvatar from '@/components/UserAvatar';
 import { useLanguage } from '../../lib/LanguageContext';
 import { useAuth } from '../../lib/AuthContext';
 
@@ -19,6 +20,7 @@ const translations: Record<
     contact: string;
     signIn: string;
     logout: string;
+    progress: string;
     english: string;
     hindi: string;
     menuLabel: string;
@@ -33,6 +35,7 @@ const translations: Record<
     contact: 'Contact',
     signIn: 'Sign In',
     logout: 'Log out',
+    progress: 'Profile',
     english: 'English',
     hindi: 'हिंदी',
     menuLabel: 'Open menu',
@@ -46,6 +49,7 @@ const translations: Record<
     contact: 'संपर्क',
     signIn: 'साइन इन',
     logout: 'लॉग आउट',
+    progress: 'प्रोफ़ाइल',
     english: 'English',
     hindi: 'हिंदी',
     menuLabel: 'मेनू खोलें',
@@ -64,9 +68,11 @@ const focusRing =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2';
 
 const desktopNavLinkClass = (active: boolean) =>
-  `relative whitespace-nowrap px-1 py-2 text-sm font-medium transition-colors ${focusRing} ${
+  `relative inline-flex items-center whitespace-nowrap px-1 py-2 text-sm font-medium leading-none transition-colors ${focusRing} ${
     active ? 'text-brand' : 'text-[#0F172A] hover:text-brand'
   }`;
+
+const desktopAuthButtonClass = `inline-flex items-center whitespace-nowrap px-1 py-2 text-sm font-semibold leading-none transition-colors ${focusRing} rounded-lg text-slate-700 hover:text-brand`;
 
 const mobileLinkClass = (active: boolean) =>
   `block min-h-[44px] rounded-xl px-4 py-3 text-base font-semibold transition-colors ${focusRing} ${
@@ -84,6 +90,8 @@ export default function Navbar() {
   const t = translations[language];
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
+    if (href === '/profile') return pathname.startsWith('/profile');
+    if (href === '/dashboard') return pathname.startsWith('/dashboard');
     if (href === '/subjects') {
       const segment = pathname.split('/').filter(Boolean)[0];
       const subjectSlugs = new Set([
@@ -133,6 +141,10 @@ export default function Navbar() {
     href: item.href,
     label: t[item.labelKey],
   }));
+
+  const authNavLinks = user
+    ? [{ href: '/profile', label: t.progress }]
+    : [];
 
   const LanguageToggle = ({ className = '' }: { className?: string }) => (
     <div className={`flex shrink-0 items-center gap-1.5 text-sm font-medium ${className}`}>
@@ -188,24 +200,39 @@ export default function Navbar() {
                 )}
               </Link>
             ))}
+            {authNavLinks.map((item) => (
+              <Link key={item.href} href={item.href} className={desktopNavLinkClass(isActive(item.href))}>
+                {item.label}
+                {isActive(item.href) && (
+                  <span className="absolute -bottom-0.5 left-0 right-0 mx-auto h-0.5 w-full max-w-[2.5rem] rounded-full bg-brand" />
+                )}
+              </Link>
+            ))}
           </div>
 
           <div className="ml-auto flex shrink-0 items-center gap-1.5 min-[360px]:gap-2 min-[900px]:ml-0 min-[900px]:gap-4">
             <LanguageToggle className="hidden min-[900px]:flex" />
 
             {!loading && user ? (
-              <>
-                <span className="hidden max-w-[7rem] truncate text-sm font-semibold text-slate-700 min-[900px]:inline">
-                  {user.fullName.split(' ')[0]}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => void logout()}
-                  className={`hidden min-h-[44px] text-sm font-semibold text-slate-700 transition hover:text-brand min-[900px]:inline-flex ${focusRing} rounded-lg px-2`}
+              <div className="hidden items-center gap-3 min-[900px]:flex">
+                <Link
+                  href="/profile"
+                  className={`inline-flex items-center gap-2 rounded-full bg-slate-50 py-1 pl-1 pr-3 text-sm font-semibold leading-none text-slate-700 transition hover:bg-[#FAF5FF] hover:text-brand ${focusRing}`}
+                  aria-label={`${user.fullName} profile`}
                 >
+                  <UserAvatar
+                    name={user.fullName}
+                    id={user.id}
+                    email={user.email}
+                    className="pointer-events-none h-8 w-8 rounded-full"
+                    textClassName="text-xs"
+                  />
+                  <span className="max-w-[7rem] truncate">{user.fullName.split(' ')[0]}</span>
+                </Link>
+                <button type="button" onClick={() => void logout()} className={desktopAuthButtonClass}>
                   {t.logout}
                 </button>
-              </>
+              </div>
             ) : (
               <Link
                 href="/login"
@@ -283,7 +310,31 @@ export default function Navbar() {
 
                 {!loading && user ? (
                   <>
-                    <p className="px-4 py-2 text-sm font-semibold text-slate-500">{user.fullName.split(' ')[0]}</p>
+                    <Link
+                      href="/profile"
+                      onClick={closeMenu}
+                      className={`flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 transition hover:bg-[#FAF5FF] ${focusRing}`}
+                      aria-label={`${user.fullName} profile`}
+                    >
+                      <UserAvatar
+                        name={user.fullName}
+                        id={user.id}
+                        email={user.email}
+                        className="pointer-events-none h-10 w-10 shrink-0 rounded-full"
+                        textClassName="text-sm"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-800">{user.fullName}</p>
+                        <p className="truncate text-xs text-slate-500">{user.email}</p>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/profile"
+                      onClick={closeMenu}
+                      className={mobileLinkClass(isActive('/profile'))}
+                    >
+                      {t.progress}
+                    </Link>
                     <button
                       type="button"
                       onClick={() => {

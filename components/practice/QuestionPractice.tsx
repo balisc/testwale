@@ -58,12 +58,18 @@ const COPY = {
     previous: 'Previous',
     next: 'Next',
     reset: 'Reset',
+    resetSubtopic: 'Reset Subtopic',
+    resetSubtopicConfirm: 'Reset this subtopic? All your saved answers here will be cleared and every question will show again.',
+    resetSubtopicError: 'Could not reset subtopic. Please try again.',
+    allCompleted: 'You have answered all questions in this subtopic correctly!',
+    allCompletedSub: 'Reset the subtopic to practice these questions again.',
+    continuePractice: 'Continue',
     attempted: 'Attempted',
     correct: 'Correct',
     wrong: 'Wrong',
     errorSubmit: 'Could not submit answer. Please try again.',
     errorService: 'Server is not configured for saving attempts. Please contact support or sign in later.',
-    alreadyAttempted: 'You already attempted this question. Stats were not updated again.',
+    alreadyAttempted: 'You already attempted this question before. This retry was saved to your progress.',
     loadError: 'Could not load your previous attempts.',
   },
   hi: {
@@ -82,12 +88,18 @@ const COPY = {
     previous: 'पिछला',
     next: 'अगला',
     reset: 'रीसेट',
+    resetSubtopic: 'उप-विषय रीसेट करें',
+    resetSubtopicConfirm: 'इस उप-विषय को रीसेट करें? यहाँ के सभी सेव उत्तर हट जाएंगे और सभी प्रश्न फिर दिखेंगे।',
+    resetSubtopicError: 'उप-विषय रीसेट नहीं हो सका। कृपया फिर कोशिश करें।',
+    allCompleted: 'आपने इस उप-विषय के सभी प्रश्न सही कर लिए हैं!',
+    allCompletedSub: 'इन प्रश्नों को फिर से अभ्यास करने के लिए उप-विषय रीसेट करें।',
+    continuePractice: 'आगे बढ़ें',
     attempted: 'प्रयास किया',
     correct: 'सही',
     wrong: 'गलत',
     errorSubmit: 'उत्तर submit नहीं हो सका। कृपया फिर कोशिश करें।',
     errorService: 'प्रयास save करने के लिए server configure नहीं है। बाद में फिर कोशिश करें।',
-    alreadyAttempted: 'आप पहले ही इस प्रश्न का प्रयास कर चुके हैं। आँकड़े दोबारा नहीं बढ़े।',
+    alreadyAttempted: 'आप पहले इस प्रश्न का प्रयास कर चुके हैं। यह retry आपकी progress में save हो गया।',
     loadError: 'पिछले प्रयास लोड नहीं हो सके।',
   },
 };
@@ -115,6 +127,9 @@ export default function QuestionPractice({
   const [submitNotice, setSubmitNotice] = useState<string | null>(null);
   const [resultsByQuestion, setResultsByQuestion] = useState<Record<string, QuestionResult>>({});
   const [attemptedIds, setAttemptedIds] = useState<Set<string>>(new Set());
+  const [correctQuestionIds, setCorrectQuestionIds] = useState<Set<string>>(new Set());
+  const [sessionHiddenIds, setSessionHiddenIds] = useState<Set<string>>(new Set());
+  const [resettingSubtopic, setResettingSubtopic] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [reportComingSoonOpen, setReportComingSoonOpen] = useState(false);
   const [loadingAttempts, setLoadingAttempts] = useState(false);
@@ -123,8 +138,19 @@ export default function QuestionPractice({
   const questionStartedAt = useRef<number>(Date.now());
   const isFirstGuestSubmit = useRef(true);
 
-  const current = questions[index];
-  const total = questions.length;
+  const hiddenQuestionIds = useMemo(() => {
+    const ids = new Set(correctQuestionIds);
+    for (const id of sessionHiddenIds) ids.add(id);
+    return ids;
+  }, [correctQuestionIds, sessionHiddenIds]);
+
+  const activeQuestions = useMemo(() => {
+    if (!subtopicId || !user) return questions;
+    return questions.filter((question) => !hiddenQuestionIds.has(question.id));
+  }, [questions, subtopicId, user, hiddenQuestionIds]);
+
+  const current = activeQuestions[index];
+  const total = activeQuestions.length;
   const currentResult = current ? resultsByQuestion[current.id] : undefined;
 
   const displayTitle = titleLocalized
@@ -152,24 +178,71 @@ export default function QuestionPractice({
     setIndex(0);
     setResultsByQuestion({});
     setAttemptedIds(new Set());
+    setCorrectQuestionIds(new Set());
+    setSessionHiddenIds(new Set());
     isFirstGuestSubmit.current = true;
     resetQuestionState();
   }, [questions, resetQuestionState]);
 
   useEffect(() => {
+    if (index >= total && total > 0) {
+      setIndex(total - 1);
+    }
+  }, [index, total]);
+
+  useEffect(() => {
     if (!user || questions.length === 0) return;
 
     setLoadingAttempts(true);
-    fetch('/api/practice/attempts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ questionIds: questions.map((q) => q.id) }),
-    })
-      .then(async (res) => {
+    const loadAttempts = async () => {
+      try {
+        if (subtopicId) {
+          const params = new URLSearchParams({ subtopicId });
+          for (const question of questions) {
+            params.append('questionId', question.id);
+          }
+
+          const res = await fetch(`/api/practice/subtopic-state?${params.toString()}`, {
+            cache: 'no-store',
+          });
+          if (!res.ok) throw new Error('failed');
+
+          const { correctQuestionIds: masteredIds, attempts } = (await res.json()) as {
+            correctQuestionIds: string[];
+            attempts: Array<QuestionResult & { question_id: string; selected_option: string }>;
+          };
+
+          setCorrectQuestionIds(new Set(masteredIds));
+          const nextResults: Record<string, QuestionResult> = {};
+          const nextAttempted = new Set<string>();
+          for (const attempt of attempts) {
+            nextAttempted.add(attempt.question_id);
+            nextResults[attempt.question_id] = {
+              is_correct: attempt.is_correct,
+              correct_option: attempt.correct_option ?? '',
+              explanation: attempt.explanation ?? {},
+              attempt_count: attempt.attempt_count ?? 0,
+              correct_count: attempt.correct_count ?? 0,
+              correct_percentage: attempt.correct_percentage ?? null,
+              is_new_attempt: false,
+              selected_option: attempt.selected_option,
+            };
+          }
+          setResultsByQuestion(nextResults);
+          setAttemptedIds(nextAttempted);
+          return;
+        }
+
+        const res = await fetch('/api/practice/attempts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ questionIds: questions.map((q) => q.id) }),
+        });
         if (!res.ok) throw new Error('failed');
-        return res.json() as Promise<{ attempts: Array<QuestionResult & { question_id: string; selected_option: string }> }>;
-      })
-      .then(({ attempts }) => {
+        const { attempts } = (await res.json()) as {
+          attempts: Array<QuestionResult & { question_id: string; selected_option: string }>;
+        };
+
         const nextResults: Record<string, QuestionResult> = {};
         const nextAttempted = new Set<string>();
         for (const attempt of attempts) {
@@ -187,15 +260,15 @@ export default function QuestionPractice({
         }
         setResultsByQuestion(nextResults);
         setAttemptedIds(nextAttempted);
-        const first = questions[index];
-        if (first && nextResults[first.id]) {
-          setSelectedOption(nextResults[first.id].selected_option as OptionKey);
-          setSubmitted(true);
-        }
-      })
-      .catch(() => setSubmitError(c.loadError))
-      .finally(() => setLoadingAttempts(false));
-  }, [user, questions, c.loadError]);
+      } catch {
+        setSubmitError(c.loadError);
+      } finally {
+        setLoadingAttempts(false);
+      }
+    };
+
+    void loadAttempts();
+  }, [user, questions, subtopicId, c.loadError]);
 
   const questionText = useMemo(
     () => getQuestionLocalizedText(current?.question_text, language),
@@ -261,7 +334,7 @@ export default function QuestionPractice({
     } finally {
       setSubmitting(false);
     }
-  }, [selectedOption, current, submitting, submitted, user, c.errorSubmit, c.errorService, c.alreadyAttempted]);
+  }, [selectedOption, current, submitting, submitted, user, subtopicId, c.errorSubmit, c.errorService, c.alreadyAttempted]);
 
   const handleSubmit = () => {
     if (!selectedOption || !current || submitting || submitted) return;
@@ -294,6 +367,14 @@ export default function QuestionPractice({
   };
 
   const handleNextQuestion = () => {
+    if (!current) return;
+
+    if (subtopicId && user && resultsByQuestion[current.id]?.is_correct) {
+      setSessionHiddenIds((prev) => new Set(prev).add(current.id));
+      resetQuestionState();
+      return;
+    }
+
     if (index < total - 1) setIndex((prev) => prev + 1);
   };
 
@@ -301,9 +382,50 @@ export default function QuestionPractice({
     if (index > 0) setIndex((prev) => prev - 1);
   };
 
+  const handleSelectQuestion = (qIndex: number) => {
+    if (
+      subtopicId &&
+      user &&
+      current &&
+      qIndex !== index &&
+      resultsByQuestion[current.id]?.is_correct
+    ) {
+      setSessionHiddenIds((prev) => new Set(prev).add(current.id));
+    }
+    setIndex(qIndex);
+  };
+
   const handleReset = () => {
     if (!current || submitted) return;
     resetQuestionState();
+  };
+
+  const handleResetSubtopic = async () => {
+    if (!subtopicId || !user || resettingSubtopic) return;
+    if (!window.confirm(c.resetSubtopicConfirm)) return;
+
+    setResettingSubtopic(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch('/api/practice/reset-subtopic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subtopicId }),
+      });
+      if (!res.ok) throw new Error('reset failed');
+
+      setCorrectQuestionIds(new Set());
+      setSessionHiddenIds(new Set());
+      setResultsByQuestion({});
+      setAttemptedIds(new Set());
+      setIndex(0);
+      resetQuestionState();
+      setProgressRefreshKey((prev) => prev + 1);
+    } catch {
+      setSubmitError(c.resetSubtopicError);
+    } finally {
+      setResettingSubtopic(false);
+    }
   };
 
   const openReport = () => {
@@ -322,6 +444,36 @@ export default function QuestionPractice({
   );
 
   if (total === 0) {
+    if (subtopicId && user && questions.length > 0) {
+      return (
+        <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+          <div className="rounded-3xl border border-emerald-100 bg-white px-6 py-12 shadow-sm">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">{c.practice}</p>
+            <h1 className="mt-3 text-2xl font-bold text-slate-900">{c.allCompleted}</h1>
+            <p className="mt-3 text-sm text-slate-500">{c.allCompletedSub}</p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => void handleResetSubtopic()}
+                disabled={resettingSubtopic}
+                className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#6D28D9] disabled:opacity-60"
+              >
+                {resettingSubtopic ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                {c.resetSubtopic}
+              </button>
+              <Link
+                href={backHref}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#DDD6FE] hover:text-brand"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                {backLabel}
+              </Link>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center">
         <div className="rounded-3xl border border-slate-100 bg-white px-6 py-12 shadow-sm">
@@ -380,7 +532,7 @@ export default function QuestionPractice({
         </div>
 
         <div className="mb-2 flex flex-wrap gap-1.5">
-          {questions.map((question, qIndex) => {
+          {activeQuestions.map((question, qIndex) => {
             const isActive = qIndex === index;
             const isAttempted = attemptedIds.has(question.id);
             const result = resultsByQuestion[question.id];
@@ -388,7 +540,7 @@ export default function QuestionPractice({
               <button
                 key={question.id}
                 type="button"
-                onClick={() => setIndex(qIndex)}
+                onClick={() => handleSelectQuestion(qIndex)}
                 className={`h-8 min-w-8 rounded-lg px-2 text-xs font-bold transition ${
                   isActive
                     ? 'bg-brand text-white'
@@ -555,6 +707,15 @@ export default function QuestionPractice({
                     {c.nextQuestion}
                     <ArrowRight className="h-4 w-4" />
                   </button>
+                ) : subtopicId && user && currentResult?.is_correct ? (
+                  <button
+                    type="button"
+                    onClick={handleNextQuestion}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#6D28D9] min-[520px]:w-auto"
+                  >
+                    {c.continuePractice}
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
                 ) : (
                   <span className="hidden min-[520px]:block" />
                 )}
@@ -576,15 +737,31 @@ export default function QuestionPractice({
           </Link>
 
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={handleReset}
-              disabled={submitted}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-[#DDD6FE] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <RotateCcw className="h-4 w-4" />
-              {c.reset}
-            </button>
+            {subtopicId && user ? (
+              <button
+                type="button"
+                onClick={() => void handleResetSubtopic()}
+                disabled={resettingSubtopic}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-[#DDD6FE] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {resettingSubtopic ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="h-4 w-4" />
+                )}
+                {c.resetSubtopic}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleReset}
+                disabled={submitted}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-[#DDD6FE] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <RotateCcw className="h-4 w-4" />
+                {c.reset}
+              </button>
+            )}
             <button
               type="button"
               onClick={handlePrevious}

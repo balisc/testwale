@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { registerTabCloseLogout } from '@/lib/tabSessionLogout';
 
 export type AuthUser = {
   id: string;
@@ -49,6 +50,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await fetch('/api/auth/me', { method: 'DELETE' });
     setUser(null);
   }, []);
+
+  useEffect(() => {
+    if (!user) return undefined;
+    return registerTabCloseLogout(() => setUser(null));
+  }, [user]);
 
   const value = useMemo(
     () => ({ user, loading, refreshUser, logout, setUser }),

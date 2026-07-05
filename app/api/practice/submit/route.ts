@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import { getAuthUserFromCookies } from '@/lib/authCookies';
 import {
   checkAnswerOnServer,
-  getPracticeAdmin,
   practiceErrorResponse,
-  submitQuestionAnswer,
+  submitQuestionAnswerForUser,
 } from '@/lib/practiceServer';
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +16,6 @@ type SubmitBody = {
 
 export async function POST(request: Request) {
   const user = await getAuthUserFromCookies();
-  const { admin } = await getPracticeAdmin();
 
   let body: SubmitBody;
   try {
@@ -39,13 +37,7 @@ export async function POST(request: Request) {
       : null;
 
   if (user) {
-    if (!admin) {
-      console.error('[practice/submit] logged-in user but SUPABASE_SERVICE_ROLE_KEY is missing');
-      return practiceErrorResponse('service_unavailable', 503);
-    }
-
-    const result = await submitQuestionAnswer(
-      admin,
+    const result = await submitQuestionAnswerForUser(
       user.id,
       questionId,
       selectedOption,
