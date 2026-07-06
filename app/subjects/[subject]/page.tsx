@@ -15,7 +15,7 @@ import { buildCatalogSubjectMetadata } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
 import { buildBreadcrumbListSchema } from '@/lib/breadcrumbSchema';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 type PageProps = {
   params: Promise<{ subject: string }>;

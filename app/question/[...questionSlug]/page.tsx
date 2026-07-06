@@ -60,6 +60,7 @@ function getTextValue(value: LocalizedText | undefined, locale: 'en' | 'hi' = 'e
 
 import { subCategoryMatches, topicMatches } from '@/lib/topicMatching';
 import { HISTORY_QUESTION_COLUMNS, PUBLIC_QUESTION_COLUMNS } from '@/lib/questionColumns';
+import { MAX_QUIZ_CANDIDATE_ROWS } from '@/lib/supabaseQueryLimits';
 
 type QuestionItem = {
   id: string;
@@ -267,7 +268,6 @@ export default async function QuestionPage({
   );
 }
 
-const SUPABASE_FETCH_LIMIT = 3000;
 const HISTORY_SUBCATEGORY_HI: Record<string, string> = {
   ancient: 'प्राचीन',
   medieval: 'मध्यकालीन',
@@ -325,7 +325,7 @@ async function fetchTopicQuestions(
         query = query.or(`topic->>en.ilike.%${escapedTopic}%,topic->>hi.ilike.%${escapedTopic}%`);
       }
 
-      const { data, error } = await query.range(0, SUPABASE_FETCH_LIMIT - 1);
+      const { data, error } = await query.range(0, MAX_QUIZ_CANDIDATE_ROWS - 1);
 
       if (error) {
         console.error('SUPABASE ERROR:', error.message ?? error);

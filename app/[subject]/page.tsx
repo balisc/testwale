@@ -6,7 +6,7 @@ import MathClient from '../math/MathClient';
 import ScienceClient from '../science/ScienceClient';
 import HistoryClient from '../history/HistoryClient';
 import { buildSubjectMetadata } from '@/lib/seo';
-import { fetchTopicsFromQuestions, TopicItem } from '@/lib/questionTopics';
+import { fetchTopicsForLegacySubject, type TopicItem } from '@/lib/catalogTopics';
 import { LEGACY_SUBJECT_SLUG_MAP } from '@/lib/subjectRoutes';
 import SubjectPageClient from './SubjectPageClient';
 
@@ -25,7 +25,7 @@ const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
 export const revalidate = 3600;
 
 async function fetchTopics(subjectKey: string) {
-  return fetchTopicsFromQuestions(subjectKey);
+  return fetchTopicsForLegacySubject(subjectKey);
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ subject: string }> }) {

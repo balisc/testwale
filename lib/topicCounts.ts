@@ -50,7 +50,7 @@ async function countForColumn(
 ): Promise<number> {
   if (!value) return 0;
 
-  let query: any = supabase.from(tableName).select('*', { count: 'exact', head: true }).eq(column, value);
+  let query: any = supabase.from(tableName).select('id', { count: 'exact', head: true }).eq(column, value);
   if (subjectKey) {
     query = addSubjectFilter(query, subjectKey, subjectColumn);
   }
@@ -77,7 +77,7 @@ async function countForJsonPath(
 ): Promise<number> {
   if (!value) return 0;
 
-  let query: any = supabase.from(tableName).select('*', { count: 'exact', head: true }).filter(path, 'eq', value);
+  let query: any = supabase.from(tableName).select('id', { count: 'exact', head: true }).filter(path, 'eq', value);
   if (subjectKey) {
     query = addSubjectFilter(query, subjectKey, subjectColumn);
   }
@@ -105,7 +105,7 @@ async function countForTextLike(
   if (!value) return 0;
 
   const escaped = escapeForLike(value);
-  let query: any = supabase.from(tableName).select('*', { count: 'exact', head: true }).filter(column, 'ilike', `%${escaped}%`);
+  let query: any = supabase.from(tableName).select('id', { count: 'exact', head: true }).filter(column, 'ilike', `%${escaped}%`);
   if (subjectKey) {
     query = addSubjectFilter(query, subjectKey, subjectColumn);
   }

@@ -35,7 +35,11 @@ async function getUserProfilePageFallback(userId: string): Promise<ProfilePageDa
 
   await client.from('user_profiles').upsert({ user_id: userId }, { onConflict: 'user_id' });
 
-  const { data: profile } = await client.from('user_profiles').select('*').eq('user_id', userId).maybeSingle();
+  const { data: profile } = await client
+    .from('user_profiles')
+    .select('user_id, bio, country, state, city, target_exam, is_premium, daily_goal, weekly_goal, monthly_goal, updated_at')
+    .eq('user_id', userId)
+    .maybeSingle();
 
   const { data: attempts, error: attemptsError } = await client
     .from('user_question_attempts')
@@ -125,15 +129,10 @@ export async function getUserProfilePage(userId: string): Promise<ProfilePageDat
     if (error) {
       console.error('[profile/getUserProfilePage] RPC failed:', error);
     }
-  }
-
-  const { data, error } = await supabase.rpc('get_user_profile_page', { p_user_id: userId });
-  if (!error && data) {
-    return normalizeProfilePage(data as Record<string, unknown>);
-  }
-
-  if (error) {
-    console.error('[profile/getUserProfilePage] RPC failed:', error);
+  } else {
+    console.warn(
+      '[profile/getUserProfilePage] SUPABASE_SERVICE_ROLE_KEY not set; RPC requires service_role. Using fallback.',
+    );
   }
 
   return getUserProfilePageFallback(userId);

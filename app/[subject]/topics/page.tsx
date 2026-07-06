@@ -1,7 +1,7 @@
 import { permanentRedirect, redirect } from 'next/navigation';
 import SubjectTopicsClient from '@/app/subjects/[subject]/SubjectTopicsClient';
 import { slugifySubject } from '@/lib/slugGenerator';
-import { fetchTopicsFromQuestions } from '@/lib/questionTopics';
+import { fetchTopicsForLegacySubject } from '@/lib/catalogTopics';
 import { PHYSICAL_GEOGRAPHY_PAGE_TITLE } from '@/lib/geography/physicalGeographyData';
 import { INDIAN_GEOGRAPHY_PAGE_TITLE } from '@/lib/geography/indianGeographyData';
 import { WORLD_GEOGRAPHY_PAGE_TITLE } from '@/lib/geography/worldGeographyData';
@@ -114,7 +114,7 @@ function extractTopicValues(row: any) {
 }
 
 async function fetchTopics(subjectKey: string, subCategory?: string) {
-  return fetchTopicsFromQuestions(subjectKey, subCategory);
+  return fetchTopicsForLegacySubject(subjectKey, subCategory);
 }
 
 export async function generateMetadata({

@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { BASE_URL } from '@/lib/seo';
 import { fetchCatalogSitemapPaths } from '@/lib/sitemapCatalog';
-import { collectSitemapPathsFromRows, fetchAllSitemapQuestionRows } from '@/lib/sitemapQuestions';
+import { fetchCappedSitemapQuestionRows, collectSitemapPathsFromRows } from '@/lib/sitemapQuestions';
+import { SITEMAP_LEGACY_QUESTION_CAP } from '@/lib/supabaseQueryLimits';
 import { SUBJECTS } from '@/lib/subjects';
 
 export const dynamic = 'force-dynamic';
@@ -54,20 +55,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     addUrl(`/${subject.key}/topics`, 0.75);
 
     try {
-      const rows = await fetchAllSitemapQuestionRows(subject.table);
-      const { topicSlugs, questionPaths } = collectSitemapPathsFromRows(rows);
+      if (SITEMAP_LEGACY_QUESTION_CAP > 0) {
+        const rows = await fetchCappedSitemapQuestionRows(subject.table);
+        const { topicSlugs, questionPaths } = collectSitemapPathsFromRows(rows);
 
-      for (const [path, lastModified] of questionPaths.entries()) {
-        urls.set(path, {
-          url: absolutePath(path),
-          lastModified,
-          changeFrequency: 'weekly',
-          priority: 0.65,
-        });
-      }
+        for (const [path, lastModified] of questionPaths.entries()) {
+          urls.set(path, {
+            url: absolutePath(path),
+            lastModified,
+            changeFrequency: 'weekly',
+            priority: 0.65,
+          });
+        }
 
-      for (const topicSlug of topicSlugs) {
-        addUrl(`/${subject.key}/topics/${topicSlug}`, 0.7);
+        for (const topicSlug of topicSlugs) {
+          addUrl(`/${subject.key}/topics/${topicSlug}`, 0.7);
+        }
       }
     } catch {
       // Keep the sitemap available even if one subject table is temporarily unavailable.

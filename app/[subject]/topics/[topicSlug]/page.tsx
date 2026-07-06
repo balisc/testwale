@@ -7,10 +7,9 @@ import { BASE_URL, buildQuizMetadata } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
 import { buildBreadcrumbListSchema } from '@/lib/breadcrumbSchema';
 import { slugifySubject } from '@/lib/slugGenerator';
-
-const PAGE_SIZE = 1000;
-const FAST_QUERY_LIMIT = 3000;
 import { BASE_QUESTION_COLUMNS, HISTORY_QUESTION_COLUMNS } from '@/lib/questionColumns';
+import { MAX_QUIZ_CANDIDATE_ROWS } from '@/lib/supabaseQueryLimits';
+
 const HISTORY_SUBCATEGORY_HI: Record<string, string> = {
   ancient: 'प्राचीन',
   medieval: 'मध्यकालीन',
@@ -129,7 +128,7 @@ async function fetchCandidateQuestionsFromSupabase(tableName: string, subject: s
     query = query.or(filters.join(','));
   }
 
-  const result: any = await query.range(0, FAST_QUERY_LIMIT - 1);
+  const result: any = await query.range(0, MAX_QUIZ_CANDIDATE_ROWS - 1);
   if (result.error) {
     throw result.error;
   }
@@ -251,43 +250,9 @@ function questionMatchesTopic(row: any, subject: string, normalizedTopic: string
 async function fetchQuestionsFromSupabaseTable(tableName: string, subject: string, normalizedTopic: string) {
   try {
     const fastCandidates = await fetchCandidateQuestionsFromSupabase(tableName, subject, normalizedTopic);
-    const fastMatched = fastCandidates
+    return fastCandidates
       .filter(isQuestionVisible)
       .filter((row: any) => questionMatchesTopic(row, subject, normalizedTopic));
-    if (fastMatched.length) {
-      return fastMatched;
-    }
-
-    const collected: any[] = [];
-    let offset = 0;
-
-    while (true) {
-      const query: any = supabase
-        .from(tableName)
-        .select(tableName === 'history_questions' ? HISTORY_QUESTION_COLUMNS : BASE_QUESTION_COLUMNS)
-        .order('id', { ascending: true })
-        .range(offset, offset + PAGE_SIZE - 1);
-
-      const result: any = await query;
-      if (result.error) {
-        throw result.error;
-      }
-
-      const chunk = (result.data ?? []) as any[];
-      const rows = chunk
-        .filter(isQuestionVisible)
-        .filter((row: any) => questionMatchesTopic(row, subject, normalizedTopic));
-
-      collected.push(...rows);
-
-      if (chunk.length < PAGE_SIZE) {
-        break;
-      }
-
-      offset += PAGE_SIZE;
-    }
-
-    return collected;
   } catch (error) {
     console.warn(`Topic questions query failed for ${tableName}:`, error instanceof Error ? error.message : error);
     return [];

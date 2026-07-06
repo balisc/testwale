@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import supabase, { SUPABASE_AVAILABLE } from '@/lib/supabase';
 import { normalizeDifficulty, normalizeMapScope, shuffleArray, type MapQuestion } from '@/lib/mapPractice';
-
+import { resolveQuestionListLimit } from '@/lib/publicQuestionApiGuards';
+import { MAX_QUESTION_LIMIT } from '@/lib/supabaseQueryLimits';
 type SupabaseQuestionRow = {
   id: string;
   question_text: string;
@@ -48,6 +49,8 @@ export async function GET(request: Request) {
     );
   }
 
+  const mapLimit = Math.min(resolveQuestionListLimit(searchParams.get('limit')), MAX_QUESTION_LIMIT);
+
   let query = supabase
     .from('map_questions')
     .select(
@@ -79,7 +82,7 @@ export async function GET(request: Request) {
     .eq('map_scope', scope)
     .eq('question_type', 'map_click_point')
     .order('created_at', { ascending: false })
-    .limit(200);
+    .limit(mapLimit);
 
   if (difficulty !== 'all') {
     query = query.eq('difficulty', difficulty);

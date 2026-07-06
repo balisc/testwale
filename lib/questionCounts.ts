@@ -1,4 +1,5 @@
 import supabase from './supabase';
+import { MAX_LEGACY_TOPIC_SCAN } from './supabaseQueryLimits';
 
 export const SUBJECT_TABLES: Record<string, string> = {
   history: 'history_questions',
@@ -52,7 +53,7 @@ function isUnknownColumnError(error: any) {
 }
 
 async function countRows(table: string, applyFilter?: (query: any) => any) {
-  const query = supabase.from(table).select('*', { count: 'exact', head: true });
+  const query = supabase.from(table).select('id', { count: 'exact', head: true });
   const result = applyFilter ? await applyFilter(query) : await query;
 
   if (result.error) {
@@ -109,7 +110,7 @@ const TOPIC_COLUMN_GROUPS = [
 ];
 
 async function selectTopicColumns(table: string, columns: string[]) {
-  const query = supabase.from(table).select(columns.join(', '));
+  const query = supabase.from(table).select(columns.join(', ')).limit(MAX_LEGACY_TOPIC_SCAN);
   const result = await query;
   if (result.error) {
     throw result.error;
@@ -121,7 +122,7 @@ export async function fetchActiveTopicCandidates(table: string) {
   for (const strategy of ACTIVE_COUNT_STRATEGIES) {
     for (const columns of TOPIC_COLUMN_GROUPS) {
       try {
-        const query = strategy.apply(supabase.from(table).select(columns.join(', ')));
+        const query = strategy.apply(supabase.from(table).select(columns.join(', '))).limit(MAX_LEGACY_TOPIC_SCAN);
         const result = await query;
         if (result.error) {
           throw result.error;

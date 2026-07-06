@@ -20,7 +20,8 @@ const SUBJECT_TABLES: Record<string, string> = {
   reasoning: 'reasoning_questions',
 };
 
-const SUPABASE_FETCH_LIMIT = 10000;
+import { MAX_LEGACY_TOPIC_SCAN } from './supabaseQueryLimits';
+
 const SUPABASE_PAGE_SIZE = 1000;
 
 function sanitizeTopicText(value: string): string {
@@ -293,7 +294,7 @@ async function fetchTopicsFromSubjectTable(tableName: string, subCategory?: stri
     console.warn('Subject table RPC failed or returned empty for category filter, falling back to client-side aggregation:', error?.message ?? error);
 
     let rows: any[] = [];
-    for (let offset = 0; offset < SUPABASE_FETCH_LIMIT; offset += SUPABASE_PAGE_SIZE) {
+    for (let offset = 0; offset < MAX_LEGACY_TOPIC_SCAN; offset += SUPABASE_PAGE_SIZE) {
       const fallback = await supabase
         .from(tableName)
         .select('id, topic, sub_category', { head: false })
@@ -342,6 +343,8 @@ async function fetchTopicsFromSubjectTable(tableName: string, subCategory?: stri
 }
 
 export async function fetchTopicsFromQuestions(subjectKey: string, subCategory?: string) {
+  // TEMPORARY fallback: aggregates topics from legacy question tables.
+  // Capped at MAX_LEGACY_TOPIC_SCAN. Prefer fetchTopicsFromCatalog() for navigation.
   if (!SUPABASE_AVAILABLE) {
     console.warn('Supabase is not configured; skipping local topic fallback so only database-backed topics are shown.');
     return [];
@@ -371,7 +374,7 @@ export async function fetchTopicsFromQuestions(subjectKey: string, subCategory?:
     .from('questions')
     .select(selectFields)
     .not('topic', 'is', null)
-    .range(0, SUPABASE_FETCH_LIMIT - 1);
+    .range(0, MAX_LEGACY_TOPIC_SCAN - 1);
 
   query = addSubjectFilter(query, subjectKey);
 

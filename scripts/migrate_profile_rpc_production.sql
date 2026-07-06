@@ -1,6 +1,12 @@
--- QuestionWale: fix get_user_profile_page (GROUP BY 42803 + security + egress)
--- Run once in Supabase SQL Editor if /api/profile returns 500.
--- Prefer scripts/migrate_profile_rpc_production.sql for new deployments.
+-- QuestionWale: production-safe get_user_profile_page RPC
+-- Run once in Supabase SQL Editor before production deploy.
+--
+-- Security: SECURITY DEFINER + service_role EXECUTE only.
+--   /api/profile validates the session cookie server-side, then calls this RPC
+--   with SUPABASE_SERVICE_ROLE_KEY. Do not grant to anon or authenticated.
+--
+-- Performance: stats from attempts/progress tables only; no questions bank scan.
+-- Fixes: PostgreSQL 42803 GROUP BY error in rank-change CTEs.
 
 begin;
 
@@ -37,6 +43,8 @@ begin
     raise exception 'unauthenticated' using errcode = '42501';
   end if;
 
+  -- Defense in depth: only the server (service_role JWT) may call this function.
+  -- Prevents reading another user's email/stats by passing a different UUID from a client.
   if coalesce(auth.jwt() ->> 'role', '') <> 'service_role' then
     raise exception 'forbidden' using errcode = '42501';
   end if;
