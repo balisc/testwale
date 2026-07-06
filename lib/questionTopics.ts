@@ -1,28 +1,12 @@
 import supabase, { SUPABASE_AVAILABLE } from './supabase';
-import { buildTopicCountKey, fetchExactTopicCounts } from './topicCounts';
 import { subCategoryMatches } from './topicMatching';
+import { MAX_LEGACY_TOPIC_SCAN } from './supabaseQueryLimits';
 
 export type TopicItem = {
   en: string;
   hi: string;
   count: number;
 };
-
-const SUBJECT_TABLES: Record<string, string> = {
-  history: 'history_questions',
-  science: 'science_questions',
-  polity: 'polity_questions',
-  economics: 'economics_questions',
-  geography: 'geography_questions',
-  'general-knowledge': 'general_knowledge_questions',
-  math: 'math_questions',
-  'current-affairs': 'current_affairs_questions',
-  reasoning: 'reasoning_questions',
-};
-
-import { MAX_LEGACY_TOPIC_SCAN } from './supabaseQueryLimits';
-
-const SUPABASE_PAGE_SIZE = 1000;
 
 function sanitizeTopicText(value: string): string {
   return String(value)
@@ -238,27 +222,6 @@ function addSubjectFilter(query: any, subjectKey: string) {
   );
 }
 
-function getSubjectTable(subjectKey: string): string | undefined {
-  return SUBJECT_TABLES[subjectKey];
-}
-
-// The preferred fast path uses a Supabase RPC to GROUP BY the JSONB topic field.
-// Create the RPC in your database using `scripts/create_topic_group_counts_function.sql`.
-// Then call it like:
-//   supabase.rpc('topic_group_counts', { table_name: 'polity_questions', category: 'ancient' })
-// This avoids unsupported `.group()` and keeps the aggregation on the DB.
-// The RPC groups by topic->>'en' and topic->>'hi', returns a count for all rows,
-// and orders topics by the first occurrence of the topic row via MIN(id).
-function extractTopicListRow(row: any): TopicItem {
-  const { topicEn, topicHi } = parseTopicFields(row);
-  const countValue = Number(row.count ?? row['count'] ?? row.count_id ?? row['count_id'] ?? 0);
-  return {
-    en: topicEn,
-    hi: topicHi,
-    count: Number.isFinite(countValue) ? countValue : 0,
-  };
-}
-
 function dedupeTopics(rows: any[]) {
   const seen = new Set<string>();
   return rows.filter((row) => {
@@ -273,100 +236,11 @@ function dedupeTopics(rows: any[]) {
   });
 }
 
-async function fetchTopicsFromSubjectTable(tableName: string, subCategory?: string): Promise<TopicItem[]> {
-  try {
-    const rpcResult: any = await supabase.rpc('topic_group_counts', {
-      category: subCategory ?? null,
-      table_name: tableName,
-    });
-
-    if (rpcResult.error) {
-      throw rpcResult.error;
-    }
-
-    const rows = (rpcResult.data ?? []) as any[];
-    if (subCategory && rows.length === 0) {
-      throw new Error('No RPC rows returned for filtered subject category.');
-    }
-
-    return rows.map((row: any) => extractTopicListRow(row));
-  } catch (error: any) {
-    console.warn('Subject table RPC failed or returned empty for category filter, falling back to client-side aggregation:', error?.message ?? error);
-
-    let rows: any[] = [];
-    for (let offset = 0; offset < MAX_LEGACY_TOPIC_SCAN; offset += SUPABASE_PAGE_SIZE) {
-      const fallback = await supabase
-        .from(tableName)
-        .select('id, topic, sub_category', { head: false })
-        .not('topic', 'is', null)
-        .order('id', { ascending: true })
-        .range(offset, offset + SUPABASE_PAGE_SIZE - 1);
-
-      if (fallback.error) {
-        throw fallback.error;
-      }
-
-      const batch = (fallback.data ?? []) as any[];
-      rows.push(...batch);
-
-      if (batch.length < SUPABASE_PAGE_SIZE) {
-        break;
-      }
-    }
-
-    if (subCategory) {
-      rows = rows.filter((row) => doesSubCategoryMatch(row, subCategory));
-    }
-
-    const grouped = new Map<string, { count: number; firstId: number }>();
-    for (const row of rows) {
-      const key = JSON.stringify(row.topic);
-      const record = grouped.get(key);
-      const idValue = Number(row.id ?? 0);
-      if (record) {
-        record.count += 1;
-        record.firstId = Math.min(record.firstId, idValue);
-      } else {
-        grouped.set(key, { count: 1, firstId: idValue });
-      }
-    }
-
-    return Array.from(grouped.entries())
-      .map(([topicRaw, meta]) => {
-        const row = { topic: JSON.parse(topicRaw) };
-        const { topicEn, topicHi } = parseTopicFields(row);
-        return { en: topicEn, hi: topicHi, count: meta.count, firstId: meta.firstId };
-      })
-      .sort((a, b) => a.firstId - b.firstId)
-      .map(({ firstId, ...topic }) => topic);
-  }
-}
-
 export async function fetchTopicsFromQuestions(subjectKey: string, subCategory?: string) {
-  // TEMPORARY fallback: aggregates topics from legacy question tables.
-  // Capped at MAX_LEGACY_TOPIC_SCAN. Prefer fetchTopicsFromCatalog() for navigation.
+  // Last-resort fallback: unified `questions` table only (never legacy *_questions tables).
   if (!SUPABASE_AVAILABLE) {
-    console.warn('Supabase is not configured; skipping local topic fallback so only database-backed topics are shown.');
+    console.warn('Supabase is not configured; skipping topic fallback.');
     return [];
-  }
-
-  const subjectTable = getSubjectTable(subjectKey);
-  if (subjectTable) {
-    try {
-      const supabaseTopics = await fetchTopicsFromSubjectTable(subjectTable, subCategory);
-      if (supabaseTopics.length > 0) {
-        return supabaseTopics;
-      }
-
-      console.warn('No Supabase topic rows found for', subjectKey, 'with subCategory', subCategory, '- falling back to local JSON');
-    } catch (error: any) {
-      console.warn(
-        'Subject-specific table fetch failed for',
-        subjectKey,
-        '- falling back to generic questions table:',
-        error?.message ?? error
-      );
-    }
   }
 
   const selectFields = 'topic, subject, sub_category';
@@ -379,25 +253,20 @@ export async function fetchTopicsFromQuestions(subjectKey: string, subCategory?:
   query = addSubjectFilter(query, subjectKey);
 
   let result: any;
-  let rows: any[] = [];
-
   try {
     result = await query;
   } catch (error) {
-    result = { data: null, error: error as any };
+    result = { data: null, error: error as Error };
   }
 
-  const shouldFallback = result.error || (Array.isArray(result.data) && result.data.length === 0);
-
-  if (shouldFallback) {
+  if (result.error || !Array.isArray(result.data) || result.data.length === 0) {
     if (result.error && !isJsonSyntaxError(result.error)) {
-      console.warn('⚠️ Subject topic query failed, returning no topics:', result.error.message ?? result.error);
+      console.warn('Subject topic query failed:', result.error.message ?? result.error);
     }
-
     return [];
   }
 
-  rows = (result.data ?? []) as any[];
+  let rows = result.data as any[];
 
   if (subCategory) {
     rows = rows.filter((row) => doesSubCategoryMatch(row, subCategory));
@@ -405,28 +274,19 @@ export async function fetchTopicsFromQuestions(subjectKey: string, subCategory?:
 
   rows = dedupeTopics(rows);
 
-  const seen = new Set<string>();
-  const topicItems: TopicItem[] = [];
+  const topicMap = new Map<string, TopicItem>();
 
   for (const row of rows) {
     const { topicEn, topicHi } = parseTopicFields(row);
-    const key = `${topicEn}||${topicHi}`;
     if (!topicEn && !topicHi) continue;
-    if (seen.has(key)) continue;
-
-    seen.add(key);
-    topicItems.push({ en: topicEn, hi: topicHi, count: 0 });
+    const key = `${topicEn}||${topicHi}`;
+    const existing = topicMap.get(key);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      topicMap.set(key, { en: topicEn, hi: topicHi, count: 1 });
+    }
   }
 
-  if (topicItems.length === 0) {
-    return [];
-  }
-
-  const countsTable = subjectTable ?? 'questions';
-  const exactCounts = await fetchExactTopicCounts(countsTable, topicItems, subjectKey);
-
-  return topicItems.map((topic) => ({
-    ...topic,
-    count: exactCounts.get(buildTopicCountKey(topic)) ?? 0,
-  }));
+  return Array.from(topicMap.values());
 }
