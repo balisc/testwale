@@ -21,8 +21,10 @@ import {
   formatCorrectPercentage,
   getOptionsForLang,
   getQuestionLocalizedText,
+  type PracticeProgress,
   type SubmitAnswerResponse,
 } from '@/lib/practice';
+import { trackPracticeDebug } from '@/lib/practiceDebug';
 import type { LocalizedText, OptionKey, PublicQuestion } from '@/types/polity';
 
 type QuestionPracticeProps = {
@@ -134,6 +136,7 @@ export default function QuestionPractice({
   const [reportComingSoonOpen, setReportComingSoonOpen] = useState(false);
   const [loadingAttempts, setLoadingAttempts] = useState(false);
   const [progressRefreshKey, setProgressRefreshKey] = useState(0);
+  const [practiceProgress, setPracticeProgress] = useState<PracticeProgress | null>(null);
 
   const questionStartedAt = useRef<number>(Date.now());
   const isFirstGuestSubmit = useRef(true);
@@ -326,7 +329,11 @@ export default function QuestionPractice({
       if (result.already_attempted || result.is_new_attempt === false) {
         setSubmitNotice(c.alreadyAttempted);
       }
-      if (user) {
+      if (user && result.progress) {
+        setPracticeProgress(result.progress);
+        trackPracticeDebug('answer_submit', 'progress from RPC — no refetch');
+      } else if (user) {
+        setPracticeProgress(null);
         setProgressRefreshKey((prev) => prev + 1);
       }
     } catch {
@@ -420,6 +427,7 @@ export default function QuestionPractice({
       setAttemptedIds(new Set());
       setIndex(0);
       resetQuestionState();
+      setPracticeProgress(null);
       setProgressRefreshKey((prev) => prev + 1);
     } catch {
       setSubmitError(c.resetSubtopicError);
@@ -504,6 +512,7 @@ export default function QuestionPractice({
           topicId={topicId}
           subtopicId={subtopicId}
           refreshKey={progressRefreshKey}
+          progressOverride={practiceProgress}
         />
 
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">

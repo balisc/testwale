@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import supabase from '@/lib/supabase';
-import type { ReportQuestionResponse, SubmitAnswerResponse, PracticeProgress, UserAttemptSummary } from '@/lib/practice';
+import type { ReportQuestionResponse, SubmitAnswerResponse, PracticeProgress, UserAttemptSummary, ScopedProgressSnapshot } from '@/lib/practice';
 import type { RecordQuestionAttemptInput, UserProgressDashboard } from '@/lib/practiceAnalytics';
 import { normalizeProgressDashboard } from '@/lib/practiceAnalytics';
 import { getAuthUserFromCookies } from '@/lib/authCookies';
@@ -24,6 +24,108 @@ export async function requirePracticeUser() {
 
 export function practiceErrorResponse(error: string, status: number) {
   return Response.json({ error }, { status });
+}
+
+function parseScopedProgress(raw: unknown): ScopedProgressSnapshot | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const row = raw as Record<string, unknown>;
+  const attempted = Number(row.attempted ?? row.attempts_count ?? 0);
+  const correct = Number(row.correct ?? row.correct_count ?? 0);
+  const wrong = Number(row.wrong ?? row.wrong_count ?? attempted - correct);
+  const accuracy = Number(row.accuracy ?? row.accuracy_percent ?? 0);
+  return { attempted, correct, wrong, accuracy };
+}
+
+function scopedProgressToPracticeProgress(snapshot: ScopedProgressSnapshot): PracticeProgress {
+  return {
+    attempted: snapshot.attempted,
+    correct: snapshot.correct,
+    wrong: snapshot.wrong,
+    accuracy: snapshot.accuracy,
+    bySubject: [],
+    byTopic: [],
+  };
+}
+
+async function fetchScopedProgressFromViews(
+  admin: SupabaseClient,
+  userId: string,
+  ids: { subjectId: string | null; topicId: string | null; subtopicId: string | null },
+): Promise<{
+  progress: PracticeProgress;
+  subtopic_progress: ScopedProgressSnapshot | null;
+  topic_progress: ScopedProgressSnapshot | null;
+  subject_progress: ScopedProgressSnapshot | null;
+} | null> {
+  let subtopicProgress: ScopedProgressSnapshot | null = null;
+  let topicProgress: ScopedProgressSnapshot | null = null;
+  let subjectProgress: ScopedProgressSnapshot | null = null;
+
+  if (ids.subtopicId) {
+    const { data } = await admin
+      .from('user_subtopic_progress')
+      .select('attempts_count, correct_count, wrong_count, accuracy_percent')
+      .eq('user_id', userId)
+      .eq('subtopic_id', ids.subtopicId)
+      .maybeSingle();
+    if (data) {
+      subtopicProgress = parseScopedProgress({
+        attempted: data.attempts_count,
+        correct: data.correct_count,
+        wrong: data.wrong_count,
+        accuracy: data.accuracy_percent,
+      });
+    }
+  }
+
+  if (ids.topicId) {
+    const { data } = await admin
+      .from('user_topic_progress')
+      .select('attempts_count, correct_count, wrong_count, accuracy_percent')
+      .eq('user_id', userId)
+      .eq('topic_id', ids.topicId)
+      .maybeSingle();
+    if (data) {
+      topicProgress = parseScopedProgress({
+        attempted: data.attempts_count,
+        correct: data.correct_count,
+        wrong: data.wrong_count,
+        accuracy: data.accuracy_percent,
+      });
+    }
+  }
+
+  if (ids.subjectId) {
+    const { data } = await admin
+      .from('user_subject_progress')
+      .select('attempts_count, correct_count, wrong_count, accuracy_percent')
+      .eq('user_id', userId)
+      .eq('subject_id', ids.subjectId)
+      .maybeSingle();
+    if (data) {
+      subjectProgress = parseScopedProgress({
+        attempted: data.attempts_count,
+        correct: data.correct_count,
+        wrong: data.wrong_count,
+        accuracy: data.accuracy_percent,
+      });
+    }
+  }
+
+  const scoped =
+    subtopicProgress ?? topicProgress ?? subjectProgress ?? {
+      attempted: 0,
+      correct: 0,
+      wrong: 0,
+      accuracy: 0,
+    };
+
+  return {
+    progress: scopedProgressToPracticeProgress(scoped),
+    subtopic_progress: subtopicProgress,
+    topic_progress: topicProgress,
+    subject_progress: subjectProgress,
+  };
 }
 
 function buildPracticeProgress(
@@ -178,22 +280,26 @@ export async function getPracticeProgressForUser(
 
   const admin = getSupabaseAdmin();
   if (admin) {
-    let query = admin
-      .from('user_question_attempts')
-      .select('subject_id, topic_id, subtopic_id, is_correct')
-      .eq('user_id', userId);
-
-    if (normalized.subjectId) query = query.eq('subject_id', normalized.subjectId);
-    if (normalized.topicId) query = query.eq('topic_id', normalized.topicId);
-    if (normalized.subtopicId) query = query.eq('subtopic_id', normalized.subtopicId);
-
-    const { data, error: dbError } = await query;
-    if (dbError) {
-      console.error('[practice/progress]', dbError);
-      return null;
+    const scoped = await fetchScopedProgressFromViews(admin, userId, normalized);
+    if (scoped) {
+      return scoped.progress;
     }
 
-    return buildPracticeProgress(data ?? []);
+    if (!normalized.subjectId && !normalized.topicId && !normalized.subtopicId) {
+      const dashboard = await getUserProgressDashboard(admin, userId);
+      if (!dashboard) return null;
+      const { overview } = dashboard;
+      return {
+        attempted: overview.total_attempts,
+        correct: overview.correct_count,
+        wrong: overview.wrong_count,
+        accuracy: overview.accuracy_percent,
+        bySubject: [],
+        byTopic: [],
+      };
+    }
+
+    return scopedProgressToPracticeProgress({ attempted: 0, correct: 0, wrong: 0, accuracy: 0 });
   }
 
   const rows = await getPracticeProgressRowsSigned(userId, normalized);
@@ -214,9 +320,15 @@ function normalizeSubmitResponse(raw: Record<string, unknown>): SubmitAnswerResp
     raw.is_new_attempt === 'true' ||
     raw.already_attempted === false;
 
+  const progressRaw = raw.progress;
+  const progressSnapshot = progressRaw ? parseScopedProgress(progressRaw) : null;
+  const parsedProgress = progressSnapshot
+    ? scopedProgressToPracticeProgress(progressSnapshot)
+    : null;
+
   return {
     is_correct: Boolean(raw.is_correct),
-    correct_option: String(raw.correct_option ?? ''),
+    correct_option: String(raw.correct_option ?? raw.correct_answer ?? ''),
     explanation: (raw.explanation ?? {}) as SubmitAnswerResponse['explanation'],
     attempt_count: attemptCount,
     correct_count: correctCount,
@@ -227,6 +339,10 @@ function normalizeSubmitResponse(raw: Record<string, unknown>): SubmitAnswerResp
     is_new_attempt: isNewAttempt,
     already_attempted: !isNewAttempt,
     selected_option: String(raw.selected_option ?? ''),
+    progress: parsedProgress,
+    subtopic_progress: parseScopedProgress(raw.subtopic_progress),
+    topic_progress: parseScopedProgress(raw.topic_progress),
+    subject_progress: parseScopedProgress(raw.subject_progress),
   };
 }
 
@@ -418,6 +534,12 @@ async function submitQuestionAnswerDirect(
     correctCount = Number(refreshed.correct_count ?? 0);
   }
 
+  const progressBundle = await fetchScopedProgressFromViews(admin, userId, {
+    subjectId: row.subject_id,
+    topicId: row.topic_id,
+    subtopicId: row.subtopic_id,
+  });
+
   return {
     is_correct: finalIsCorrect,
     correct_option: String(row.correct_option ?? ''),
@@ -428,6 +550,10 @@ async function submitQuestionAnswerDirect(
     is_new_attempt: isNewAttempt,
     already_attempted: !isNewAttempt,
     selected_option: returnedOption,
+    progress: progressBundle?.progress ?? null,
+    subtopic_progress: progressBundle?.subtopic_progress ?? null,
+    topic_progress: progressBundle?.topic_progress ?? null,
+    subject_progress: progressBundle?.subject_progress ?? null,
   };
 }
 

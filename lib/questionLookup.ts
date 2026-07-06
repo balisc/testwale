@@ -1,6 +1,9 @@
 import questionsData from '@/data/questions.json';
 import supabase from '@/lib/supabase';
-import { PUBLIC_QUESTION_COLUMNS } from '@/lib/questionColumns';
+import {
+  CATALOG_PRE_SUBMIT_COLUMNS,
+  legacyColumnsForTable,
+} from '@/lib/questionColumns';
 import { SUBJECT_TABLES } from '@/lib/subjects';
 import { extractQuestionIdFromSlug, generateQuestionSlug, slugifySubject } from '@/lib/slugGenerator';
 
@@ -14,12 +17,7 @@ export type QuestionLookupContext = {
 };
 
 const SAFE_QUESTION_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
-
 const GENERIC_QUESTIONS_TABLE = 'questions';
-
-const SUBJECT_QUESTION_TABLES = Object.values(SUBJECT_TABLES);
-
-const QUESTION_TABLES = [...SUBJECT_QUESTION_TABLES, GENERIC_QUESTIONS_TABLE] as const;
 
 function getText(value: LocalizedText | undefined, locale: 'en' | 'hi' = 'en'): string {
   if (!value) return '';
@@ -33,99 +31,76 @@ function isPublicQuestion(row: QuestionRecord | null | undefined) {
   return !status || status === 'active' || status === 'published';
 }
 
-function getTableSearchOrder(subjectKey?: string): string[] {
-  const preferredTable = subjectKey ? SUBJECT_TABLES[subjectKey] : undefined;
-  const subjectTables = preferredTable
-    ? [preferredTable, ...SUBJECT_QUESTION_TABLES.filter((table) => table !== preferredTable)]
-    : [...SUBJECT_QUESTION_TABLES];
-
-  return [...new Set([...subjectTables, GENERIC_QUESTIONS_TABLE])];
+function resolveQuestionTable(subjectKey?: string): string {
+  if (subjectKey && SUBJECT_TABLES[subjectKey]) {
+    return SUBJECT_TABLES[subjectKey];
+  }
+  return GENERIC_QUESTIONS_TABLE;
 }
 
-function scoreQuestionCandidate(question: QuestionRecord, context?: QuestionLookupContext): number {
-  let score = 0;
-  const questionTopicSlug = slugifySubject(getText(question.topic, 'en')).trim();
-  const questionSlug = generateQuestionSlug(question.question, String(question.id)).trim();
-
-  if (context?.questionSlug && questionSlug === context.questionSlug.trim()) {
-    score += 100;
+function columnsForTable(tableName: string): string {
+  if (tableName === GENERIC_QUESTIONS_TABLE) {
+    return CATALOG_PRE_SUBMIT_COLUMNS;
   }
-
-  if (context?.topicSlug && questionTopicSlug === context.topicSlug.trim()) {
-    score += 50;
-  }
-
-  if (context?.subjectKey) {
-    const subjectText = slugifySubject(getText(question.subject, 'en')).trim();
-    if (subjectText === context.subjectKey.trim()) {
-      score += 25;
-    }
-    if (SUBJECT_TABLES[context.subjectKey] && question._sourceTable === SUBJECT_TABLES[context.subjectKey]) {
-      score += 40;
-    }
-  }
-
-  if (question._sourceTable && question._sourceTable !== GENERIC_QUESTIONS_TABLE) {
-    score += 10;
-  }
-
-  if (question._sourceTable === GENERIC_QUESTIONS_TABLE) {
-    score -= 100;
-  }
-
-  return score;
+  return legacyColumnsForTable(tableName);
 }
 
-function pickBestQuestionCandidate(candidates: QuestionRecord[], context?: QuestionLookupContext) {
-  if (!candidates.length) return null;
-  if (candidates.length === 1) return candidates[0];
+async function queryQuestionTable(
+  tableName: string,
+  questionId: string,
+): Promise<QuestionRecord | null> {
+  const { data, error } = await supabase
+    .from(tableName)
+    .select(columnsForTable(tableName))
+    .eq('id', questionId)
+    .maybeSingle();
 
-  return [...candidates].sort(
-    (a, b) => scoreQuestionCandidate(b, context) - scoreQuestionCandidate(a, context)
-  )[0];
+  if (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(`[questionLookup] ${tableName}:`, error.message ?? error);
+    }
+    return null;
+  }
+
+  if (!isPublicQuestion(data as QuestionRecord | null)) {
+    return null;
+  }
+
+  return { ...(data as QuestionRecord), _sourceTable: tableName };
 }
 
 export async function fetchQuestionById(
   questionId: string,
-  context?: QuestionLookupContext
+  context?: QuestionLookupContext,
 ): Promise<QuestionRecord | null> {
   if (!SAFE_QUESTION_ID_PATTERN.test(questionId)) {
     return null;
   }
 
-  const candidates: QuestionRecord[] = [];
+  const primaryTable = resolveQuestionTable(context?.subjectKey);
+  const primary = await queryQuestionTable(primaryTable, questionId);
 
-  for (const tableName of getTableSearchOrder(context?.subjectKey)) {
-    try {
-      const { data, error } = await supabase
-        .from(tableName)
-        .select(PUBLIC_QUESTION_COLUMNS)
-        .eq('id', questionId)
-        .maybeSingle();
+  if (primary) {
+    const { _sourceTable, ...question } = primary;
+    return question;
+  }
 
-      if (error) {
-        console.warn(`Supabase lookup failed for table ${tableName}:`, error.message ?? error);
-        continue;
-      }
-
-      if (isPublicQuestion(data as QuestionRecord | null)) {
-        candidates.push({ ...(data as QuestionRecord), _sourceTable: tableName });
-      }
-    } catch (err) {
-      console.warn(`Supabase query error for table ${tableName}:`, err);
+  if (primaryTable !== GENERIC_QUESTIONS_TABLE) {
+    const catalog = await queryQuestionTable(GENERIC_QUESTIONS_TABLE, questionId);
+    if (catalog) {
+      const { _sourceTable, ...question } = catalog;
+      return question;
     }
   }
 
-  const fallbackQuestion = (questionsData as QuestionRecord[]).find((item) => String(item.id) === questionId);
+  const fallbackQuestion = (questionsData as QuestionRecord[]).find(
+    (item) => String(item.id) === questionId,
+  );
   if (isPublicQuestion(fallbackQuestion ?? null) && fallbackQuestion) {
-    candidates.push({ ...fallbackQuestion, _sourceTable: 'questions.json' });
+    return fallbackQuestion;
   }
 
-  const bestMatch = pickBestQuestionCandidate(candidates, context);
-  if (!bestMatch) return null;
-
-  const { _sourceTable, ...question } = bestMatch;
-  return question;
+  return null;
 }
 
 export function inferSubjectKeyFromTopicSlug(topicSlug: string): string | undefined {

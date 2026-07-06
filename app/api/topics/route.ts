@@ -23,9 +23,10 @@ function topicsFromLocalJson(): Array<{ en: string; hi: string }> {
 
 export async function GET() {
   const catalogTopics = await fetchCatalogTopicLabels('history');
+  const headers = { 'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800' };
   if (catalogTopics.length > 0) {
-    return NextResponse.json({ topics: catalogTopics });
+    return NextResponse.json({ topics: catalogTopics }, { headers });
   }
 
-  return NextResponse.json({ topics: topicsFromLocalJson() });
+  return NextResponse.json({ topics: topicsFromLocalJson() }, { headers });
 }

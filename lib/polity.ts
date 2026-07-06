@@ -21,7 +21,7 @@ const PUBLIC_QUESTION_SELECT =
   'id, question_text, options, difficulty, source, year, pyq_exam_name, exam_tags, attempt_count, correct_count';
 
 const DEBUG = process.env.NODE_ENV !== 'production';
-const CATALOG_REVALIDATE_SECONDS = 3600;
+const CATALOG_REVALIDATE_SECONDS = 86400;
 
 type TopicRow = {
   id: string;

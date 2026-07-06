@@ -1,5 +1,12 @@
 import type { LocalizedOptions, LocalizedText, OptionKey } from '@/types/polity';
 
+export type ScopedProgressSnapshot = {
+  attempted: number;
+  correct: number;
+  wrong: number;
+  accuracy: number;
+};
+
 export type SubmitAnswerResponse = {
   is_correct: boolean;
   correct_option: string;
@@ -10,6 +17,11 @@ export type SubmitAnswerResponse = {
   is_new_attempt: boolean;
   already_attempted?: boolean;
   selected_option: string;
+  /** Scoped progress for the practice page filter (subtopic > topic > subject). */
+  progress?: PracticeProgress | null;
+  subtopic_progress?: ScopedProgressSnapshot | null;
+  topic_progress?: ScopedProgressSnapshot | null;
+  subject_progress?: ScopedProgressSnapshot | null;
 };
 
 export type ReportQuestionResponse = {

@@ -59,7 +59,7 @@ function getTextValue(value: LocalizedText | undefined, locale: 'en' | 'hi' = 'e
 }
 
 import { subCategoryMatches, topicMatches } from '@/lib/topicMatching';
-import { HISTORY_QUESTION_COLUMNS, PUBLIC_QUESTION_COLUMNS } from '@/lib/questionColumns';
+import { legacyColumnsForTable } from '@/lib/questionColumns';
 import { MAX_QUIZ_CANDIDATE_ROWS } from '@/lib/supabaseQueryLimits';
 
 type QuestionItem = {
@@ -307,38 +307,39 @@ async function fetchTopicQuestions(
     return { questions: [], fetchError: 'No topic provided.' };
   }
 
-  const tableNames = tableName ? [tableName, 'questions'] : ['questions'];
+  if (!tableName) {
+    return { questions: [], fetchError: `No quiz questions found for ${normalizedTopic}.` };
+  }
+
   const escapedTopic = escapeForLike(normalizedTopic);
   const historySubCategoryKey = subjectKey === 'history' ? getHistorySubCategoryKey(normalizedTopic) : '';
 
-  for (const table of tableNames) {
-    try {
-      const columns = table === 'history_questions' ? HISTORY_QUESTION_COLUMNS : PUBLIC_QUESTION_COLUMNS;
-      let query = supabase.from(table).select(columns).order('id', { ascending: true });
+  try {
+    const columns = legacyColumnsForTable(tableName);
+    let query = supabase.from(tableName).select(columns).order('id', { ascending: true });
 
-      if (historySubCategoryKey && table === 'history_questions') {
-        const hiValue = HISTORY_SUBCATEGORY_HI[historySubCategoryKey];
-        query = query.or(
-          `sub_category->>en.eq.${historySubCategoryKey},sub_category->>en.ilike.%${historySubCategoryKey}%,sub_category->>hi.ilike.%${hiValue}%`
-        );
-      } else {
-        query = query.or(`topic->>en.ilike.%${escapedTopic}%,topic->>hi.ilike.%${escapedTopic}%`);
-      }
-
-      const { data, error } = await query.range(0, MAX_QUIZ_CANDIDATE_ROWS - 1);
-
-      if (error) {
-        console.error('SUPABASE ERROR:', error.message ?? error);
-        continue;
-      }
-
-      const questions = (data ?? []).filter((row: any) => questionMatchesTopic(row, normalizedTopic));
-      if (questions.length) {
-        return { questions, fetchError: null };
-      }
-    } catch (err) {
-      console.error(`QUIZ FETCH ERROR for table ${table}:`, err);
+    if (historySubCategoryKey && tableName === 'history_questions') {
+      const hiValue = HISTORY_SUBCATEGORY_HI[historySubCategoryKey];
+      query = query.or(
+        `sub_category->>en.eq.${historySubCategoryKey},sub_category->>en.ilike.%${historySubCategoryKey}%,sub_category->>hi.ilike.%${hiValue}%`
+      );
+    } else {
+      query = query.or(`topic->>en.ilike.%${escapedTopic}%,topic->>hi.ilike.%${escapedTopic}%`);
     }
+
+    const { data, error } = await query.range(0, MAX_QUIZ_CANDIDATE_ROWS - 1);
+
+    if (error) {
+      console.error('SUPABASE ERROR:', error.message ?? error);
+      return { questions: [], fetchError: error.message ?? 'Query failed.' };
+    }
+
+    const questions = (data ?? []).filter((row: any) => questionMatchesTopic(row, normalizedTopic));
+    if (questions.length) {
+      return { questions, fetchError: null };
+    }
+  } catch (err) {
+    console.error(`QUIZ FETCH ERROR for table ${tableName}:`, err);
   }
 
   return { questions: [], fetchError: `No quiz questions found for ${normalizedTopic}.` };

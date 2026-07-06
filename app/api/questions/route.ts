@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import questionsData from '@/data/questions.json';
 import supabase from '@/lib/supabase';
-import { HISTORY_QUESTION_COLUMNS, PUBLIC_QUESTION_COLUMNS } from '@/lib/questionColumns';
+import { CATALOG_PRE_SUBMIT_COLUMNS, legacyColumnsForTable } from '@/lib/questionColumns';
 import {
   hasRequiredQuestionListFilter,
   missingQuestionListFilterResponse,
@@ -94,7 +94,7 @@ async function fetchCatalogQuestions(
 ) {
   let query = supabase
     .from('questions')
-    .select(PUBLIC_QUESTION_COLUMNS)
+    .select(CATALOG_PRE_SUBMIT_COLUMNS)
     .eq('is_active', true)
     .eq('is_verified', true)
     .order('id', { ascending: true });
@@ -150,7 +150,7 @@ export async function GET(request: Request) {
 
     let query: any = supabase
       .from(tableName)
-      .select(tableName === 'history_questions' ? HISTORY_QUESTION_COLUMNS : PUBLIC_QUESTION_COLUMNS)
+      .select(legacyColumnsForTable(tableName))
       .order('id', { ascending: true });
 
     if (tableName === 'questions' && subject) {

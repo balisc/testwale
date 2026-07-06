@@ -7,7 +7,7 @@ import { BASE_URL, buildQuizMetadata } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
 import { buildBreadcrumbListSchema } from '@/lib/breadcrumbSchema';
 import { slugifySubject } from '@/lib/slugGenerator';
-import { BASE_QUESTION_COLUMNS, HISTORY_QUESTION_COLUMNS } from '@/lib/questionColumns';
+import { legacyColumnsForTable } from '@/lib/questionColumns';
 import { MAX_QUIZ_CANDIDATE_ROWS } from '@/lib/supabaseQueryLimits';
 
 const HISTORY_SUBCATEGORY_HI: Record<string, string> = {
@@ -98,7 +98,7 @@ function addGenericSubjectFilter(query: any, subject: string) {
 }
 
 async function fetchCandidateQuestionsFromSupabase(tableName: string, subject: string, normalizedTopic: string) {
-  const columns = tableName === 'history_questions' ? HISTORY_QUESTION_COLUMNS : BASE_QUESTION_COLUMNS;
+  const columns = legacyColumnsForTable(tableName);
   let query: any = supabase.from(tableName).select(columns).order('id', { ascending: true });
 
   if (tableName === 'questions') {

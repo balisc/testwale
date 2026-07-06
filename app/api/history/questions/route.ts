@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import supabase from '@/lib/supabase';
 import { subCategoryMatches, topicMatches } from '@/lib/topicMatching';
-import { BASE_QUESTION_COLUMNS, HISTORY_QUESTION_COLUMNS } from '@/lib/questionColumns';
+import { legacyColumnsForTable } from '@/lib/questionColumns';
 import {
   missingQuestionListFilterResponse,
   questionListJsonResponse,
@@ -54,7 +54,7 @@ async function fetchQuestionsFromSupabase(tableName: string, subject: string, to
     const escapedTopic = topic.replace(/([%_\\])/g, '\\$1');
     let fastQuery: any = supabase
       .from(tableName)
-      .select(tableName === 'history_questions' ? HISTORY_QUESTION_COLUMNS : BASE_QUESTION_COLUMNS)
+      .select(legacyColumnsForTable(tableName))
       .order('id', { ascending: true });
 
     if (inferredSubCategory) {

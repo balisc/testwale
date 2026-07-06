@@ -1,4 +1,4 @@
-import supabase from './supabase';
+import { getSubjectsCached } from '@/lib/cachedCatalog';
 import { catalogSlugToSubjectKey } from './subjectRoutes';
 import { SUBJECTS } from './subjects';
 
@@ -11,19 +11,13 @@ async function loadCatalogSubjectCounts(): Promise<Record<string, number>> {
     SUBJECTS.map((subject) => [subject.key, 0]),
   );
 
-  const { data: catalogRows, error } = await supabase
-    .from('subjects')
-    .select('slug, question_count')
-    .eq('is_active', true);
-
-  if (!error && catalogRows) {
-    for (const row of catalogRows) {
-      const slug = String(row.slug ?? '').trim();
-      if (!slug) continue;
-      const key = catalogSlugToSubjectKey(slug);
-      if (key in counts) {
-        counts[key] = Number(row.question_count ?? 0);
-      }
+  const catalogRows = await getSubjectsCached();
+  for (const row of catalogRows) {
+    const slug = String(row.slug ?? '').trim();
+    if (!slug) continue;
+    const key = catalogSlugToSubjectKey(slug);
+    if (key in counts) {
+      counts[key] = Number(row.question_count ?? 0);
     }
   }
 
