@@ -1,6 +1,27 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import supabase from '@/lib/supabase';
 import type { ReportQuestionResponse, SubmitAnswerResponse, PracticeProgress, UserAttemptSummary, ScopedProgressSnapshot } from '@/lib/practice';
+import type { AdvanceSubtopicCycleResult, SubtopicQuestionBatchState } from '@/lib/practiceMastery';
+import {
+  parseAdvanceSubtopicCycleResult,
+  parseSubtopicQuestionBatchState,
+} from '@/lib/practiceMastery';
+
+export type PracticeMasteryRpcError =
+  | 'mastery_migration_pending'
+  | 'question_state_failed'
+  | 'advance_cycle_failed'
+  | 'invalid_rpc_response';
+
+function isMissingRpcError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  return (
+    error.code === '42883' ||
+    error.code === 'PGRST202' ||
+    error.message?.includes('Could not find the function') === true ||
+    error.message?.includes('does not exist') === true
+  );
+}
 import type { RecordQuestionAttemptInput, UserProgressDashboard } from '@/lib/practiceAnalytics';
 import { normalizeProgressDashboard } from '@/lib/practiceAnalytics';
 import { getAuthUserFromCookies } from '@/lib/authCookies';
@@ -339,6 +360,7 @@ function normalizeSubmitResponse(raw: Record<string, unknown>): SubmitAnswerResp
     is_new_attempt: isNewAttempt,
     already_attempted: !isNewAttempt,
     selected_option: String(raw.selected_option ?? ''),
+    is_mastered: raw.is_mastered === true || raw.is_mastered === 'true',
     progress: parsedProgress,
     subtopic_progress: parseScopedProgress(raw.subtopic_progress),
     topic_progress: parseScopedProgress(raw.topic_progress),
@@ -480,6 +502,16 @@ async function submitQuestionAnswerDirect(
   let returnedOption = option;
   let finalIsCorrect = isCorrect;
 
+  const { data: masteredRows } = await admin
+    .from('user_question_attempts')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('question_id', questionId)
+    .eq('is_correct', true)
+    .limit(1);
+
+  const isMastered = Boolean(masteredRows && masteredRows.length > 0);
+
   if (isNewAttempt) {
     const { data: updated, error: updateError } = await admin
       .from('questions')
@@ -517,7 +549,7 @@ async function submitQuestionAnswerDirect(
     }
 
     returnedOption = String(existing.selected_option);
-    finalIsCorrect = Boolean(existing.is_correct);
+    finalIsCorrect = isCorrect;
 
     const { data: refreshed, error: refreshError } = await admin
       .from('questions')
@@ -550,6 +582,7 @@ async function submitQuestionAnswerDirect(
     is_new_attempt: isNewAttempt,
     already_attempted: !isNewAttempt,
     selected_option: returnedOption,
+    is_mastered: isMastered,
     progress: progressBundle?.progress ?? null,
     subtopic_progress: progressBundle?.subtopic_progress ?? null,
     topic_progress: progressBundle?.topic_progress ?? null,
@@ -995,22 +1028,156 @@ export async function getSubtopicAttemptState(
   return { correctQuestionIds, attempts };
 }
 
-/** Clears saved attempts for a subtopic so all questions become available again. */
+/** Clears saved attempts and practice cycle state for a subtopic. */
 export async function resetSubtopicProgress(
   admin: SupabaseClient,
   userId: string,
   subtopicId: string,
+  examCode?: string | null,
 ): Promise<boolean> {
-  const { error } = await admin
+  const normalizedExam = examCode?.trim() ? examCode.trim().toUpperCase() : 'ALL';
+
+  const { error: rpcError } = await admin.rpc('reset_subtopic_practice_progress', {
+    p_user_id: userId,
+    p_subtopic_id: subtopicId,
+    p_exam_code: normalizedExam,
+  });
+
+  if (!rpcError) return true;
+
+  const missingFunction =
+    rpcError.code === '42883' ||
+    rpcError.message?.includes('does not exist') ||
+    rpcError.message?.includes('Could not find the function');
+
+  if (!missingFunction) {
+    console.error('[practice/resetSubtopicProgress] RPC failed:', rpcError.message);
+    return false;
+  }
+
+  const { error: attemptsError } = await admin
     .from('user_attempts')
     .delete()
     .eq('user_id', userId)
     .eq('subtopic_id', subtopicId);
 
-  if (error) {
-    console.error('[practice/resetSubtopicProgress]', error);
+  if (attemptsError) {
+    console.error('[practice/resetSubtopicProgress]', attemptsError);
     return false;
   }
 
+  await admin
+    .from('user_question_attempts')
+    .delete()
+    .eq('user_id', userId)
+    .eq('subtopic_id', subtopicId);
+
+  await admin
+    .from('user_practice_scope_state')
+    .delete()
+    .eq('user_id', userId)
+    .eq('scope_type', 'subtopic')
+    .eq('scope_id', subtopicId);
+
   return true;
+}
+
+export async function getSubtopicBatchQuestionState(
+  admin: SupabaseClient,
+  userId: string,
+  subtopicId: string,
+  examCode: string | null | undefined,
+  questionIds: string[],
+): Promise<
+  | { ok: true; state: SubtopicQuestionBatchState }
+  | { ok: false; error: PracticeMasteryRpcError }
+> {
+  const normalizedExam = examCode?.trim() ? examCode.trim().toUpperCase() : 'ALL';
+
+  const { data, error } = await admin.rpc('get_subtopic_batch_question_state', {
+    p_user_id: userId,
+    p_subtopic_id: subtopicId,
+    p_exam_code: normalizedExam,
+    p_question_ids: questionIds,
+  });
+
+  if (error) {
+    if (isMissingRpcError(error)) {
+      console.error('[practice/getSubtopicBatchQuestionState] RPC missing:', error.message);
+      return { ok: false, error: 'mastery_migration_pending' };
+    }
+    console.error('[practice/getSubtopicBatchQuestionState]', error.message);
+    return { ok: false, error: 'question_state_failed' };
+  }
+
+  const parsed = parseSubtopicQuestionBatchState(data);
+  if (!parsed.ok) {
+    console.error('[practice/getSubtopicBatchQuestionState] invalid RPC payload');
+    return { ok: false, error: 'invalid_rpc_response' };
+  }
+
+  return { ok: true, state: parsed.state };
+}
+
+export async function advanceSubtopicPracticeCycle(
+  admin: SupabaseClient,
+  userId: string,
+  subtopicId: string,
+  examCode: string | null | undefined,
+): Promise<
+  | { ok: true; state: AdvanceSubtopicCycleResult }
+  | { ok: false; error: PracticeMasteryRpcError }
+> {
+  const normalizedExam = examCode?.trim() ? examCode.trim().toUpperCase() : 'ALL';
+
+  const { data, error } = await admin.rpc('advance_subtopic_practice_cycle', {
+    p_user_id: userId,
+    p_subtopic_id: subtopicId,
+    p_exam_code: normalizedExam,
+  });
+
+  if (error) {
+    if (isMissingRpcError(error)) {
+      console.error('[practice/advanceSubtopicPracticeCycle] RPC missing:', error.message);
+      return { ok: false, error: 'mastery_migration_pending' };
+    }
+    console.error('[practice/advanceSubtopicPracticeCycle]', error.message);
+    return { ok: false, error: 'advance_cycle_failed' };
+  }
+
+  const parsed = parseAdvanceSubtopicCycleResult(data);
+  if (!parsed.ok) {
+    console.error('[practice/advanceSubtopicPracticeCycle] invalid RPC payload');
+    return { ok: false, error: 'invalid_rpc_response' };
+  }
+
+  return { ok: true, state: parsed.state };
+}
+
+/** @deprecated First-attempt mastery — use getSubtopicBatchQuestionState for subtopic mastery loop. */
+export async function getCorrectQuestionIdsForBatch(
+  admin: SupabaseClient,
+  userId: string,
+  questionIds: string[],
+): Promise<string[] | null> {
+  if (questionIds.length === 0) return [];
+
+  const { data, error } = await admin
+    .from('user_attempts')
+    .select('question_id')
+    .eq('user_id', userId)
+    .eq('is_correct', true)
+    .in('question_id', questionIds);
+
+  if (error) {
+    console.error('[practice/getCorrectQuestionIdsForBatch]', error.message);
+    return null;
+  }
+
+  const correctQuestionIds = new Set<string>();
+  for (const row of data ?? []) {
+    correctQuestionIds.add(String((row as { question_id: string }).question_id));
+  }
+
+  return [...correctQuestionIds];
 }

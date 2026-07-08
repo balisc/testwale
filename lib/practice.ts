@@ -17,6 +17,8 @@ export type SubmitAnswerResponse = {
   is_new_attempt: boolean;
   already_attempted?: boolean;
   selected_option: string;
+  /** True when user_question_attempts contains any correct attempt for this question. */
+  is_mastered?: boolean;
   /** Scoped progress for the practice page filter (subtopic > topic > subject). */
   progress?: PracticeProgress | null;
   subtopic_progress?: ScopedProgressSnapshot | null;
@@ -36,12 +38,24 @@ export type UserAttemptSummary = {
   question_id: string;
   selected_option: string;
   is_correct: boolean;
-  attempted_at: string;
+  attempted_at?: string;
   correct_option?: string;
   explanation?: LocalizedText;
   attempt_count?: number;
   correct_count?: number;
   correct_percentage?: number | null;
+};
+
+/** Minimal fields restored when reopening practice for previously attempted questions. */
+export type PracticeAttemptRestoreRow = {
+  question_id: string;
+  selected_option: string;
+  is_correct: boolean;
+  correct_option: string;
+  explanation: LocalizedText;
+  attempt_count: number;
+  correct_count: number;
+  correct_percentage: number | null;
 };
 
 export type PracticeProgress = {

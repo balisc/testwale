@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server';
 import type { LocalizedText } from '@/types/polity';
-import type { UserAttemptSummary } from '@/lib/practice';
-import { practiceErrorResponse, requirePracticeUser } from '@/lib/practiceServer';
+import type { PracticeAttemptRestoreRow } from '@/lib/practice';
+import { requirePracticeUser } from '@/lib/practiceServer';
+import {
+  isTextBodyTooLarge,
+  parseBatchQuestionIdsPayload,
+  privateNoStoreJsonResponse,
+} from '@/lib/publicQuestionApiGuards';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +20,6 @@ type AttemptRow = {
   question_id: string;
   selected_option: string;
   is_correct: boolean;
-  attempted_at: string;
   questions: QuestionJoin | QuestionJoin[] | null;
 };
 
@@ -25,34 +28,54 @@ function unwrapQuestionJoin(value: QuestionJoin | QuestionJoin[] | null | undefi
   return Array.isArray(value) ? value[0] ?? null : value;
 }
 
+function privateErrorResponse(error: string, status: number) {
+  return privateNoStoreJsonResponse({ error }, status);
+}
+
 export async function POST(request: Request) {
   const { user, admin, error } = await requirePracticeUser();
-  if (error === 'unauthorized') return practiceErrorResponse('unauthorized', 401);
-  if (!admin) return practiceErrorResponse('service_unavailable', 503);
+  if (error === 'unauthorized') return privateErrorResponse('unauthorized', 401);
+  if (!admin) return privateErrorResponse('service_unavailable', 503);
 
-  let questionIds: string[] = [];
+  let rawBody: string;
   try {
-    const body = (await request.json()) as { questionIds?: string[] };
-    questionIds = Array.isArray(body.questionIds) ? body.questionIds.map(String) : [];
+    rawBody = await request.text();
   } catch {
-    return practiceErrorResponse('invalid_body', 400);
+    return privateErrorResponse('invalid_body', 400);
   }
 
+  if (isTextBodyTooLarge(rawBody)) {
+    return privateErrorResponse('payload_too_large', 400);
+  }
+
+  let body: unknown;
+  try {
+    body = JSON.parse(rawBody) as unknown;
+  } catch {
+    return privateErrorResponse('invalid_body', 400);
+  }
+
+  const parsed = parseBatchQuestionIdsPayload(body);
+  if (!parsed.ok) {
+    return privateErrorResponse(parsed.error, 400);
+  }
+
+  const { questionIds } = parsed;
   if (questionIds.length === 0) {
-    return NextResponse.json({ attempts: [] as UserAttemptSummary[] });
+    return privateNoStoreJsonResponse({ attempts: [] as PracticeAttemptRestoreRow[] });
   }
 
-  const { data, error: dbError } = await admin!
+  const { data, error: dbError } = await admin
     .from('user_attempts')
     .select(
-      'question_id, selected_option, is_correct, attempted_at, questions:question_id (correct_option, explanation, attempt_count, correct_count)',
+      'question_id, selected_option, is_correct, questions:question_id (correct_option, explanation, attempt_count, correct_count)',
     )
     .eq('user_id', user!.id)
     .in('question_id', questionIds);
 
   if (dbError) {
-    console.error('[practice/attempts]', dbError);
-    return practiceErrorResponse('attempts_failed', 500);
+    console.error('[practice/attempts]', dbError.message);
+    return privateErrorResponse('attempts_failed', 500);
   }
 
   const attempts = ((data ?? []) as AttemptRow[]).map((row) => {
@@ -63,15 +86,14 @@ export async function POST(request: Request) {
       question_id: String(row.question_id),
       selected_option: String(row.selected_option),
       is_correct: Boolean(row.is_correct),
-      attempted_at: String(row.attempted_at),
-      correct_option: question?.correct_option,
-      explanation: question?.explanation,
+      correct_option: String(question?.correct_option ?? ''),
+      explanation: (question?.explanation ?? {}) as LocalizedText,
       attempt_count: attemptCount,
       correct_count: correctCount,
       correct_percentage:
         attemptCount > 0 ? Math.round((correctCount * 10000) / attemptCount) / 100 : null,
-    } satisfies UserAttemptSummary;
+    } satisfies PracticeAttemptRestoreRow;
   });
 
-  return NextResponse.json({ attempts });
+  return privateNoStoreJsonResponse({ attempts });
 }

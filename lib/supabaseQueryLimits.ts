@@ -1,6 +1,9 @@
 /** Default rows returned for practice / quiz question loads. */
 export const DEFAULT_QUESTION_LIMIT = 25;
 
+/** Default page size for cursor-paginated public question batches. */
+export const QUESTION_BATCH_PAGE_SIZE = 10;
+
 /** Hard cap for any public question API or page fetch. */
 export const MAX_QUESTION_LIMIT = 50;
 

@@ -114,4 +114,11 @@ export type PublicQuestion = {
   correct_count: number;
 };
 
+/** Cursor-paginated public question batch (no answer key fields). */
+export type QuestionBatchPage = {
+  questions: PublicQuestion[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export type OptionKey = 'A' | 'B' | 'C' | 'D';

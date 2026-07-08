@@ -1,12 +1,23 @@
 import supabase, { SUPABASE_AVAILABLE } from '@/lib/supabase';
 import { unstable_cache } from 'next/cache';
 import { getLocalizedText } from '@/lib/localizedText';
-import { MAX_QUESTION_LIMIT } from '@/lib/supabaseQueryLimits';
+import {
+  QUESTION_BATCH_REVALIDATE_SECONDS,
+  QUESTION_BATCH_TAG,
+  questionBatchSubtopicTag,
+  questionBatchTopicTag,
+} from '@/lib/questionBatchCache';
+import {
+  clampQuestionLimit,
+  MAX_QUESTION_LIMIT,
+  QUESTION_BATCH_PAGE_SIZE,
+} from '@/lib/supabaseQueryLimits';
 import type {
   Exam,
   LocalizedText,
   PublicQuestion,
   Question,
+  QuestionBatchPage,
   Subject,
   Subtopic,
   SubtopicWithExamPriority,
@@ -22,6 +33,23 @@ const PUBLIC_QUESTION_SELECT =
 
 const DEBUG = process.env.NODE_ENV !== 'production';
 const CATALOG_REVALIDATE_SECONDS = 86400;
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/** Stable cache-key segment for the first cursor page. */
+const FIRST_PAGE_CURSOR_KEY = 'first';
+
+const EMPTY_QUESTION_BATCH: QuestionBatchPage = {
+  questions: [],
+  nextCursor: null,
+  hasMore: false,
+};
+
+export type GetQuestionBatchOptions = {
+  cursor?: string | null;
+  batchSize?: number;
+};
 
 type TopicRow = {
   id: string;
@@ -548,57 +576,164 @@ export async function getSubtopicBySlug(topicId: string, subtopicSlug: string): 
   )();
 }
 
+function clampBatchSize(raw?: number): number {
+  return clampQuestionLimit(raw, QUESTION_BATCH_PAGE_SIZE);
+}
+
+function isValidQuestionCursor(cursor: string): boolean {
+  return UUID_PATTERN.test(cursor);
+}
+
+function resolveExamCacheKey(examCode?: string): string {
+  const normalized = examCode ? normalizeExamCode(examCode) : undefined;
+  return normalized && normalized !== 'ALL' ? normalized : 'all';
+}
+
+function buildQuestionBatchPage(rows: PublicQuestion[], batchSize: number): QuestionBatchPage {
+  const hasMore = rows.length > batchSize;
+  const questions = hasMore ? rows.slice(0, batchSize) : rows;
+  const nextCursor = hasMore && questions.length > 0 ? questions[questions.length - 1]!.id : null;
+  return { questions, nextCursor, hasMore };
+}
+
+type QuestionBatchScope =
+  | { kind: 'subtopic'; subtopicId: string }
+  | { kind: 'topic'; topicId: string };
+
+async function fetchQuestionBatchPage(
+  scope: QuestionBatchScope,
+  normalizedExam: string | undefined,
+  queryCursor: string | null,
+  batchSize: number,
+  logName: string,
+  logParams: Record<string, unknown>,
+): Promise<QuestionBatchPage> {
+  const scopeColumn = scope.kind === 'subtopic' ? 'subtopic_id' : 'topic_id';
+  const scopeId = scope.kind === 'subtopic' ? scope.subtopicId : scope.topicId;
+
+  let query = applyVerifiedActiveQuestionFilters(
+    supabase.from('questions').select(PUBLIC_QUESTION_SELECT).eq(scopeColumn, scopeId),
+  );
+
+  if (queryCursor) {
+    query = query.lt('id', queryCursor);
+  }
+
+  if (normalizedExam && normalizedExam !== 'ALL') {
+    query = query.contains('exam_tags', [normalizedExam]);
+  }
+
+  const { data, error } = await query.order('id', { ascending: false }).limit(batchSize + 1);
+
+  logQuery(logName, { ...logParams, queryCursor, batchSize }, data, error);
+
+  if (error) return EMPTY_QUESTION_BATCH;
+
+  const rows = (data ?? []).map((row: Record<string, unknown>) => normalizePublicQuestion(row));
+  return buildQuestionBatchPage(rows, batchSize);
+}
+
+export async function getQuestionBatchBySubtopic(
+  subtopicId: string,
+  examCode?: string,
+  options?: GetQuestionBatchOptions,
+): Promise<QuestionBatchPage> {
+  const normalizedExam = examCode ? normalizeExamCode(examCode) : undefined;
+  const batchSize = clampBatchSize(options?.batchSize);
+  const examKey = resolveExamCacheKey(normalizedExam);
+  const params = { subtopicId, examCode: normalizedExam, batchSize };
+
+  if (!subtopicId) {
+    logQuery('getQuestionBatchBySubtopic', params, null, { message: 'subtopicId is undefined' });
+    return EMPTY_QUESTION_BATCH;
+  }
+
+  const trimmedCursor = options?.cursor?.trim();
+  if (trimmedCursor && !isValidQuestionCursor(trimmedCursor)) {
+    logQuery('getQuestionBatchBySubtopic', { ...params, cursor: trimmedCursor }, null, {
+      message: 'Invalid cursor',
+    });
+    return EMPTY_QUESTION_BATCH;
+  }
+
+  const cursorKey = trimmedCursor || FIRST_PAGE_CURSOR_KEY;
+  const queryCursor = trimmedCursor || null;
+
+  return unstable_cache(
+    async () =>
+      fetchQuestionBatchPage(
+        { kind: 'subtopic', subtopicId },
+        normalizedExam,
+        queryCursor,
+        batchSize,
+        'getQuestionBatchBySubtopic',
+        params,
+      ),
+    ['polity-question-batch-subtopic', subtopicId, examKey, cursorKey, String(batchSize)],
+    {
+      revalidate: QUESTION_BATCH_REVALIDATE_SECONDS,
+      tags: [QUESTION_BATCH_TAG, questionBatchSubtopicTag(subtopicId)],
+    },
+  )();
+}
+
+export async function getQuestionBatchByTopic(
+  topicId: string,
+  examCode?: string,
+  options?: GetQuestionBatchOptions,
+): Promise<QuestionBatchPage> {
+  const normalizedExam = examCode ? normalizeExamCode(examCode) : undefined;
+  const batchSize = clampBatchSize(options?.batchSize);
+  const examKey = resolveExamCacheKey(normalizedExam);
+  const params = { topicId, examCode: normalizedExam, batchSize };
+
+  if (!topicId) {
+    logQuery('getQuestionBatchByTopic', params, null, { message: 'topicId is undefined' });
+    return EMPTY_QUESTION_BATCH;
+  }
+
+  const trimmedCursor = options?.cursor?.trim();
+  if (trimmedCursor && !isValidQuestionCursor(trimmedCursor)) {
+    logQuery('getQuestionBatchByTopic', { ...params, cursor: trimmedCursor }, null, {
+      message: 'Invalid cursor',
+    });
+    return EMPTY_QUESTION_BATCH;
+  }
+
+  const cursorKey = trimmedCursor || FIRST_PAGE_CURSOR_KEY;
+  const queryCursor = trimmedCursor || null;
+
+  return unstable_cache(
+    async () =>
+      fetchQuestionBatchPage(
+        { kind: 'topic', topicId },
+        normalizedExam,
+        queryCursor,
+        batchSize,
+        'getQuestionBatchByTopic',
+        params,
+      ),
+    ['polity-question-batch-topic', topicId, examKey, cursorKey, String(batchSize)],
+    {
+      revalidate: QUESTION_BATCH_REVALIDATE_SECONDS,
+      tags: [QUESTION_BATCH_TAG, questionBatchTopicTag(topicId)],
+    },
+  )();
+}
+
 export async function getQuestionsBySubtopic(
   subtopicId: string,
   examCode?: string,
 ): Promise<PublicQuestion[]> {
-  const normalizedExam = examCode ? normalizeExamCode(examCode) : undefined;
-  const params = { subtopicId, examCode: normalizedExam };
-
-  if (!subtopicId) {
-    logQuery('getQuestionsBySubtopic', params, null, { message: 'subtopicId is undefined' });
-    return [];
-  }
-
-  let query = applyVerifiedActiveQuestionFilters(
-    supabase.from('questions').select(PUBLIC_QUESTION_SELECT).eq('subtopic_id', subtopicId),
-  ).limit(MAX_QUESTION_LIMIT);
-
-  if (normalizedExam && normalizedExam !== 'ALL') {
-    query = query.contains('exam_tags', [normalizedExam]);
-  }
-
-  const { data, error } = await query.order('id', { ascending: false });
-
-  logQuery('getQuestionsBySubtopic', params, data, error);
-
-  if (error) return [];
-  return (data ?? []).map((row: Record<string, unknown>) => normalizePublicQuestion(row));
+  const page = await getQuestionBatchBySubtopic(subtopicId, examCode, {
+    batchSize: MAX_QUESTION_LIMIT,
+  });
+  return page.questions;
 }
 
 export async function getMixedQuestionsByTopic(topicId: string, examCode?: string): Promise<PublicQuestion[]> {
-  const normalizedExam = examCode ? normalizeExamCode(examCode) : undefined;
-  const params = { topicId, examCode: normalizedExam };
-
-  if (!topicId) {
-    logQuery('getMixedQuestionsByTopic', params, null, { message: 'topicId is undefined' });
-    return [];
-  }
-
-  let query = applyVerifiedActiveQuestionFilters(
-    supabase.from('questions').select(PUBLIC_QUESTION_SELECT).eq('topic_id', topicId),
-  ).limit(MAX_QUESTION_LIMIT);
-
-  if (normalizedExam && normalizedExam !== 'ALL') {
-    query = query.contains('exam_tags', [normalizedExam]);
-  }
-
-  const { data, error } = await query.order('id', { ascending: false });
-
-  logQuery('getMixedQuestionsByTopic', params, data, error);
-
-  if (error) return [];
-  return (data ?? []).map((row: Record<string, unknown>) => normalizePublicQuestion(row));
+  const page = await getQuestionBatchByTopic(topicId, examCode, { batchSize: MAX_QUESTION_LIMIT });
+  return page.questions;
 }
 
 /** Normalize URL exam param to DB exam_code (e.g. ssc → SSC). */
