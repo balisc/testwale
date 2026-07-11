@@ -2,17 +2,33 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import supabase from '@/lib/supabase';
 import ClientQuiz from '@/app/subjects/[subject]/[topicSlug]/ClientQuiz';
 import QuestionDetailsClient from '@/app/question/QuestionDetailsClient';
+import QuestionPractice from '@/components/practice/QuestionPractice';
+import PracticeBreadcrumb from '@/components/practice/PracticeBreadcrumb';
+import JsonLd from '@/components/JsonLd';
+import { buildBreadcrumbListSchema } from '@/lib/breadcrumbSchema';
+import {
+  getSubjectByIdFromCache,
+  getSubtopicByIdFromCache,
+  getTopicByIdFromCache,
+} from '@/lib/catalogCache';
 import {
   buildQuestionLookupContext,
   decodeQuizTopicFromSlug,
   extractQuestionIdFromQuestionSlug,
   fetchQuestionById,
+  getQuestionTextField,
   inferSubjectKeyFromTopicSlug,
+  type QuestionRecord,
 } from '@/lib/questionLookup';
+import { getQuestionBatchBySubtopic } from '@/lib/polity';
+import { getLocalizedText } from '@/lib/localizedText';
 import { SUBJECT_TABLES } from '@/lib/subjects';
 import { buildQuestionUrl, generateQuestionSlug, slugifySubject } from '@/lib/slugGenerator';
 import { BASE_URL, canonical, absoluteUrl, SITE_NAME } from '@/lib/seo';
-import JsonLd from '@/components/JsonLd';
+import { legacyColumnsForTable } from '@/lib/questionColumns';
+import { MAX_QUIZ_CANDIDATE_ROWS, QUESTION_BATCH_PAGE_SIZE } from '@/lib/supabaseQueryLimits';
+import { subCategoryMatches, topicMatches } from '@/lib/topicMatching';
+import type { PublicQuestion } from '@/types/polity';
 
 export const revalidate = 3600;
 
@@ -58,9 +74,22 @@ function getTextValue(value: LocalizedText | undefined, locale: 'en' | 'hi' = 'e
   return value[locale] || value.en || value.hi || '';
 }
 
-import { subCategoryMatches, topicMatches } from '@/lib/topicMatching';
-import { legacyColumnsForTable } from '@/lib/questionColumns';
-import { MAX_QUIZ_CANDIDATE_ROWS } from '@/lib/supabaseQueryLimits';
+function toPublicQuestion(row: QuestionRecord): PublicQuestion {
+  const questionText = row.question_text ?? row.question ?? {};
+  return {
+    id: String(row.id),
+    question_text:
+      typeof questionText === 'string' ? { en: questionText, hi: questionText } : questionText,
+    options: (row.options as PublicQuestion['options']) ?? {},
+    difficulty: row.difficulty != null ? String(row.difficulty) : null,
+    source: row.source != null ? String(row.source) : null,
+    year: typeof row.year === 'number' ? row.year : row.year != null ? Number(row.year) : null,
+    pyq_exam_name: row.pyq_exam_name != null ? String(row.pyq_exam_name) : null,
+    exam_tags: Array.isArray(row.exam_tags) ? row.exam_tags.map(String) : null,
+    attempt_count: typeof row.attempt_count === 'number' ? row.attempt_count : Number(row.attempt_count ?? 0),
+    correct_count: typeof row.correct_count === 'number' ? row.correct_count : Number(row.correct_count ?? 0),
+  };
+}
 
 type QuestionItem = {
   id: string;
@@ -89,11 +118,12 @@ export async function generateMetadata({
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
   const pathSegments = getQuestionPath(resolvedParams);
-  if (pathSegments.length < 1 || pathSegments.length > 2) {
+  if (pathSegments.length < 1 || pathSegments.length > 3) {
     return { title: 'Question not found', robots: { index: false, follow: true } };
   }
 
-  const topicSlug = pathSegments.length === 2 ? pathSegments[0] : '';
+  const topicSlug = pathSegments.length >= 2 ? pathSegments[0] : '';
+  const subtopicSlug = pathSegments.length === 3 ? pathSegments[1] : '';
   const currentSlug = pathSegments[pathSegments.length - 1];
   const questionId = extractQuestionIdFromQuestionSlug(currentSlug);
   if (!questionId) return { title: 'Question not found', robots: { index: false, follow: true } };
@@ -106,11 +136,18 @@ export async function generateMetadata({
   const question = await fetchQuestionById(questionId, lookupContext);
   if (!question) return { title: 'Question not found', robots: { index: false, follow: true } };
 
-  const questionText = getText(question.question, 'en').trim();
+  const questionText = getText(getQuestionTextField(question), 'en').trim();
   const shortTitle = `${questionText.slice(0, 60).trim()}${questionText.length > 60 ? '…' : ''}`;
   const examText = getText(question.exam, 'en');
   const topicText = getText(question.topic, 'en');
-  const canonicalPath = buildQuestionUrl(question.topic ?? topicText, question.id, question.question);
+  const canonicalPath = buildQuestionUrl(
+    question.topic_slug || question.topic || topicSlug || topicText,
+    question.id,
+    getQuestionTextField(question) ?? '',
+    {
+      subtopic: question.subtopic_slug || subtopicSlug || undefined,
+    },
+  );
   const title = `${shortTitle} - Practice question`;
   const description = `${examText ? `${examText}: ` : ''}Practice a question on ${topicText || 'competitive exams'} with answer and explanation.`;
   const hasQuizQuery = resolvedSearchParams.q !== undefined;
@@ -145,11 +182,12 @@ export default async function QuestionPage({
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
   const pathSegments = getQuestionPath(resolvedParams);
-  if (pathSegments.length < 1 || pathSegments.length > 2) {
+  if (pathSegments.length < 1 || pathSegments.length > 3) {
     notFound();
   }
 
-  const topicSlug = pathSegments.length === 2 ? pathSegments[0] : '';
+  const topicSlug = pathSegments.length >= 2 ? pathSegments[0] : '';
+  const subtopicSlug = pathSegments.length === 3 ? pathSegments[1] : '';
   const currentSlug = pathSegments[pathSegments.length - 1];
   const questionId = extractQuestionIdFromQuestionSlug(currentSlug);
   if (!questionId) notFound();
@@ -165,13 +203,107 @@ export default async function QuestionPage({
   });
   const question = await fetchQuestionById(questionId, lookupContext);
 
-  if (question && !isQuizMode) {
-    const decodedTopic = getText(question.topic, 'en').trim();
-    const canonicalSlug = generateQuestionSlug(question.question, question.id).trim();
-    const canonicalTopicSlug = decodedTopic ? slugifySubject(decodedTopic) : '';
-    const canonicalPath = canonicalTopicSlug ? `/question/${canonicalTopicSlug}/${canonicalSlug}` : `/question/${canonicalSlug}`;
+  // Catalog questions: keep the same practice UI on refresh / shared links.
+  if (question && !isQuizMode && question.subtopic_id) {
+    const questionTextField = getQuestionTextField(question);
+    const canonicalSlug = generateQuestionSlug(questionTextField ?? '', question.id).trim();
+    const [subject, topic, subtopic] = await Promise.all([
+      question.subject_id ? getSubjectByIdFromCache(String(question.subject_id)) : null,
+      question.topic_id ? getTopicByIdFromCache(String(question.topic_id)) : null,
+      getSubtopicByIdFromCache(String(question.subtopic_id)),
+    ]);
 
-    if (currentSlug !== canonicalSlug || topicSlug !== canonicalTopicSlug) {
+    const canonicalTopicSlug = topic?.slug || question.topic_slug || topicSlug;
+    const canonicalSubtopicSlug = subtopic?.slug || question.subtopic_slug || subtopicSlug;
+    const canonicalPath = buildQuestionUrl(canonicalTopicSlug || 'question', question.id, questionTextField ?? '', {
+      subtopic: canonicalSubtopicSlug || undefined,
+    });
+
+    if (
+      currentSlug !== canonicalSlug ||
+      (canonicalTopicSlug && topicSlug && topicSlug !== canonicalTopicSlug) ||
+      (canonicalSubtopicSlug && subtopicSlug && subtopicSlug !== canonicalSubtopicSlug) ||
+      (canonicalSubtopicSlug && !subtopicSlug)
+    ) {
+      return permanentRedirect(canonicalPath);
+    }
+
+    if (subject && topic && subtopic) {
+      const initialBatch = await getQuestionBatchBySubtopic(subtopic.id, undefined, {
+        batchSize: QUESTION_BATCH_PAGE_SIZE,
+      });
+      const linkedQuestion = toPublicQuestion(question);
+      const initialQuestions = initialBatch.questions.some((item) => item.id === linkedQuestion.id)
+        ? initialBatch.questions
+        : [linkedQuestion, ...initialBatch.questions];
+
+      const backHref = `/subjects/${subject.slug}/${topic.slug}`;
+      const breadcrumbSchema = buildBreadcrumbListSchema([
+        { name: 'Home', href: '/' },
+        { name: getLocalizedText(subject.title, 'en'), href: `/subjects/${subject.slug}` },
+        { name: getLocalizedText(topic.title, 'en'), href: backHref },
+        { name: getLocalizedText(subtopic.title, 'en') },
+      ]);
+
+      return (
+        <div className="min-h-screen bg-[#F8FAFC]">
+          <JsonLd data={breadcrumbSchema} />
+          <div className="mx-auto max-w-3xl px-4 pt-6 sm:px-6">
+            <PracticeBreadcrumb
+              subjectSlug={subject.slug}
+              subjectTitle={subject.title}
+              topicTitle={topic.title}
+              topicHref={backHref}
+              subtopicTitle={subtopic.title}
+              currentLabel={{ en: 'Practice', hi: 'अभ्यास' }}
+            />
+          </div>
+
+          <QuestionPractice
+            questions={[]}
+            initialQuestions={initialQuestions}
+            initialNextCursor={initialBatch.nextCursor}
+            initialHasMore={initialBatch.hasMore}
+            questionBatchScope="subtopic"
+            questionBatchScopeId={subtopic.id}
+            backHref={backHref}
+            backLabel="Back to topic"
+            titleLocalized={subtopic.title}
+            seoTopic={topic.slug || topic.title}
+            seoSubtopic={subtopic.slug || subtopic.title}
+            initialQuestionId={question.id}
+            subjectId={subject.id}
+            topicId={topic.id}
+            subtopicId={subtopic.id}
+            totalQuestionCount={subtopic.question_count}
+          />
+        </div>
+      );
+    }
+  }
+
+  if (question && !isQuizMode) {
+    const questionTextField = getQuestionTextField(question);
+    const canonicalSlug = generateQuestionSlug(questionTextField ?? '', question.id).trim();
+    const canonicalTopicSlug =
+      (typeof question.topic_slug === 'string' && question.topic_slug) ||
+      (getText(question.topic, 'en').trim() ? slugifySubject(getText(question.topic, 'en')) : '') ||
+      topicSlug;
+    const canonicalSubtopicSlug =
+      (typeof question.subtopic_slug === 'string' && question.subtopic_slug) || subtopicSlug || undefined;
+    const canonicalPath = buildQuestionUrl(
+      canonicalTopicSlug || 'question',
+      question.id,
+      questionTextField ?? '',
+      { subtopic: canonicalSubtopicSlug },
+    );
+
+    if (
+      currentSlug !== canonicalSlug ||
+      (canonicalTopicSlug && topicSlug && topicSlug !== canonicalTopicSlug) ||
+      (canonicalSubtopicSlug && subtopicSlug && subtopicSlug !== canonicalSubtopicSlug) ||
+      (canonicalSubtopicSlug && !subtopicSlug)
+    ) {
       return permanentRedirect(canonicalPath);
     }
   }
@@ -207,10 +339,18 @@ export default async function QuestionPage({
     notFound();
   }
 
-  const resolvedQuestion = question as QuestionItem;
-  const questionText = getText(resolvedQuestion.question, 'en').trim();
+  const resolvedQuestion = question as QuestionItem & QuestionRecord;
+  const questionTextField = getQuestionTextField(resolvedQuestion);
+  const questionText = getText(questionTextField, 'en').trim();
   const topicText = getText(resolvedQuestion.topic, 'en').trim();
-  const canonicalPath = buildQuestionUrl(resolvedQuestion.topic ?? topicText, resolvedQuestion.id, resolvedQuestion.question);
+  const canonicalPath = buildQuestionUrl(
+    resolvedQuestion.topic_slug || resolvedQuestion.topic || topicSlug || topicText,
+    resolvedQuestion.id,
+    questionTextField ?? '',
+    {
+      subtopic: resolvedQuestion.subtopic_slug || subtopicSlug || undefined,
+    },
+  );
   const options = resolvedQuestion.options
     ? Object.entries(resolvedQuestion.options).map(([key, value]) => ({
         '@type': 'Answer',
@@ -259,7 +399,10 @@ export default async function QuestionPage({
     <>
       <JsonLd data={questionJsonLd} />
       <QuestionDetailsClient
-        initialQuestion={resolvedQuestion}
+        initialQuestion={{
+          ...resolvedQuestion,
+          question: questionTextField ?? resolvedQuestion.question,
+        }}
         initialQuestionId={questionId}
         initialQuestionSlug={currentSlug}
         initialTopic={topicSlug}

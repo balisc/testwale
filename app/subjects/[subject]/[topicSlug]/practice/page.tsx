@@ -91,6 +91,7 @@ export default async function MixedTopicPracticePage({ params, searchParams }: P
           en: `${getLocalizedText(topic.title, 'en')} — Mixed Practice`,
           hi: `${getLocalizedText(topic.title, 'hi')} — मिश्रित अभ्यास`,
         }}
+        seoTopic={topic.slug || topic.title}
         subjectId={subject.id}
         topicId={topic.id}
       />

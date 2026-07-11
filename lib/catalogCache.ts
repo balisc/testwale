@@ -201,6 +201,24 @@ export const getCatalogSnapshot = unstable_cache(fetchCatalogSnapshot, ['catalog
   tags: [CATALOG_CACHE_TAG],
 });
 
+export async function getSubjectByIdFromCache(subjectId: string): Promise<Subject | null> {
+  if (!subjectId) return null;
+  const { subjects } = await getCatalogSnapshot();
+  return subjects.find((subject) => subject.id === subjectId) ?? null;
+}
+
+export async function getTopicByIdFromCache(topicId: string): Promise<Topic | null> {
+  if (!topicId) return null;
+  const { topics } = await getCatalogSnapshot();
+  return topics.find((topic) => topic.id === topicId) ?? null;
+}
+
+export async function getSubtopicByIdFromCache(subtopicId: string): Promise<Subtopic | null> {
+  if (!subtopicId) return null;
+  const { subtopics } = await getCatalogSnapshot();
+  return subtopics.find((subtopic) => subtopic.id === subtopicId) ?? null;
+}
+
 export async function listSubjectsFromCache(): Promise<Subject[]> {
   return (await getCatalogSnapshot()).subjects;
 }

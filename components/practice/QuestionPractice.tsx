@@ -34,6 +34,7 @@ import {
   type SubtopicQuestionBatchState,
 } from '@/lib/practiceMastery';
 import { validateQuestionBatchPagePayload } from '@/lib/publicQuestionApiGuards';
+import { buildQuestionUrl } from '@/lib/slugGenerator';
 import { QUESTION_BATCH_PAGE_SIZE } from '@/lib/supabaseQueryLimits';
 import type { LocalizedText, OptionKey, PublicQuestion, QuestionBatchPage } from '@/types/polity';
 
@@ -49,6 +50,12 @@ type QuestionPracticeProps = {
   backLabel?: string;
   title?: string;
   titleLocalized?: LocalizedText;
+  /** Topic slug/title used to build unique SEO question URLs. */
+  seoTopic?: string | LocalizedText | null;
+  /** Subtopic slug/title — included in SEO URL when practicing a subtopic. */
+  seoSubtopic?: string | LocalizedText | null;
+  /** Deep-link into a specific question after reload/share. */
+  initialQuestionId?: string | null;
   subjectId?: string | null;
   topicId?: string | null;
   subtopicId?: string | null;
@@ -211,6 +218,9 @@ export default function QuestionPractice({
   backLabel = 'Back to topic',
   title,
   titleLocalized,
+  seoTopic,
+  seoSubtopic,
+  initialQuestionId,
   subjectId,
   topicId,
   subtopicId,
@@ -241,7 +251,12 @@ export default function QuestionPractice({
   );
   const [verifiedQuestionIds, setVerifiedQuestionIds] = useState<Set<string>>(new Set());
   const [verifyingBatchIds, setVerifyingBatchIds] = useState<Set<string>>(new Set());
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(() => {
+    const targetId = initialQuestionId?.trim();
+    if (!targetId) return 0;
+    const found = resolvedInitialQuestions.findIndex((question) => question.id === targetId);
+    return found >= 0 ? found : 0;
+  });
   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -1262,6 +1277,31 @@ export default function QuestionPractice({
       setSubmitted(true);
     }
   }, [index, current, resultsByQuestion, resetQuestionState]);
+
+  // Keep a unique SEO URL for the currently shown question.
+  // Refresh stays on the same practice UI via the /question/[...] catalog renderer.
+  useEffect(() => {
+    if (!current || typeof window === 'undefined') return;
+
+    const topicForSlug = seoTopic || titleLocalized || title || 'question';
+    const seoPath = buildQuestionUrl(topicForSlug, current.id, current.question_text, {
+      language,
+      subtopic: seoSubtopic,
+    });
+    const url = new URL(window.location.href);
+
+    if (url.pathname === seoPath) return;
+
+    url.pathname = seoPath;
+    window.history.replaceState(
+      {
+        practiceScopeKey,
+        questionId: current.id,
+      },
+      '',
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  }, [current, seoTopic, seoSubtopic, titleLocalized, title, language, practiceScopeKey]);
 
   useEffect(() => {
     if (!isSubtopicBatchMode) {

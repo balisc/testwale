@@ -107,6 +107,8 @@ export default async function SubtopicPracticePage({ params, searchParams }: Pag
         backHref={backHref}
         backLabel="Back to topic"
         titleLocalized={subtopic.title}
+        seoTopic={topic.slug || topic.title}
+        seoSubtopic={subtopic.slug || subtopic.title}
         subjectId={subject.id}
         topicId={topic.id}
         subtopicId={subtopic.id}

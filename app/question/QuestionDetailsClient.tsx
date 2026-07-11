@@ -56,13 +56,14 @@ type SanitizedQuestion = {
   explanation: string;
 };
 
-function sanitizeQuestion(question: QuestionItem): SanitizedQuestion {
+function sanitizeQuestion(question: QuestionItem & { question_text?: LocalizedText }): SanitizedQuestion {
+  const questionText = question.question ?? question.question_text;
   return {
     id: question.id?.toString() || '',
     exam: typeof question.exam === 'string' ? question.exam : getTextValue(question.exam, 'en'),
     subject: typeof question.subject === 'string' ? question.subject : getTextValue(question.subject, 'en'),
     topic: typeof question.topic === 'string' ? question.topic : getTextValue(question.topic, 'en'),
-    question: typeof question.question === 'string' ? question.question : getTextValue(question.question, 'en'),
+    question: typeof questionText === 'string' ? questionText : getTextValue(questionText, 'en'),
     options: question.options
       ? Object.fromEntries(
           Object.entries(question.options).map(([key, val]) => [
@@ -90,7 +91,7 @@ export default function QuestionDetailsClient({
     ? [String(rawQuestionSlug).trim()]
     : [];
   const questionSlug = initialQuestionSlug ?? String(pathSegments[pathSegments.length - 1] ?? '').trim();
-  const topicSlug = initialTopic ?? (pathSegments.length === 2 ? String(pathSegments[0]).trim() : '');
+  const topicSlug = initialTopic ?? (pathSegments.length >= 2 ? String(pathSegments[0]).trim() : '');
   const questionId = useMemo(
     () => initialQuestionId ?? extractQuestionIdFromSlug(questionSlug),
     [initialQuestionId, questionSlug]
