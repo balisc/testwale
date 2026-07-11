@@ -14,6 +14,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import CircularGauge from './CircularGauge';
+import ModalPortal from '@/components/ModalPortal';
 import UserAvatar from '@/components/UserAvatar';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -401,53 +402,57 @@ export default function ProfileClient() {
         )}
       </div>
 
-      {editOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-2 min-[360px]:items-center min-[360px]:p-4">
-          <div className="max-h-[92dvh] w-full min-w-0 overflow-y-auto rounded-t-2xl bg-white p-4 shadow-xl min-[360px]:max-w-md min-[360px]:rounded-2xl min-[360px]:p-6">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="text-base font-bold text-slate-900 min-[360px]:text-lg">Edit Profile</h3>
-              <button type="button" onClick={() => setEditOpen(false)} aria-label="Close">
-                <X className="h-5 w-5 text-slate-400" />
-              </button>
-            </div>
-            <div className="mt-3 space-y-3 min-[360px]:mt-4">
-              <label className="block text-xs font-medium text-slate-700 min-[360px]:text-sm">
-                Bio
-                <textarea
-                  value={editForm.bio}
-                  onChange={(e) => setEditForm((f) => ({ ...f, bio: e.target.value }))}
-                  rows={3}
-                  className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 px-2.5 py-2 text-xs outline-none focus:border-brand min-[360px]:rounded-xl min-[360px]:px-3 min-[360px]:text-sm"
-                />
-              </label>
-              <label className="block text-xs font-medium text-slate-700 min-[360px]:text-sm">
-                Country
-                <input
-                  value={editForm.country}
-                  onChange={(e) => setEditForm((f) => ({ ...f, country: e.target.value }))}
-                  className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 px-2.5 py-2 text-xs outline-none focus:border-brand min-[360px]:rounded-xl min-[360px]:px-3 min-[360px]:text-sm"
-                />
-              </label>
-              <label className="block text-xs font-medium text-slate-700 min-[360px]:text-sm">
-                Target Exam
-                <input
-                  value={editForm.target_exam}
-                  onChange={(e) => setEditForm((f) => ({ ...f, target_exam: e.target.value }))}
-                  className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 px-2.5 py-2 text-xs outline-none focus:border-brand min-[360px]:rounded-xl min-[360px]:px-3 min-[360px]:text-sm"
-                />
-              </label>
-            </div>
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => void handleSaveProfile()}
-              className="mt-4 w-full rounded-lg bg-brand py-2.5 text-xs font-semibold text-white hover:bg-[#6D28D9] disabled:opacity-60 min-[360px]:mt-5 min-[360px]:rounded-xl min-[360px]:text-sm"
-            >
-              {saving ? 'Saving…' : 'Save Changes'}
-            </button>
-          </div>
+      <ModalPortal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        labelledBy="edit-profile-title"
+        zClassName="z-50"
+        panelClassName="max-w-md rounded-2xl bg-white p-4 shadow-xl min-[360px]:p-6"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <h3 id="edit-profile-title" className="text-base font-bold text-slate-900 min-[360px]:text-lg">
+            Edit Profile
+          </h3>
+          <button type="button" onClick={() => setEditOpen(false)} aria-label="Close">
+            <X className="h-5 w-5 text-slate-400" />
+          </button>
         </div>
-      )}
+        <div className="mt-3 space-y-3 min-[360px]:mt-4">
+          <label className="block text-xs font-medium text-slate-700 min-[360px]:text-sm">
+            Bio
+            <textarea
+              value={editForm.bio}
+              onChange={(e) => setEditForm((f) => ({ ...f, bio: e.target.value }))}
+              rows={3}
+              className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 px-2.5 py-2 text-xs outline-none focus:border-brand min-[360px]:rounded-xl min-[360px]:px-3 min-[360px]:text-sm"
+            />
+          </label>
+          <label className="block text-xs font-medium text-slate-700 min-[360px]:text-sm">
+            Country
+            <input
+              value={editForm.country}
+              onChange={(e) => setEditForm((f) => ({ ...f, country: e.target.value }))}
+              className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 px-2.5 py-2 text-xs outline-none focus:border-brand min-[360px]:rounded-xl min-[360px]:px-3 min-[360px]:text-sm"
+            />
+          </label>
+          <label className="block text-xs font-medium text-slate-700 min-[360px]:text-sm">
+            Target Exam
+            <input
+              value={editForm.target_exam}
+              onChange={(e) => setEditForm((f) => ({ ...f, target_exam: e.target.value }))}
+              className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 px-2.5 py-2 text-xs outline-none focus:border-brand min-[360px]:rounded-xl min-[360px]:px-3 min-[360px]:text-sm"
+            />
+          </label>
+        </div>
+        <button
+          type="button"
+          disabled={saving}
+          onClick={() => void handleSaveProfile()}
+          className="mt-4 w-full rounded-lg bg-brand py-2.5 text-xs font-semibold text-white hover:bg-[#6D28D9] disabled:opacity-60 min-[360px]:mt-5 min-[360px]:rounded-xl min-[360px]:text-sm"
+        >
+          {saving ? 'Saving…' : 'Save Changes'}
+        </button>
+      </ModalPortal>
     </div>
   );
 }

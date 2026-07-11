@@ -70,6 +70,9 @@ export const SIGNUP_ERROR_MESSAGES = {
     saveError: 'Account could not be saved. Run scripts/create_users_table.sql in Supabase.',
     googleError: 'Google sign-in failed. Check Google Client ID settings.',
     googleConfig: 'Google sign-in is not configured. Add NEXT_PUBLIC_GOOGLE_CLIENT_ID in Vercel Environment Variables and redeploy.',
+    googlePopupBlocked:
+      'Your browser blocked the Google sign-in popup. Allow popups for this site in your browser settings, then try again.',
+    googlePopupCancelled: 'Google sign-in was cancelled. Please try again.',
     googleSuccess: 'Your Google account has been connected successfully!',
     success: 'Account created successfully! You can start practicing now.',
   },
@@ -84,6 +87,9 @@ export const SIGNUP_ERROR_MESSAGES = {
     saveError: 'खाता सेव नहीं हो सका। Supabase में users table बनाएँ।',
     googleError: 'Google sign-in विफल। Google Client ID settings जाँचें।',
     googleConfig: 'Google sign-in configure नहीं है। Vercel में NEXT_PUBLIC_GOOGLE_CLIENT_ID जोड़कर redeploy करें।',
+    googlePopupBlocked:
+      'आपके ब्राउज़र ने Google sign-in पॉपअप ब्लॉक कर दिया है। इस साइट के लिए पॉपअप allow करें, फिर दोबारा कोशिश करें।',
+    googlePopupCancelled: 'Google sign-in रद्द हो गया। कृपया फिर कोशिश करें।',
     googleSuccess: 'आपका Google account सफलतापूर्वक जुड़ गया!',
     success: 'खाता सफलतापूर्वक बन गया! अब अभ्यास शुरू करें।',
   },

@@ -6,7 +6,7 @@ This document covers Phase 1 (server-side question-batch caching) and Phase 2 (t
 
 | Data | Layer | TTL | Tags |
 |------|-------|-----|------|
-| Subjects, topics, subtopics, exams | `unstable_cache` in `lib/polity.ts` | 24h | `catalog` |
+| Subjects, topics, subtopics, exams | Single snapshot `getCatalogSnapshot` in `lib/catalogCache.ts` | 24h | `catalog` |
 | Public question batch (subtopic practice) | `getQuestionsBySubtopic` | 1h | `question-batch`, `question-batch:subtopic:{id}` |
 | Public question batch (mixed topic practice) | `getMixedQuestionsByTopic` | 1h | `question-batch`, `question-batch:topic:{id}` |
 

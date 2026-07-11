@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useLanguage } from '@/lib/LanguageContext';
+import { getSignupErrorMessage } from '@/lib/signupValidation';
 
 declare global {
   interface Window {
@@ -47,10 +49,12 @@ type GoogleSignInButtonProps = {
 
 const SCRIPT_ID = 'google-identity-services';
 const MAX_BUTTON_WIDTH = 600;
+const POPUP_GUARD_MS = 8000;
 
 let gsiInitializedKey: string | null = null;
 const gsiCredentialHandlers = new Set<(credential: string) => void>();
 const gsiCancelHandlers = new Set<() => void>();
+const gsiPopupBlockedHandlers = new Set<() => void>();
 
 function ensureGoogleIdentityInitialized(clientId: string, redirectLoginUri?: string) {
   if (!window.google?.accounts?.id) return false;
@@ -69,6 +73,7 @@ function ensureGoogleIdentityInitialized(clientId: string, redirectLoginUri?: st
   } else {
     window.google.accounts.id.initialize({
       client_id: clientId,
+      ux_mode: 'popup',
       callback: (response) => {
         if (response.credential) {
           gsiCredentialHandlers.forEach((handler) => handler(response.credential!));
@@ -84,6 +89,47 @@ function ensureGoogleIdentityInitialized(clientId: string, redirectLoginUri?: st
 
   gsiInitializedKey = initKey;
   return true;
+}
+
+/**
+ * Detects when Google's GIS client fails to open a popup (browser blocker).
+ * Returns a cleanup function that restores window.open.
+ */
+function armPopupOpenGuard(onBlocked: () => void): () => void {
+  const originalOpen = window.open.bind(window);
+  let finished = false;
+  let blockedNotified = false;
+  let sawOpenWindow = false;
+
+  const notifyBlocked = () => {
+    if (blockedNotified || sawOpenWindow) return;
+    blockedNotified = true;
+    onBlocked();
+  };
+
+  window.open = ((url?: string | URL, target?: string, features?: string) => {
+    let popup: Window | null = null;
+    try {
+      popup = originalOpen(url, target, features);
+    } catch {
+      notifyBlocked();
+      return null;
+    }
+
+    if (!popup) {
+      notifyBlocked();
+      return null;
+    }
+
+    sawOpenWindow = true;
+    return popup;
+  }) as typeof window.open;
+
+  return () => {
+    if (finished) return;
+    finished = true;
+    window.open = originalOpen;
+  };
 }
 
 type ButtonRenderConfig = {
@@ -153,11 +199,14 @@ export default function GoogleSignInButton({
   overlay = false,
   redirectLoginUri,
 }: GoogleSignInButtonProps) {
+  const { language } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
   const lastRenderKeyRef = useRef('');
   const onCredentialRef = useRef(onCredential);
   const onErrorRef = useRef(onError);
+  const popupGuardCleanupRef = useRef<(() => void) | null>(null);
+  const popupBlockedRef = useRef(false);
   const [resolvedClientId, setResolvedClientId] = useState(() => {
     const fromProp = (clientIdProp ?? '').trim();
     if (fromProp) return fromProp;
@@ -179,22 +228,34 @@ export default function GoogleSignInButton({
     if (redirectLoginUri) return;
 
     const handleCredential = (credential: string) => {
+      popupBlockedRef.current = false;
+      popupGuardCleanupRef.current?.();
+      popupGuardCleanupRef.current = null;
       onCredentialRef.current?.(credential);
     };
+
     const handleCancel = () => {
-      onErrorRef.current?.(
-        'Google sign-in was cancelled. If no popup appeared, allow popups for this site in your browser and try again.',
-      );
+      if (popupBlockedRef.current) return;
+      onErrorRef.current?.(getSignupErrorMessage(language, 'googlePopupCancelled'));
+    };
+
+    const handlePopupBlocked = () => {
+      popupBlockedRef.current = true;
+      onErrorRef.current?.(getSignupErrorMessage(language, 'googlePopupBlocked'));
     };
 
     gsiCredentialHandlers.add(handleCredential);
     gsiCancelHandlers.add(handleCancel);
+    gsiPopupBlockedHandlers.add(handlePopupBlocked);
 
     return () => {
       gsiCredentialHandlers.delete(handleCredential);
       gsiCancelHandlers.delete(handleCancel);
+      gsiPopupBlockedHandlers.delete(handlePopupBlocked);
+      popupGuardCleanupRef.current?.();
+      popupGuardCleanupRef.current = null;
     };
-  }, [redirectLoginUri]);
+  }, [redirectLoginUri, language]);
 
   useEffect(() => {
     const fromProp = (clientIdProp ?? '').trim();
@@ -250,6 +311,31 @@ export default function GoogleSignInButton({
     let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     let resizeObserver: ResizeObserver | null = null;
     let handleWindowResize: (() => void) | null = null;
+    let guardTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const clearPopupGuard = () => {
+      if (guardTimeout) {
+        clearTimeout(guardTimeout);
+        guardTimeout = null;
+      }
+      popupGuardCleanupRef.current?.();
+      popupGuardCleanupRef.current = null;
+    };
+
+    const armGuardForClick = () => {
+      if (redirectLoginUri) return;
+      clearPopupGuard();
+      popupBlockedRef.current = false;
+
+      popupGuardCleanupRef.current = armPopupOpenGuard(() => {
+        gsiPopupBlockedHandlers.forEach((handler) => handler());
+        clearPopupGuard();
+      });
+
+      guardTimeout = setTimeout(() => {
+        clearPopupGuard();
+      }, POPUP_GUARD_MS);
+    };
 
     const renderGoogleButton = () => {
       if (!window.google?.accounts?.id || !buttonRef.current || !containerRef.current) return;
@@ -312,6 +398,7 @@ export default function GoogleSignInButton({
     };
 
     lastRenderKeyRef.current = '';
+    container.addEventListener('pointerdown', armGuardForClick, true);
 
     const existingScript = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
     if (existingScript) {
@@ -333,6 +420,8 @@ export default function GoogleSignInButton({
     }
 
     return () => {
+      clearPopupGuard();
+      container.removeEventListener('pointerdown', armGuardForClick, true);
       if (resizeTimer) clearTimeout(resizeTimer);
       resizeObserver?.disconnect();
       if (handleWindowResize) {

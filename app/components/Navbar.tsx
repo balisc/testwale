@@ -7,6 +7,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import UserAvatar from '@/components/UserAvatar';
 import { useLanguage } from '../../lib/LanguageContext';
 import { useAuth } from '../../lib/AuthContext';
+import { useBodyScrollLock } from '@/lib/useBodyScrollLock';
 
 type Language = 'en' | 'hi';
 
@@ -124,10 +125,7 @@ export default function Navbar() {
     closeMenu();
   }, [pathname]);
 
-  useEffect(() => {
-    document.body.classList.toggle('overflow-hidden', isOpen);
-    return () => document.body.classList.remove('overflow-hidden');
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   useEffect(() => {
     const onResize = () => {

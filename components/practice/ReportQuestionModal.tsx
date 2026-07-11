@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
+import ModalPortal from '@/components/ModalPortal';
 import { REPORT_REASONS, type ReportReason } from '@/lib/practice';
 import { useLanguage } from '@/lib/LanguageContext';
 
@@ -54,10 +55,8 @@ export default function ReportQuestionModal({ open, questionId, onClose }: Repor
     }
   }, [open, questionId]);
 
-  if (!open || !questionId) return null;
-
   const handleSubmit = async () => {
-    if (submitting) return;
+    if (submitting || !questionId) return;
     setSubmitting(true);
     setMessage(null);
     setIsError(false);
@@ -69,7 +68,11 @@ export default function ReportQuestionModal({ open, questionId, onClose }: Repor
         body: JSON.stringify({ questionId, reason, details }),
       });
 
-      const data = (await response.json()) as { message?: string; is_new_report?: boolean; error?: string };
+      const data = (await response.json()) as {
+        message?: string;
+        is_new_report?: boolean;
+        error?: string;
+      };
 
       if (response.status === 401) {
         setMessage(c.login);
@@ -106,61 +109,65 @@ export default function ReportQuestionModal({ open, questionId, onClose }: Repor
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-      <button type="button" aria-label="Close" className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-3xl border border-[#EDE9FE] bg-white p-6 shadow-2xl">
+    <ModalPortal
+      open={open && Boolean(questionId)}
+      onClose={onClose}
+      labelledBy="report-question-title"
+      panelClassName="max-w-md rounded-3xl border border-[#EDE9FE] bg-white p-6 shadow-2xl"
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute right-4 top-4 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+      >
+        <X className="h-5 w-5" />
+      </button>
+      <h2 id="report-question-title" className="pr-8 text-lg font-bold text-slate-900">
+        {c.title}
+      </h2>
+
+      <label className="mt-4 block text-sm font-semibold text-slate-700">{c.reason}</label>
+      <select
+        value={reason}
+        onChange={(e) => setReason(e.target.value as ReportReason)}
+        className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-[#EDE9FE]"
+      >
+        {REPORT_REASONS.map((item) => (
+          <option key={item} value={item}>
+            {item}
+          </option>
+        ))}
+      </select>
+
+      <label className="mt-4 block text-sm font-semibold text-slate-700">{c.details}</label>
+      <textarea
+        value={details}
+        onChange={(e) => setDetails(e.target.value)}
+        rows={3}
+        className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-[#EDE9FE]"
+      />
+
+      {message && (
+        <p className={`mt-4 text-sm ${isError ? 'text-red-600' : 'text-emerald-600'}`}>{message}</p>
+      )}
+
+      <div className="mt-6 flex gap-2">
+        <button
+          type="button"
+          onClick={() => void handleSubmit()}
+          disabled={submitting}
+          className="inline-flex flex-1 items-center justify-center rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#6D28D9] disabled:opacity-60"
+        >
+          {c.submit}
+        </button>
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+          className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-[#DDD6FE]"
         >
-          <X className="h-5 w-5" />
+          {c.cancel}
         </button>
-        <h2 className="pr-8 text-lg font-bold text-slate-900">{c.title}</h2>
-
-        <label className="mt-4 block text-sm font-semibold text-slate-700">{c.reason}</label>
-        <select
-          value={reason}
-          onChange={(e) => setReason(e.target.value as ReportReason)}
-          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-[#EDE9FE]"
-        >
-          {REPORT_REASONS.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-
-        <label className="mt-4 block text-sm font-semibold text-slate-700">{c.details}</label>
-        <textarea
-          value={details}
-          onChange={(e) => setDetails(e.target.value)}
-          rows={3}
-          className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-[#EDE9FE]"
-        />
-
-        {message && (
-          <p className={`mt-4 text-sm ${isError ? 'text-red-600' : 'text-emerald-600'}`}>{message}</p>
-        )}
-
-        <div className="mt-6 flex gap-2">
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="inline-flex flex-1 items-center justify-center rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#6D28D9] disabled:opacity-60"
-          >
-            {c.submit}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-[#DDD6FE]"
-          >
-            {c.cancel}
-          </button>
-        </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }

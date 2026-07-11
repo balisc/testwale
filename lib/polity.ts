@@ -1,5 +1,15 @@
 import supabase, { SUPABASE_AVAILABLE } from '@/lib/supabase';
 import { unstable_cache } from 'next/cache';
+import {
+  CATALOG_CACHE_TAG,
+  CATALOG_REVALIDATE_SECONDS,
+  getSubjectBySlugFromCache,
+  getSubtopicBySlugFromCache,
+  getTopicBySlugFromCache,
+  listExamsFromCache,
+  listSubtopicsByTopicFromCache,
+  listTopicsBySubjectFromCache,
+} from '@/lib/catalogCache';
 import { getLocalizedText } from '@/lib/localizedText';
 import {
   QUESTION_BATCH_REVALIDATE_SECONDS,
@@ -32,7 +42,6 @@ const PUBLIC_QUESTION_SELECT =
   'id, question_text, options, difficulty, source, year, pyq_exam_name, exam_tags, attempt_count, correct_count';
 
 const DEBUG = process.env.NODE_ENV !== 'production';
-const CATALOG_REVALIDATE_SECONDS = 86400;
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -118,24 +127,6 @@ function parseLocalizedField(value: unknown): LocalizedText {
   return {};
 }
 
-function normalizeSubject(row: Record<string, unknown>): Subject {
-  return {
-    id: String(row.id),
-    title: parseLocalizedField(row.title),
-    slug: String(row.slug ?? ''),
-    description: (() => {
-      const parsed = parseLocalizedField(row.description);
-      return parsed.en || parsed.hi ? parsed : null;
-    })(),
-    icon_key: row.icon_key != null ? String(row.icon_key) : null,
-    hero_image_url: row.hero_image_url != null ? String(row.hero_image_url) : null,
-    sort_order: typeof row.sort_order === 'number' ? row.sort_order : null,
-    topic_count: typeof row.topic_count === 'number' ? row.topic_count : null,
-    question_count: typeof row.question_count === 'number' ? row.question_count : null,
-    is_active: Boolean(row.is_active),
-  };
-}
-
 function normalizeTopic(row: Record<string, unknown>): Topic {
   return {
     id: String(row.id),
@@ -166,20 +157,6 @@ function normalizeSubtopic(row: Record<string, unknown>): Subtopic {
     })(),
     sort_order: typeof row.sort_order === 'number' ? row.sort_order : null,
     question_count: typeof row.question_count === 'number' ? row.question_count : null,
-    is_active: Boolean(row.is_active),
-  };
-}
-
-function normalizeExam(row: Record<string, unknown>): Exam {
-  return {
-    id: String(row.id),
-    code: String(row.code ?? ''),
-    title: parseLocalizedField(row.title),
-    description: (() => {
-      const parsed = parseLocalizedField(row.description);
-      return parsed.en || parsed.hi ? parsed : null;
-    })(),
-    sort_order: typeof row.sort_order === 'number' ? row.sort_order : null,
     is_active: Boolean(row.is_active),
   };
 }
@@ -227,25 +204,9 @@ export async function getSubjectBySlug(subjectSlug: string): Promise<Subject | n
     return null;
   }
 
-  return unstable_cache(
-    async () => {
-      const { data, error } = await supabase
-        .from('subjects')
-        .select(
-          'id, title, slug, description, icon_key, hero_image_url, sort_order, topic_count, question_count, is_active',
-        )
-        .eq('slug', slug)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      logQuery('getSubjectBySlug', params, data, error);
-
-      if (error) return null;
-      return data ? normalizeSubject(data as Record<string, unknown>) : null;
-    },
-    ['polity-subject', slug],
-    { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ['catalog'] },
-  )();
+  const subject = await getSubjectBySlugFromCache(slug);
+  logQuery('getSubjectBySlug', params, subject, null);
+  return subject;
 }
 
 /** Preferred exam pill order — Basic, SSC, Railway, State One-Day first. */
@@ -280,23 +241,9 @@ export function sortExamsForDisplay(exams: Exam[]): Exam[] {
 }
 
 export async function getAllExams(): Promise<Exam[]> {
-  return unstable_cache(
-    async () => {
-      const { data, error } = await supabase
-        .from('exams')
-        .select('id, code, title, description, sort_order, is_active')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      logQuery('getAllExams', {}, data, error);
-
-      if (error) return [];
-      const exams = (data ?? []).map((row: Record<string, unknown>) => normalizeExam(row));
-      return sortExamsForDisplay(exams);
-    },
-    ['polity-exams'],
-    { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ['catalog'] },
-  )();
+  const exams = await listExamsFromCache();
+  logQuery('getAllExams', {}, exams, null);
+  return exams;
 }
 
 export async function getTopicsBySubject(subjectId: string): Promise<Topic[]> {
@@ -307,25 +254,9 @@ export async function getTopicsBySubject(subjectId: string): Promise<Topic[]> {
     return [];
   }
 
-  return unstable_cache(
-    async () => {
-      const { data, error } = await supabase
-        .from('topics')
-        .select(
-          'id, subject_id, title, slug, description, icon_key, sort_order, subtopic_count, question_count, is_active',
-        )
-        .eq('subject_id', subjectId)
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      logQuery('getTopicsBySubject', params, data, error);
-
-      if (error) return [];
-      return (data ?? []).map((row: Record<string, unknown>) => normalizeTopic(row));
-    },
-    ['polity-topics', subjectId],
-    { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ['catalog'] },
-  )();
+  const topics = await listTopicsBySubjectFromCache(subjectId);
+  logQuery('getTopicsBySubject', params, topics, null);
+  return topics;
 }
 
 export async function getExamWiseTopics(
@@ -397,7 +328,7 @@ export async function getExamWiseTopics(
         .sort((a, b) => a.priority - b.priority);
     },
     ['polity-exam-topics', subjectId, normalizedExamCode],
-    { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ['catalog'] },
+    { revalidate: CATALOG_REVALIDATE_SECONDS, tags: [CATALOG_CACHE_TAG] },
   )();
 }
 
@@ -409,42 +340,16 @@ export async function getTopicBySlug(subjectId: string, topicSlug: string): Prom
     return null;
   }
 
-  return unstable_cache(
-    async () => {
-      const { data, error } = await supabase
-        .from('topics')
-        .select(
-          'id, subject_id, title, slug, description, icon_key, sort_order, subtopic_count, question_count, is_active',
-        )
-        .eq('subject_id', subjectId)
-        .eq('slug', params.topicSlug)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      logQuery('getTopicBySlug', params, data, error);
-
-      if (error) return null;
-      return data ? normalizeTopic(data as Record<string, unknown>) : null;
-    },
-    ['polity-topic', subjectId, params.topicSlug],
-    { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ['catalog'] },
-  )();
+  const topic = await getTopicBySlugFromCache(subjectId, params.topicSlug);
+  logQuery('getTopicBySlug', params, topic, null);
+  return topic;
 }
 
 async function getDefaultSubtopicsByTopic(topicId: string): Promise<SubtopicWithExamPriority[]> {
   const params = { topicId, mode: 'default' };
-
-  const { data, error } = await supabase
-    .from('subtopics')
-    .select('id, topic_id, title, slug, description, sort_order, question_count, is_active')
-    .eq('topic_id', topicId)
-    .eq('is_active', true)
-    .order('sort_order', { ascending: true });
-
-  logQuery('getSubtopicsByTopic.default', params, data, error);
-
-  if (error) return [];
-  return (data ?? []).map((row: Record<string, unknown>) => normalizeSubtopic(row));
+  const subtopics = await listSubtopicsByTopicFromCache(topicId);
+  logQuery('getSubtopicsByTopic.default', params, subtopics, null);
+  return subtopics;
 }
 
 async function getExamWiseSubtopics(
@@ -534,18 +439,16 @@ export async function getSubtopicsByTopic({
   }
 
   const normalizedExam = examCode ? normalizeExamCode(examCode) : undefined;
-  const cacheExamKey = normalizedExam && normalizedExam !== 'ALL' ? normalizedExam : 'all';
 
-  return unstable_cache(
-    async () => {
-      if (normalizedExam && normalizedExam !== 'ALL') {
-        return getExamWiseSubtopics(topicId, normalizedExam);
-      }
-      return getDefaultSubtopicsByTopic(topicId);
-    },
-    ['polity-subtopics', topicId, cacheExamKey],
-    { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ['catalog'] },
-  )();
+  if (normalizedExam && normalizedExam !== 'ALL') {
+    return unstable_cache(
+      async () => getExamWiseSubtopics(topicId, normalizedExam),
+      ['polity-subtopics', topicId, normalizedExam],
+      { revalidate: CATALOG_REVALIDATE_SECONDS, tags: [CATALOG_CACHE_TAG] },
+    )();
+  }
+
+  return getDefaultSubtopicsByTopic(topicId);
 }
 
 export async function getSubtopicBySlug(topicId: string, subtopicSlug: string): Promise<Subtopic | null> {
@@ -556,24 +459,9 @@ export async function getSubtopicBySlug(topicId: string, subtopicSlug: string): 
     return null;
   }
 
-  return unstable_cache(
-    async () => {
-      const { data, error } = await supabase
-        .from('subtopics')
-        .select('id, topic_id, title, slug, description, sort_order, question_count, is_active')
-        .eq('topic_id', topicId)
-        .eq('slug', params.subtopicSlug)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      logQuery('getSubtopicBySlug', params, data, error);
-
-      if (error) return null;
-      return data ? normalizeSubtopic(data as Record<string, unknown>) : null;
-    },
-    ['polity-subtopic', topicId, params.subtopicSlug],
-    { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ['catalog'] },
-  )();
+  const subtopic = await getSubtopicBySlugFromCache(topicId, params.subtopicSlug);
+  logQuery('getSubtopicBySlug', params, subtopic, null);
+  return subtopic;
 }
 
 function clampBatchSize(raw?: number): number {

@@ -15,7 +15,6 @@ export default function HomeHeroSection({ lang, initialSuggestions }: HomeHeroSe
   return (
     <section className="relative -mt-16 overflow-hidden border-b border-slate-100 bg-white px-2.5 pb-8 pt-20 min-[360px]:px-5 min-[360px]:pb-10 md:px-6 md:pb-10 lg:pb-12">
       <div className="pointer-events-none absolute -left-16 top-8 h-48 w-48 rounded-full bg-[#EDE9FE]/40 blur-3xl md:top-10" />
-      <div className="pointer-events-none absolute -right-12 top-6 h-80 w-80 rounded-full bg-[#EDE9FE]/70 blur-3xl lg:-right-8 lg:top-8 lg:h-96 lg:w-96" />
       <div className="mx-auto grid min-w-0 max-w-[1240px] items-center gap-4 min-[360px]:gap-6 md:gap-8 lg:grid-cols-2 lg:gap-10">
         <div className="min-w-0">
           <span className="inline-flex max-w-full flex-wrap items-center justify-center gap-1 rounded-full bg-[#F3E8FF] px-2 py-1 text-[9px] font-semibold leading-snug tracking-wide text-brand min-[360px]:inline-flex min-[360px]:gap-2 min-[360px]:px-4 min-[360px]:py-1.5 min-[360px]:text-xs">

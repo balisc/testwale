@@ -1,6 +1,7 @@
 'use client';
 
 import { Clock, X } from 'lucide-react';
+import ModalPortal from '@/components/ModalPortal';
 import { useLanguage } from '@/lib/LanguageContext';
 
 type ReportComingSoonModalProps = {
@@ -27,43 +28,38 @@ export default function ReportComingSoonModal({ open, onClose }: ReportComingSoo
   const { language } = useLanguage();
   const c = COPY[language];
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-      <button type="button" aria-label="Close" className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="report-coming-soon-title"
-        className="relative w-full max-w-md rounded-3xl border border-[#EDE9FE] bg-white p-6 shadow-2xl"
+    <ModalPortal
+      open={open}
+      onClose={onClose}
+      labelledBy="report-coming-soon-title"
+      panelClassName="max-w-md rounded-3xl border border-[#EDE9FE] bg-white p-6 shadow-2xl"
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute right-4 top-4 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
       >
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        <X className="h-5 w-5" />
+      </button>
 
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F3E8FF] text-brand">
-          <Clock className="h-6 w-6" aria-hidden="true" />
-        </div>
-
-        <h2 id="report-coming-soon-title" className="mt-4 text-lg font-bold text-slate-900">
-          {c.title}
-        </h2>
-        <p className="mt-2 text-sm font-semibold text-brand">{c.message}</p>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600">{c.sub}</p>
-
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-6 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#6D28D9]"
-        >
-          {c.ok}
-        </button>
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F3E8FF] text-brand">
+        <Clock className="h-6 w-6" aria-hidden="true" />
       </div>
-    </div>
+
+      <h2 id="report-coming-soon-title" className="mt-4 text-lg font-bold text-slate-900">
+        {c.title}
+      </h2>
+      <p className="mt-2 text-sm font-semibold text-brand">{c.message}</p>
+      <p className="mt-2 text-sm leading-relaxed text-slate-600">{c.sub}</p>
+
+      <button
+        type="button"
+        onClick={onClose}
+        className="mt-6 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#6D28D9]"
+      >
+        {c.ok}
+      </button>
+    </ModalPortal>
   );
 }
