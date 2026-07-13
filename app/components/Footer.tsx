@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import QuestionWaleLogoMark from '@/components/QuestionWaleLogoMark';
 import { useLanguage } from '../../lib/LanguageContext';
 
 type Lang = 'en' | 'hi';
@@ -78,9 +79,10 @@ export default function Footer() {
           <div className="min-w-0 sm:col-span-2 lg:col-span-1">
             <Link
               href="/"
-              className="inline-flex min-w-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#EDE9FE]"
+              className="inline-flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#EDE9FE]"
               aria-label={`${c.brand} home`}
             >
+              <QuestionWaleLogoMark size={36} />
               <span className="truncate text-sm font-extrabold tracking-tight text-[#0F172A] min-[360px]:text-base min-[900px]:text-lg">
                 {c.brand}
               </span>

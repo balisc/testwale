@@ -1,12 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import GoogleSignInButton from '@/app/components/GoogleSignInButton';
+import { useState } from 'react';
+import { getSupabaseBrowserClient } from '@/lib/supabaseBrowser';
+import { getSafeRedirectPath } from '@/lib/safeRedirect';
 
 type HomeGoogleCtaButtonProps = {
-  clientId: string;
+  /** Kept for call-site compatibility; OAuth uses Supabase Google provider. */
+  clientId?: string;
   disabled?: boolean;
-  onCredential: (credential: string) => void;
+  redirectTo?: string;
+  onCredential?: (credential: string) => void;
   onError: (message: string) => void;
 };
 
@@ -39,80 +42,62 @@ function GoogleGLogo({ className }: { className?: string }) {
 }
 
 export default function HomeGoogleCtaButton({
-  clientId,
   disabled = false,
-  onCredential,
+  redirectTo = '/subjects',
   onError,
 }: HomeGoogleCtaButtonProps) {
-  const [mounted, setMounted] = useState(false);
-  const [ready, setReady] = useState(Boolean(clientId.trim()));
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const handleClick = async () => {
+    if (disabled || loading) return;
 
-  useEffect(() => {
-    if (!mounted || clientId.trim()) {
-      if (clientId.trim()) setReady(true);
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) {
+      onError(
+        'Google sign-in is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY (or NEXT_PUBLIC_ equivalents).',
+      );
       return;
     }
 
-    let cancelled = false;
+    setLoading(true);
+    try {
+      const next = getSafeRedirectPath(redirectTo, '/subjects');
+      const redirectUrl = new URL('/auth/callback', window.location.origin);
+      redirectUrl.searchParams.set('next', next);
 
-    fetch('/api/auth/public-config', { cache: 'no-store' })
-      .then((response) => response.json())
-      .then((data: { googleClientId?: string | null }) => {
-        if (cancelled) return;
-        setReady(Boolean((data.googleClientId ?? '').trim()));
-      })
-      .catch(() => {
-        if (!cancelled) setReady(false);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl.toString(),
+          queryParams: {
+            prompt: 'select_account',
+          },
+        },
       });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [clientId, mounted]);
-
-  const isInteractive = mounted && ready && !disabled;
+      if (error) {
+        onError(error.message || 'Google sign-in failed. Please try again.');
+        setLoading(false);
+      }
+      // On success the browser navigates away to Google.
+    } catch {
+      onError('Google sign-in failed. Please try again.');
+      setLoading(false);
+    }
+  };
 
   return (
-    <div
-      className={`relative h-10 w-full min-w-0 rounded-lg border border-[#DADCE0] bg-white shadow-[0_1px_2px_rgba(60,64,67,0.15)] min-[360px]:h-11 ${disabled ? 'pointer-events-none opacity-60' : ''}`}
+    <button
+      type="button"
+      onClick={() => void handleClick()}
+      disabled={disabled || loading}
+      aria-label="Continue with Google"
+      className={`relative flex h-10 w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-[#DADCE0] bg-white px-2.5 shadow-[0_1px_2px_rgba(60,64,67,0.15)] transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 min-[360px]:h-11 min-[360px]:gap-2.5 min-[360px]:px-3`}
     >
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center gap-2 px-2.5 min-[360px]:gap-2.5 min-[360px]:px-3">
-        <GoogleGLogo className="h-4 w-4 shrink-0 min-[360px]:h-[18px] min-[360px]:w-[18px]" />
-        <span className="whitespace-nowrap text-[12px] font-medium leading-normal text-[#3C4043] min-[360px]:text-[13px]">
-          Continue with Google
-        </span>
-      </div>
-      <div
-        className="absolute inset-0 z-[1] h-full w-full min-w-0 overflow-hidden rounded-lg opacity-[0.011]"
-        suppressHydrationWarning
-      >
-        {isInteractive ? (
-          <GoogleSignInButton
-            clientId={clientId}
-            align="left"
-            overlay
-            disabled={disabled}
-            onCredential={onCredential}
-            onError={onError}
-          />
-        ) : null}
-      </div>
-      {mounted && !ready && !disabled ? (
-        <button
-          type="button"
-          className="absolute inset-0 z-[2] h-full w-full cursor-not-allowed rounded-lg opacity-0"
-          onClick={() =>
-            onError(
-              'Google sign-in is not configured. Add NEXT_PUBLIC_GOOGLE_CLIENT_ID to your environment variables.',
-            )
-          }
-          aria-label="Continue with Google"
-        />
-      ) : null}
-    </div>
+      <GoogleGLogo className="h-4 w-4 shrink-0 min-[360px]:h-[18px] min-[360px]:w-[18px]" />
+      <span className="min-w-0 text-center text-[11px] font-medium leading-snug text-[#3C4043] min-[360px]:whitespace-nowrap min-[360px]:text-[13px] min-[360px]:leading-normal">
+        {loading ? 'Redirecting…' : 'Continue with Google'}
+      </span>
+    </button>
   );
 }

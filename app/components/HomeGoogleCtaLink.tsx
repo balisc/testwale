@@ -35,7 +35,7 @@ export default function HomeGoogleCtaLink() {
       className="relative flex h-10 w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-[#DADCE0] bg-white px-2.5 shadow-[0_1px_2px_rgba(60,64,67,0.15)] transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 min-[360px]:h-11 min-[360px]:gap-2.5 min-[360px]:px-3"
     >
       <GoogleGLogo className="h-4 w-4 shrink-0 min-[360px]:h-[18px] min-[360px]:w-[18px]" />
-      <span className="whitespace-nowrap text-[12px] font-medium leading-normal text-[#3C4043] min-[360px]:text-[13px]">
+      <span className="min-w-0 text-center text-[11px] font-medium leading-snug text-[#3C4043] min-[360px]:whitespace-nowrap min-[360px]:text-[13px] min-[360px]:leading-normal">
         Continue with Google
       </span>
     </Link>

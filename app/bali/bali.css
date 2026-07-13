@@ -1,0 +1,81 @@
+/* /bali — desktop/tablet first; squeeze only when narrow */
+
+.bali-page {
+  width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+  scroll-behavior: smooth;
+  /* System stack first so LCP text paints without waiting on webfonts */
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+}
+
+#subjects {
+  scroll-margin-top: 5.5rem;
+}
+
+@media (max-width: 359px) {
+  #subjects {
+    scroll-margin-top: 4rem;
+  }
+}
+
+.bali-page img,
+.bali-page svg,
+.bali-page video {
+  max-width: 100%;
+}
+
+.bali-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 2rem; /* desktop / tablet */
+}
+
+/* Skip painting below-fold until near viewport — helps LCP */
+.bali-page main > section:nth-child(n + 3) {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 480px;
+}
+
+/* Tablet keeps desktop padding; only phones tighten */
+@media (max-width: 767px) {
+  .bali-container {
+    padding-inline: 1.25rem;
+  }
+}
+
+@media (max-width: 479px) {
+  .bali-container {
+    padding-inline: 1rem;
+  }
+
+  .bali-page h1,
+  .bali-page h2,
+  .bali-page h3,
+  .bali-page p,
+  .bali-page li {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* Keep CTA / action buttons visually identical to desktop */
+  .bali-page button {
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+}
+
+@media (max-width: 359px) {
+  .bali-container {
+    padding-inline: 0.5rem;
+  }
+}

@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { upsertGoogleUser } from '@/lib/userRepository';
 import { setAuthCookie, toSessionUser } from '@/lib/authCookies';
+import { getSafeRedirectPath } from '@/lib/safeRedirect';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,5 +62,7 @@ export async function GET(request: Request) {
   }
 
   await setAuthCookie(toSessionUser(saveResult.user));
-  return NextResponse.redirect(`${origin}/subjects`);
+
+  const next = getSafeRedirectPath(requestUrl.searchParams.get('next'), '/subjects');
+  return NextResponse.redirect(`${origin}${next}`);
 }

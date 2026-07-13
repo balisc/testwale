@@ -1,0 +1,128 @@
+'use client';
+
+import { useEffect, useId, useState } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/lib/AuthContext';
+import ModalPortal from '@/components/ModalPortal';
+import BaliSubjectCard, {
+  HistoryIcon,
+  MoreSubjectsIcons,
+  PolityIcon,
+} from './BaliSubjectCard';
+
+export default function BaliSubjects() {
+  const { user } = useAuth();
+  const [notifyOpen, setNotifyOpen] = useState(false);
+  const titleId = useId();
+  const signedIn = Boolean(user);
+
+  useEffect(() => {
+    if (!notifyOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setNotifyOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [notifyOpen]);
+
+  return (
+    <section id="subjects" className="bg-[#FAFAFC] py-16 sm:py-20 max-[479px]:py-10">
+      <div className="bali-container w-full">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-[28px] font-bold tracking-tight text-[#18181B] sm:text-[36px] sm:leading-[44px] max-[479px]:text-2xl">
+              Choose Your Subject
+            </h2>
+            <p className="mt-2 text-base text-[#667085] max-[479px]:text-sm">
+              Start with a subject and progress topic by topic.
+            </p>
+          </div>
+          <Link
+            href="/subjects"
+            className="text-[15px] font-semibold text-[#6D28D9] transition hover:text-[#5B21B6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6D28D9] focus-visible:ring-offset-2"
+          >
+            View All Subjects →
+          </Link>
+        </div>
+
+        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
+          <BaliSubjectCard
+            state="active"
+            title="Indian Polity"
+            description="Constitution, governance, Parliament, judiciary and public institutions."
+            icon={<PolityIcon />}
+            badge="Active"
+            meta={['591 Questions', '18 Topics', 'हिंदी + English']}
+            href="/subjects/indian-polity"
+            ctaLabel={signedIn ? 'Continue Practice' : 'Start Practice'}
+            showProgress={signedIn}
+            progressPercent={signedIn ? 32 : 0}
+            progressLabel={signedIn ? '189 of 591 attempted' : undefined}
+          />
+
+          <BaliSubjectCard
+            state="comingSoon"
+            title="Indian History"
+            description="Ancient, medieval and modern Indian history for competitive examinations."
+            icon={<HistoryIcon />}
+            badge="Coming Soon"
+            meta={['3 Eras', 'Topic-wise', 'हिंदी + English']}
+            ctaLabel="Notify Me"
+            ctaIcon="bell"
+            onAction={() => setNotifyOpen(true)}
+          />
+
+          <BaliSubjectCard
+            state="more"
+            title="More Subjects Coming Soon"
+            description="Geography, Economics, Science, Reasoning and more are being prepared."
+            icon={<MoreSubjectsIcons />}
+            href="/subjects"
+            ctaLabel="Explore Upcoming Subjects"
+          />
+        </div>
+      </div>
+
+      {notifyOpen ? (
+        <ModalPortal>
+          <div
+            className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-2 min-[360px]:p-4 sm:items-center"
+            role="presentation"
+            onClick={() => setNotifyOpen(false)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={titleId}
+              className="w-full max-w-md rounded-2xl border border-[#E4E7EC] bg-white p-4 shadow-xl min-[360px]:p-6"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h3 id={titleId} className="text-lg font-bold text-[#18181B]">
+                Get notified for Indian History
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-[#667085]">
+                We&apos;ll let you know when topic-wise bilingual History MCQs are ready to practise.
+              </p>
+              <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setNotifyOpen(false)}
+                  className="inline-flex h-11 items-center justify-center rounded-xl border border-[#E4E7EC] px-4 text-[15px] font-semibold text-[#344054] transition hover:bg-[#FAFAFC]"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNotifyOpen(false)}
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-[#6D28D9] px-4 text-[15px] font-semibold text-white transition hover:bg-[#5B21B6]"
+                >
+                  Notify Me
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      ) : null}
+    </section>
+  );
+}

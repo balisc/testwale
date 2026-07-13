@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
-import HomeClient from './HomeClient';
-import HomeHeroSection from '@/app/components/HomeHeroSection';
+import dynamic from 'next/dynamic';
+import '@/app/bali/bali.css';
+import BaliHero from '@/app/bali/components/BaliHero';
+import BaliExamStrip from '@/app/bali/components/BaliExamStrip';
+import BaliSubjects from '@/app/bali/components/BaliSubjects';
 import { canonical } from '@/lib/seo';
-import { getHomeData } from '@/lib/homeData';
-import { getServerLang } from '@/lib/serverLang';
 
 const title = 'QuestionWale - Practice Smarter. Score Higher.';
 const description =
@@ -29,13 +30,20 @@ export const metadata: Metadata = {
 
 export const revalidate = 300;
 
-export default async function HomePage() {
-  const [homeData, lang] = await Promise.all([getHomeData(), getServerLang()]);
+const BaliBelowFold = dynamic(() => import('@/app/bali/components/BaliBelowFold'), {
+  loading: () => null,
+});
 
+export default function HomePage() {
   return (
-    <>
-      <HomeHeroSection lang={lang} initialSuggestions={homeData.suggestions} />
-      <HomeClient initialSubjectCounts={homeData.subjectCounts} />
-    </>
+    <div className="bali-page w-full min-w-0 overflow-x-clip bg-[#FAFAFC] text-[#18181B] antialiased">
+      <main>
+        <BaliHero />
+        <BaliExamStrip />
+        {/* Keep #subjects in initial HTML so cross-page scroll can target it */}
+        <BaliSubjects />
+        <BaliBelowFold />
+      </main>
+    </div>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
+import '@/app/bali/bali.css';
 import LayoutShell from './components/LayoutShell';
 import { LanguageProvider } from '../lib/LanguageContext';
 import { AuthProvider } from '../lib/AuthContext';
@@ -45,7 +46,7 @@ const websiteJsonLd = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${plusJakarta.variable} scroll-auto`}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${plusJakarta.variable} scroll-smooth`}>
       <body suppressHydrationWarning className="min-h-screen bg-[#F8FAFC] text-slate-900 antialiased font-body m-0 p-0 overflow-x-hidden">
         <JsonLd data={organizationJsonLd} />
         <JsonLd data={websiteJsonLd} />

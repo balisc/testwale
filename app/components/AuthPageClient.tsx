@@ -1,8 +1,7 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   BarChart3,
@@ -17,10 +16,7 @@ import {
 } from 'lucide-react';
 import AuthHeroIllustration from '@/app/components/AuthHeroIllustration';
 import HomeGoogleCtaButton from '@/app/components/HomeGoogleCtaButton';
-import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/lib/LanguageContext';
-import { getSafeRedirectPath } from '@/lib/safeRedirect';
-import { getSignupErrorMessage } from '@/lib/signupValidation';
 
 type Lang = 'en' | 'hi';
 
@@ -120,70 +116,8 @@ export default function AuthPageClient({
   const { language } = useLanguage();
   const lang = language as Lang;
   const c = CONTENT[lang];
-  const router = useRouter();
-  const { refreshUser, setUser } = useAuth();
 
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [formError, setFormError] = useState(initialError);
-
-  const completeAuth = useCallback(
-    async (user: {
-      id: string;
-      fullName: string;
-      email: string;
-      provider: 'email' | 'google';
-      avatarUrl?: string | null;
-    }) => {
-      setUser(user);
-      await refreshUser();
-      router.push(getSafeRedirectPath(redirectTo, '/subjects'));
-    },
-    [refreshUser, redirectTo, router, setUser],
-  );
-
-  const handleGoogleCredential = useCallback(
-    async (credential: string) => {
-      setFormError('');
-      setGoogleLoading(true);
-
-      try {
-        const response = await fetch('/api/auth/google', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ credential }),
-        });
-
-        const result = (await response.json()) as {
-          success?: boolean;
-          code?: string;
-          message?: string;
-          user?: {
-            id: string;
-            fullName: string;
-            email: string;
-            provider: 'email' | 'google';
-            avatarUrl?: string | null;
-          };
-        };
-
-        if (!response.ok || !result.success || !result.user) {
-          if (result.code === 'saveError' && result.message) {
-            setFormError(result.message);
-          } else {
-            setFormError(result.message ?? getSignupErrorMessage(lang, 'googleError'));
-          }
-          return;
-        }
-
-        await completeAuth(result.user);
-      } catch {
-        setFormError(getSignupErrorMessage(lang, 'googleError'));
-      } finally {
-        setGoogleLoading(false);
-      }
-    },
-    [completeAuth, lang],
-  );
 
   return (
     <div className="relative flex min-h-screen min-w-0 flex-col overflow-x-hidden bg-[#F8FAFC] text-slate-900">
@@ -253,9 +187,8 @@ export default function AuthPageClient({
                 <div className="flex w-full min-w-0 flex-col gap-4 min-[360px]:gap-5 sm:gap-6">
                   <HomeGoogleCtaButton
                     clientId={googleClientId}
-                    onCredential={handleGoogleCredential}
+                    redirectTo={redirectTo}
                     onError={(message) => setFormError(message)}
-                    disabled={googleLoading}
                   />
 
                   <div className="flex w-full min-w-0 gap-2 rounded-lg bg-[#F5F3FF] px-2.5 py-3 text-left min-[360px]:gap-3 min-[360px]:rounded-xl min-[360px]:px-4 min-[360px]:py-3.5">

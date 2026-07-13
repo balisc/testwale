@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import UserAvatar from '@/components/UserAvatar';
+import QuestionWaleLogoMark from '@/components/QuestionWaleLogoMark';
 import { useLanguage } from '../../lib/LanguageContext';
 import { useAuth } from '../../lib/AuthContext';
 import { useBodyScrollLock } from '@/lib/useBodyScrollLock';
@@ -181,9 +182,10 @@ export default function Navbar() {
         >
           <Link
             href="/"
-            className={`flex min-w-0 shrink-0 items-center ${focusRing} rounded-lg`}
+            className={`flex min-w-0 shrink-0 items-center gap-2 ${focusRing} rounded-lg`}
             aria-label={`${t.brand} home`}
           >
+            <QuestionWaleLogoMark size={36} />
             <span className="truncate text-sm font-extrabold tracking-tight text-[#0F172A] min-[360px]:text-base min-[900px]:text-lg">
               {t.brand}
             </span>
