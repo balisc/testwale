@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import BaliHeroSearch from './BaliHeroSearch';
+﻿import Link from 'next/link';
+import HomeHeroSearch from './HomeHeroSearch';
 
 function PracticePreviewCard() {
   return (
@@ -128,12 +128,12 @@ function PracticePreviewCard() {
   );
 }
 
-export default function BaliHero() {
+export default function HomeHero() {
   return (
     <section className="relative overflow-hidden border-b border-[#E4E7EC] bg-[#FAFAFC]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgb(245,243,255,0.9),transparent_55%)]" />
       {/* md+ = desktop/tablet 2-col; stack only on phones */}
-      <div className="bali-container relative grid w-full gap-12 py-16 md:grid-cols-2 md:items-center md:gap-16 md:py-20 max-[767px]:gap-8 max-[767px]:py-12 max-[479px]:gap-8 max-[479px]:py-10">
+      <div className="home-container relative grid w-full gap-12 py-16 md:grid-cols-2 md:items-center md:gap-16 md:py-20 max-[767px]:gap-8 max-[767px]:py-12 max-[479px]:gap-8 max-[479px]:py-10">
         <div className="min-w-0">
           <p className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#DDD6FE] bg-[#F5F3FF] px-3 py-1.5 text-xs font-semibold text-[#6D28D9] max-[479px]:px-2.5 max-[479px]:text-[10px] max-[479px]:leading-snug">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#6D28D9]" />
@@ -151,7 +151,7 @@ export default function BaliHero() {
           </p>
 
           <div className="mt-8 min-w-0 max-[479px]:mt-6">
-            <BaliHeroSearch />
+            <HomeHeroSearch />
           </div>
 
           <div className="mt-4 flex flex-row flex-wrap items-center gap-3 max-[479px]:mt-3 max-[479px]:flex-col max-[479px]:gap-2.5">

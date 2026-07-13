@@ -1,11 +1,11 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 export type SubjectCardState = 'active' | 'comingSoon' | 'more';
 
-type BaliSubjectCardProps = {
+type HomeSubjectCardProps = {
   state: SubjectCardState;
   title: string;
   description: string;
@@ -53,7 +53,7 @@ function BellIcon() {
   );
 }
 
-export default function BaliSubjectCard({
+export default function HomeSubjectCard({
   state,
   title,
   description,
@@ -67,7 +67,7 @@ export default function BaliSubjectCard({
   progressPercent = 0,
   progressLabel,
   onAction,
-}: BaliSubjectCardProps) {
+}: HomeSubjectCardProps) {
   const muted = state === 'comingSoon' || state === 'more';
   const badgeClass =
     badge === 'Active'

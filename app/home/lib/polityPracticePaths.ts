@@ -1,4 +1,4 @@
-import {
+﻿import {
   getAllExams,
   getExamWiseTopics,
   getSubjectBySlug,
@@ -10,20 +10,20 @@ import { getLocalizedText } from '@/lib/localizedText';
 import type { TopicWithPriority } from '@/types/polity';
 import { unstable_cache } from 'next/cache';
 
-export type BaliPathPriority = 'High' | 'Medium' | 'Low';
+export type HomePathPriority = 'High' | 'Medium' | 'Low';
 
-export type BaliPathTopic = {
+export type HomePathTopic = {
   id: string;
   name: string;
   slug: string;
-  priority: BaliPathPriority;
+  priority: HomePathPriority;
   href: string;
 };
 
-export type BaliPathExamTab = {
+export type HomePathExamTab = {
   label: string;
   examCode: string;
-  topics: BaliPathTopic[];
+  topics: HomePathTopic[];
 };
 
 const TAB_DEFS = [
@@ -35,7 +35,7 @@ const TAB_DEFS = [
 
 const MAX_TOPICS = 5;
 
-function toPriority(importance: TopicWithPriority['importance']): BaliPathPriority {
+function toPriority(importance: TopicWithPriority['importance']): HomePathPriority {
   const raw =
     typeof importance === 'string'
       ? importance
@@ -49,7 +49,7 @@ function toPriority(importance: TopicWithPriority['importance']): BaliPathPriori
 function mapTopics(
   topics: TopicWithPriority[],
   subjectSlug: string,
-): BaliPathTopic[] {
+): HomePathTopic[] {
   return topics.slice(0, MAX_TOPICS).map((topic) => ({
     id: topic.id,
     name: getLocalizedText(topic.title, 'en') || getLocalizedText(topic.title, 'hi') || 'Topic',
@@ -59,7 +59,7 @@ function mapTopics(
   }));
 }
 
-async function fetchBaliPolityPracticePaths(): Promise<BaliPathExamTab[]> {
+async function fetchHomePolityPracticePaths(): Promise<HomePathExamTab[]> {
   const subject = await getSubjectBySlug('indian-polity');
   if (!subject) return [];
 
@@ -87,7 +87,7 @@ async function fetchBaliPolityPracticePaths(): Promise<BaliPathExamTab[]> {
     subject.slug,
   );
 
-  const tabs: BaliPathExamTab[] = [];
+  const tabs: HomePathExamTab[] = [];
 
   for (const tab of TAB_DEFS) {
     const examCode = resolveExamCodeFromDb(exams, tab.examHint);
@@ -107,8 +107,8 @@ async function fetchBaliPolityPracticePaths(): Promise<BaliPathExamTab[]> {
   return tabs;
 }
 
-export const getBaliPolityPracticePaths = unstable_cache(
-  fetchBaliPolityPracticePaths,
-  ['bali-polity-practice-paths-v1'],
+export const getHomePolityPracticePaths = unstable_cache(
+  fetchHomePolityPracticePaths,
+  ['home-polity-practice-paths-v1'],
   { revalidate: 300 },
 );

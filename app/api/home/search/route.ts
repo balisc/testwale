@@ -1,19 +1,19 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
-import { getBaliCatalogSearchItems } from '@/app/bali/lib/catalogSearch';
+import { getHomeCatalogSearchItems } from '@/app/home/lib/catalogSearch';
 
 export const runtime = 'nodejs';
 export const revalidate = 300;
 
-const getCachedBaliSearchItems = unstable_cache(
-  async () => getBaliCatalogSearchItems(),
-  ['bali-catalog-search-items-v1'],
+const getCachedHomeSearchItems = unstable_cache(
+  async () => getHomeCatalogSearchItems(),
+  ['home-catalog-search-items-v1'],
   { revalidate: 300 },
 );
 
 export async function GET() {
   try {
-    const items = await getCachedBaliSearchItems();
+    const items = await getCachedHomeSearchItems();
     return NextResponse.json(
       { items },
       {

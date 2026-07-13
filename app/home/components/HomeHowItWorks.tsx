@@ -1,4 +1,4 @@
-const STEPS = [
+﻿const STEPS = [
   {
     n: '01',
     title: 'Choose a Subject',
@@ -16,10 +16,10 @@ const STEPS = [
   },
 ] as const;
 
-export default function BaliHowItWorks() {
+export default function HomeHowItWorks() {
   return (
     <section className="bg-white py-16 sm:py-20 max-[479px]:py-10">
-      <div className="bali-container w-full">
+      <div className="home-container w-full">
         <div className="max-w-2xl min-w-0">
           <h2 className="text-[28px] font-bold tracking-tight text-[#18181B] sm:text-[36px] sm:leading-[44px] max-[479px]:text-2xl">
             Practice in Three Simple Steps

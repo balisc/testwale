@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import dynamic from 'next/dynamic';
-import '@/app/bali/bali.css';
-import BaliHero from '@/app/bali/components/BaliHero';
-import BaliExamStrip from '@/app/bali/components/BaliExamStrip';
-import BaliSubjects from '@/app/bali/components/BaliSubjects';
+import HomeHero from '@/app/home/components/HomeHero';
+import HomeExamStrip from '@/app/home/components/HomeExamStrip';
+import HomeSubjects from '@/app/home/components/HomeSubjects';
 import { canonical } from '@/lib/seo';
 
 const title = 'QuestionWale - Practice Smarter. Score Higher.';
@@ -30,19 +29,19 @@ export const metadata: Metadata = {
 
 export const revalidate = 300;
 
-const BaliBelowFold = dynamic(() => import('@/app/bali/components/BaliBelowFold'), {
+const HomeBelowFold = dynamic(() => import('@/app/home/components/HomeBelowFold'), {
   loading: () => null,
 });
 
 export default function HomePage() {
   return (
-    <div className="bali-page w-full min-w-0 overflow-x-clip bg-[#FAFAFC] text-[#18181B] antialiased">
+    <div className="home-page w-full min-w-0 overflow-x-clip bg-[#FAFAFC] text-[#18181B] antialiased">
       <main>
-        <BaliHero />
-        <BaliExamStrip />
+        <HomeHero />
+        <HomeExamStrip />
         {/* Keep #subjects in initial HTML so cross-page scroll can target it */}
-        <BaliSubjects />
-        <BaliBelowFold />
+        <HomeSubjects />
+        <HomeBelowFold />
       </main>
     </div>
   );

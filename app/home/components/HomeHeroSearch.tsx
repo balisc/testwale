@@ -1,13 +1,13 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, BookOpen, FolderOpen, Layers, Search, X } from 'lucide-react';
-import type { BaliSearchItem } from '../lib/catalogSearch';
+import type { HomeSearchItem } from '../lib/catalogSearch';
 
 const TYPE_META: Record<
-  BaliSearchItem['type'],
+  HomeSearchItem['type'],
   { label: string; Icon: typeof BookOpen }
 > = {
   subject: { label: 'Subject', Icon: BookOpen },
@@ -19,12 +19,12 @@ function normalize(value: string) {
   return value.trim().toLowerCase();
 }
 
-export default function BaliHeroSearch() {
+export default function HomeHeroSearch() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [items, setItems] = useState<BaliSearchItem[]>([]);
+  const [items, setItems] = useState<HomeSearchItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(false);
   const overlayInputRef = useRef<HTMLInputElement>(null);
   const fetchStarted = useRef(false);
@@ -55,7 +55,7 @@ export default function BaliHeroSearch() {
     if (!expanded || fetchStarted.current) return;
     fetchStarted.current = true;
     setLoadingItems(true);
-    fetch('/api/bali/search')
+    fetch('/api/home/search')
       .then((r) => r.json())
       .then((data) => {
         setItems(Array.isArray(data.items) ? data.items : []);
@@ -89,7 +89,7 @@ export default function BaliHeroSearch() {
     overlayInputRef.current?.focus();
   };
 
-  const goTo = (item: BaliSearchItem) => {
+  const goTo = (item: HomeSearchItem) => {
     setExpanded(false);
     router.push(item.href);
   };
@@ -140,7 +140,7 @@ export default function BaliHeroSearch() {
                 </button>
                 <input
                   ref={overlayInputRef}
-                  id="bali-hero-search-overlay"
+                  id="home-hero-search-overlay"
                   type="search"
                   value={query}
                   autoComplete="off"

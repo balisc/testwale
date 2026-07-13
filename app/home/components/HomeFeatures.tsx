@@ -1,4 +1,4 @@
-const FEATURES = [
+﻿const FEATURES = [
   {
     title: 'Bilingual Questions',
     body: 'Practice comfortably in English, हिंदी or view both languages together.',
@@ -46,10 +46,10 @@ const FEATURES = [
   },
 ] as const;
 
-export default function BaliFeatures() {
+export default function HomeFeatures() {
   return (
     <section className="bg-white py-16 sm:py-20 max-[479px]:py-10">
-      <div className="bali-container w-full">
+      <div className="home-container w-full">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#6D28D9] max-[479px]:text-[10px] max-[479px]:tracking-wide">
             Built for better preparation

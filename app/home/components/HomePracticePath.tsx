@@ -1,20 +1,20 @@
-'use client';
+﻿'use client';
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import type { BaliPathExamTab, BaliPathPriority } from '../lib/polityPracticePaths';
+import type { HomePathExamTab, HomePathPriority } from '../lib/polityPracticePaths';
 
-const PRIORITY_STYLE: Record<BaliPathPriority, string> = {
+const PRIORITY_STYLE: Record<HomePathPriority, string> = {
   High: 'bg-[#FFF7ED] text-[#C2410C]',
   Medium: 'bg-[#FFFBEB] text-[#B45309]',
   Low: 'bg-[#F8FAFC] text-[#667085]',
 };
 
-type BaliPracticePathProps = {
-  tabs: BaliPathExamTab[];
+type HomePracticePathProps = {
+  tabs: HomePathExamTab[];
 };
 
-export default function BaliPracticePath({ tabs }: BaliPracticePathProps) {
+export default function HomePracticePath({ tabs }: HomePracticePathProps) {
   const safeTabs = tabs.length > 0 ? tabs : [];
   const [tabLabel, setTabLabel] = useState(safeTabs[0]?.label ?? 'SSC');
 
@@ -29,7 +29,7 @@ export default function BaliPracticePath({ tabs }: BaliPracticePathProps) {
 
   return (
     <section className="border-y border-[#E4E7EC] bg-[#FAFAFC] py-16 sm:py-20 max-[479px]:py-10">
-      <div className="bali-container w-full">
+      <div className="home-container w-full">
         <div className="max-w-2xl min-w-0">
           <h2 className="text-[28px] font-bold tracking-tight text-[#18181B] sm:text-[36px] sm:leading-[44px] max-[479px]:text-2xl">
             Not Sure Where to Begin?

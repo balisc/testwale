@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -58,13 +58,13 @@ function MiniStat({
   );
 }
 
-export default function BaliSignIn({ googleClientId = '' }: { googleClientId?: string }) {
+export default function HomeSignIn({ googleClientId = '' }: { googleClientId?: string }) {
   const { user } = useAuth();
   const [formError, setFormError] = useState('');
 
   return (
     <section id="sign-in" className="bg-[#FAFAFC] py-16 sm:py-20 max-[479px]:py-10">
-      <div className="bali-container w-full">
+      <div className="home-container w-full">
         <div className="overflow-hidden rounded-2xl border border-[#DDD6FE] bg-white shadow-[0_24px_60px_-36px_rgba(109,40,217,0.45)] md:grid md:grid-cols-2">
           <div className="min-w-0 p-6 sm:p-8 md:p-10 max-[479px]:p-3">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#6D28D9] max-[479px]:text-[10px] max-[479px]:tracking-wide">

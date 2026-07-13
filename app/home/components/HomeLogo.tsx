@@ -1,7 +1,7 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import QuestionWaleLogoMark from '@/components/QuestionWaleLogoMark';
 
-export default function BaliLogo({ className = '' }: { className?: string }) {
+export default function HomeLogo({ className = '' }: { className?: string }) {
   return (
     <Link
       href="/"

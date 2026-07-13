@@ -3,8 +3,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import Template from './Template';
-import BaliHeader from '@/app/bali/components/BaliHeader';
-import BaliFooter from '@/app/bali/components/BaliFooter';
+import HomeHeader from '@/app/home/components/HomeHeader';
+import HomeFooter from '@/app/home/components/HomeFooter';
 import SmoothHashScroll, { SCROLL_INTENT_KEY } from './SmoothHashScroll';
 
 const HIDDEN_CHROME_PATHS = ['/loading-test'];
@@ -39,9 +39,9 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
   return (
     <PageChromeVisibilityContext.Provider value={setShowPageChrome}>
       <SmoothHashScroll />
-      {showPageChrome ? <BaliHeader /> : null}
+      {showPageChrome ? <HomeHeader /> : null}
       <Template disableTopPadding={!showPageChrome}>{children}</Template>
-      {showPageChrome ? <BaliFooter /> : null}
+      {showPageChrome ? <HomeFooter /> : null}
     </PageChromeVisibilityContext.Provider>
   );
 }

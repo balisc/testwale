@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 
 const POINTS = [
   'Original question wording',
@@ -15,10 +15,10 @@ const WORKFLOW = [
   'Student feedback',
 ] as const;
 
-export default function BaliQuality() {
+export default function HomeQuality() {
   return (
     <section className="border-y border-[#E4E7EC] bg-[#FAFAFC] py-16 sm:py-20 max-[479px]:py-10">
-      <div className="bali-container grid w-full gap-10 md:grid-cols-2 md:items-center md:gap-14 max-[479px]:gap-8">
+      <div className="home-container grid w-full gap-10 md:grid-cols-2 md:items-center md:gap-14 max-[479px]:gap-8">
         <div className="min-w-0">
           <h2 className="text-[28px] font-bold tracking-tight text-[#18181B] sm:text-[32px] sm:leading-[40px] max-[479px]:text-2xl">
             Practice With Better Content Confidence

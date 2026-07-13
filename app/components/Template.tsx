@@ -9,7 +9,7 @@ export default function Template({
   children: ReactNode;
   disableTopPadding?: boolean;
 }) {
-  // Match fixed BaliHeader height (72px / 56px on ultra-narrow)
+  // Match fixed HomeHeader height (72px / 56px on ultra-narrow)
   return (
     <div
       className={`min-h-screen bg-[#FAFAFC] text-slate-900 ${

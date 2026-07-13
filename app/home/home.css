@@ -1,6 +1,6 @@
-/* /bali — desktop/tablet first; squeeze only when narrow */
+﻿/* Homepage — desktop/tablet first; squeeze only when narrow */
 
-.bali-page {
+.home-page {
   width: 100%;
   min-width: 0;
   overflow-x: clip;
@@ -27,13 +27,13 @@
   }
 }
 
-.bali-page img,
-.bali-page svg,
-.bali-page video {
+.home-page img,
+.home-page svg,
+.home-page video {
   max-width: 100%;
 }
 
-.bali-container {
+.home-container {
   width: 100%;
   max-width: 1200px;
   margin-inline: auto;
@@ -41,41 +41,41 @@
 }
 
 /* Skip painting below-fold until near viewport — helps LCP */
-.bali-page main > section:nth-child(n + 3) {
+.home-page main > section:nth-child(n + 3) {
   content-visibility: auto;
   contain-intrinsic-size: 1px 480px;
 }
 
 /* Tablet keeps desktop padding; only phones tighten */
 @media (max-width: 767px) {
-  .bali-container {
+  .home-container {
     padding-inline: 1.25rem;
   }
 }
 
 @media (max-width: 479px) {
-  .bali-container {
+  .home-container {
     padding-inline: 1rem;
   }
 
-  .bali-page h1,
-  .bali-page h2,
-  .bali-page h3,
-  .bali-page p,
-  .bali-page li {
+  .home-page h1,
+  .home-page h2,
+  .home-page h3,
+  .home-page p,
+  .home-page li {
     overflow-wrap: anywhere;
     word-break: break-word;
   }
 
   /* Keep CTA / action buttons visually identical to desktop */
-  .bali-page button {
+  .home-page button {
     word-break: normal;
     overflow-wrap: normal;
   }
 }
 
 @media (max-width: 359px) {
-  .bali-container {
+  .home-container {
     padding-inline: 0.5rem;
   }
 }

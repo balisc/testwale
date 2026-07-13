@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 
@@ -39,7 +39,7 @@ const LANG_OPTIONS: { id: LangMode; label: string }[] = [
 
 const OPTION_KEYS: OptionKey[] = ['A', 'B', 'C', 'D'];
 
-export default function BaliDemo() {
+export default function HomeDemo() {
   const [lang, setLang] = useState<LangMode>('both');
   const [selected, setSelected] = useState<OptionKey | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -49,7 +49,7 @@ export default function BaliDemo() {
 
   return (
     <section id="demo" className="border-y border-purple-200 bg-[#F5F3FF]">
-      <div className="bali-container w-full max-w-6xl py-16 sm:py-20 max-[479px]:py-10">
+      <div className="home-container w-full max-w-6xl py-16 sm:py-20 max-[479px]:py-10">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl max-[479px]:text-2xl">
             Try a Question Now

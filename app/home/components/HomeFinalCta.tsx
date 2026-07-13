@@ -1,9 +1,9 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 
-export default function BaliFinalCta() {
+export default function HomeFinalCta() {
   return (
     <section className="bg-[#FAFAFC] py-16 sm:py-20 max-[479px]:py-10">
-      <div className="bali-container w-full">
+      <div className="home-container w-full">
         <div className="relative overflow-hidden rounded-2xl bg-[#6D28D9] px-6 py-12 text-center sm:px-10 sm:py-14 max-[479px]:px-3 max-[479px]:py-8">
           <div className="pointer-events-none absolute -left-8 top-8 opacity-20 max-[479px]:hidden">
             <svg width="120" height="120" viewBox="0 0 120 120" fill="none" aria-hidden>

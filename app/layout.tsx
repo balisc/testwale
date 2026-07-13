@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
-import '@/app/bali/bali.css';
+import '@/app/home/home.css';
 import LayoutShell from './components/LayoutShell';
 import { LanguageProvider } from '../lib/LanguageContext';
 import { AuthProvider } from '../lib/AuthContext';

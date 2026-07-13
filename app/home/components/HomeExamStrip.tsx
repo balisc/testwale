@@ -1,9 +1,9 @@
-const EXAMS = ['SSC', 'Railway', 'UPSC', 'State PCS', 'State One-Day Exams'] as const;
+﻿const EXAMS = ['SSC', 'Railway', 'UPSC', 'State PCS', 'State One-Day Exams'] as const;
 
-export default function BaliExamStrip() {
+export default function HomeExamStrip() {
   return (
     <section className="border-b border-[#E4E7EC] bg-white">
-      <div className="bali-container flex w-full flex-col gap-3 py-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
+      <div className="home-container flex w-full flex-col gap-3 py-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
         <p className="shrink-0 text-sm font-medium text-[#667085]">
           Focused practice for major government exams
         </p>

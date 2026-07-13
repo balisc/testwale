@@ -1,11 +1,11 @@
-import { getCatalogSnapshot } from '@/lib/catalogCache';
+﻿import { getCatalogSnapshot } from '@/lib/catalogCache';
 import { getLocalizedText } from '@/lib/localizedText';
 
-export type BaliSearchItemType = 'subject' | 'topic' | 'subtopic';
+export type HomeSearchItemType = 'subject' | 'topic' | 'subtopic';
 
-export type BaliSearchItem = {
+export type HomeSearchItem = {
   id: string;
-  type: BaliSearchItemType;
+  type: HomeSearchItemType;
   label: string;
   labelHi: string;
   href: string;
@@ -13,7 +13,7 @@ export type BaliSearchItem = {
   path: string;
 };
 
-export async function getBaliCatalogSearchItems(): Promise<BaliSearchItem[]> {
+export async function getHomeCatalogSearchItems(): Promise<HomeSearchItem[]> {
   const { subjects, topics, subtopics } = await getCatalogSnapshot();
   if (!subjects.length) return [];
 
@@ -22,7 +22,7 @@ export async function getBaliCatalogSearchItems(): Promise<BaliSearchItem[]> {
   const activeTopics = topics.filter((t) => t.is_active && subjectById.has(t.subject_id));
   const topicById = new Map(activeTopics.map((t) => [t.id, t]));
 
-  const items: BaliSearchItem[] = [];
+  const items: HomeSearchItem[] = [];
 
   for (const subject of activeSubjects) {
     const label = getLocalizedText(subject.title, 'en') || getLocalizedText(subject.title, 'hi');

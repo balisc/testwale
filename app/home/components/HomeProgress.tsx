@@ -1,9 +1,9 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 
-export default function BaliProgress() {
+export default function HomeProgress() {
   return (
     <section className="bg-[#F5F3FF] py-16 sm:py-20 max-[479px]:py-10">
-      <div className="bali-container grid w-full gap-10 md:grid-cols-2 md:items-center md:gap-14 max-[479px]:gap-8">
+      <div className="home-container grid w-full gap-10 md:grid-cols-2 md:items-center md:gap-14 max-[479px]:gap-8">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#6D28D9] max-[479px]:text-[10px] max-[479px]:tracking-wide">
             Smarter practice
@@ -53,11 +53,11 @@ export default function BaliProgress() {
               />
               <path
                 d="M0 70 C40 65, 50 40, 80 45 S120 80, 160 55 S220 20, 260 35 S300 55, 320 30 V100 H0 Z"
-                fill="url(#baliWave)"
+                fill="url(#homeWave)"
                 opacity="0.25"
               />
               <defs>
-                <linearGradient id="baliWave" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="homeWave" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#6D28D9" />
                   <stop offset="100%" stopColor="#6D28D9" stopOpacity="0" />
                 </linearGradient>

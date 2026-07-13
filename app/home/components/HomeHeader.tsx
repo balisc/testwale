@@ -1,10 +1,10 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/lib/LanguageContext';
-import BaliLogo from './BaliLogo';
+import HomeLogo from './HomeLogo';
 
 const NAV = [
   { label: 'Home', href: '/' },
@@ -113,7 +113,7 @@ function LanguageDropdown() {
   );
 }
 
-export default function BaliHeader() {
+export default function HomeHeader() {
   const { language, setLanguage } = useLanguage();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -143,8 +143,8 @@ export default function BaliHeader() {
         scrolled ? 'border-[#E4E7EC] shadow-[0_1px_0_rgba(24,24,27,0.04)]' : 'border-[#E4E7EC]'
       }`}
     >
-      <div className="bali-container flex h-[72px] min-w-0 items-center justify-between gap-2 max-[359px]:h-14">
-        <BaliLogo className="min-w-0 flex-1" />
+      <div className="home-container flex h-[72px] min-w-0 items-center justify-between gap-2 max-[359px]:h-14">
+        <HomeLogo className="min-w-0 flex-1" />
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
           {NAV.map((item) => {
@@ -207,7 +207,7 @@ export default function BaliHeader() {
 
       {open ? (
         <div className="border-t border-[#E4E7EC] bg-white lg:hidden">
-          <nav className="bali-container flex flex-col gap-1 py-4" aria-label="Mobile">
+          <nav className="home-container flex flex-col gap-1 py-4" aria-label="Mobile">
             {NAV.map((item) => (
               <Link
                 key={item.label}

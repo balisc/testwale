@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import BaliLogo from './BaliLogo';
+﻿import Link from 'next/link';
+import HomeLogo from './HomeLogo';
 
 const COLUMNS = [
   {
@@ -30,13 +30,13 @@ const COLUMNS = [
   },
 ] as const;
 
-export default function BaliFooter() {
+export default function HomeFooter() {
   return (
     <footer className="border-t border-[#E4E7EC] bg-white">
-      <div className="bali-container w-full py-12 max-[479px]:py-10">
+      <div className="home-container w-full py-12 max-[479px]:py-10">
         <div className="grid gap-10 md:grid-cols-[1.2fr_2fr] max-[479px]:gap-8">
           <div className="min-w-0">
-            <BaliLogo />
+            <HomeLogo />
             <p className="mt-4 max-w-sm text-sm leading-6 text-[#667085]">
               Focused bilingual MCQ practice for Indian government exam aspirants.
             </p>
