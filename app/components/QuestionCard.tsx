@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { QuestionItem } from '../actions/questions';
 import { translations } from '../lib/translations';
+import VerifiedSources from '@/components/questions/VerifiedSources';
 
 const optionLabels = ['A', 'B', 'C', 'D'];
 
@@ -146,9 +147,15 @@ export default function QuestionCard({ question, index, showExplanation, onAnswe
         </div>
 
         {selectedOption && showExplanation && (
-          <div className="rounded-3xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-slate-100 shadow-sm">
-            <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">{getTranslation('practice.explanation')}</p>
-            <p className="mt-4 text-base leading-7 text-slate-200">{getText(question.explanation)}</p>
+          <div className="space-y-3">
+            <div className="rounded-3xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-slate-100 shadow-sm">
+              <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">{getTranslation('practice.explanation')}</p>
+              <p className="mt-4 text-base leading-7 text-slate-200">{getText(question.explanation)}</p>
+            </div>
+            <VerifiedSources
+              source={typeof (question as { source?: unknown }).source === 'string' ? String((question as { source?: string }).source) : null}
+              language={language}
+            />
           </div>
         )}
       </div>

@@ -7,6 +7,7 @@
     "build": "cross-env NEXT_TELEMETRY_DISABLED=1 next build",
     "start": "next start",
     "lint": "tsc --noEmit",
+    "test:sources": "node --experimental-strip-types scripts/validate-parse-question-sources.ts",
     "clear-db": "node scripts/clearDatabase.js"
   },
   "dependencies": {

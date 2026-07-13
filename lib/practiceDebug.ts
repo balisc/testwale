@@ -6,7 +6,12 @@ type PracticeDebugEvent =
   | 'question_page_load'
   | 'answer_submit'
   | 'progress_fetch'
-  | 'metadata_cache_hit';
+  | 'metadata_cache_hit'
+  | 'revision_opened'
+  | 'revision_cta_clicked'
+  | 'revision_source_clicked'
+  | 'revision_mindmap_viewed'
+  | 'revision_marked_complete';
 
 const counts = new Map<PracticeDebugEvent, number>();
 

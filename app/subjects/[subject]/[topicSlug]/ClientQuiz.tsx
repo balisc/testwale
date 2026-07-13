@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useLanguage } from '../../../../lib/LanguageContext';
+import VerifiedSources from '@/components/questions/VerifiedSources';
 import {
   buildQuestionPath,
   extractQuestionIdFromSlug,
@@ -610,9 +611,21 @@ export default function ClientQuiz({
             </div>
 
             {isAnswered && !isAnswerCorrect && explanationText && selectedOptionIndex !== null && (
-              <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-6">
-                <p className="text-sm font-semibold text-blue-900 mb-2">Explanation:</p>
-                <p className="text-blue-800">{explanationText}</p>
+              <div className="mt-6 space-y-3">
+                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
+                  <p className="text-sm font-semibold text-blue-900 mb-2">Explanation:</p>
+                  <p className="text-blue-800">{explanationText}</p>
+                </div>
+                <VerifiedSources
+                  source={
+                    typeof currentQuestion.source === 'string'
+                      ? currentQuestion.source
+                      : typeof currentQuestion.Source === 'string'
+                        ? currentQuestion.Source
+                        : null
+                  }
+                  language={lang === 'hi' ? 'hi' : 'en'}
+                />
               </div>
             )}
 

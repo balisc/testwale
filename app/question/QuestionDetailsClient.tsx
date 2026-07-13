@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+import VerifiedSources from '@/components/questions/VerifiedSources';
 import { extractQuestionIdFromSlug } from '@/lib/slugGenerator';
 
 type LocalizedText = string | { en?: string; hi?: string };
@@ -16,6 +17,7 @@ type QuestionItem = {
   options?: Record<OptionKey, LocalizedText>;
   answer?: OptionKey;
   explanation?: LocalizedText;
+  source?: string | null;
 };
 
 type Props = {
@@ -54,10 +56,15 @@ type SanitizedQuestion = {
   options?: Record<string, string>;
   answer?: string;
   explanation: string;
+  source: string | null;
 };
 
 function sanitizeQuestion(question: QuestionItem & { question_text?: LocalizedText }): SanitizedQuestion {
   const questionText = question.question ?? question.question_text;
+  const rawSource =
+    typeof (question as { source?: unknown }).source === 'string'
+      ? String((question as { source?: string }).source)
+      : null;
   return {
     id: question.id?.toString() || '',
     exam: typeof question.exam === 'string' ? question.exam : getTextValue(question.exam, 'en'),
@@ -74,6 +81,7 @@ function sanitizeQuestion(question: QuestionItem & { question_text?: LocalizedTe
       : undefined,
     answer: question.answer?.toString() || undefined,
     explanation: typeof question.explanation === 'string' ? question.explanation : getTextValue(question.explanation, 'en'),
+    source: rawSource && rawSource.trim() ? rawSource : null,
   };
 }
 
@@ -216,6 +224,12 @@ export default function QuestionDetailsClient({
               {sanitizedQuestion.explanation ? (
                 <p className="mt-4 text-sm text-slate-700">{sanitizedQuestion.explanation}</p>
               ) : null}
+              <VerifiedSources
+                source={sanitizedQuestion.source}
+                isVerified
+                language="en"
+                className="mt-4"
+              />
             </div>
           ) : null}
         </div>

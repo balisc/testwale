@@ -11,10 +11,13 @@ import {
   Flag,
   Loader2,
   RotateCcw,
+  X,
 } from 'lucide-react';
 import LoginRequiredModal from '@/components/practice/LoginRequiredModal';
 import PracticeProgressSummary from '@/components/practice/PracticeProgressSummary';
 import ReportComingSoonModal from '@/components/practice/ReportComingSoonModal';
+import VerifiedSources from '@/components/questions/VerifiedSources';
+import ModalPortal from '@/components/ModalPortal';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/lib/LanguageContext';
 import {
@@ -112,6 +115,10 @@ const COPY = {
     emptySubtopicCatalog: 'No questions are available in this subtopic yet.',
     emptySubtopicCatalogSub: 'Check back later or explore another subtopic.',
     advancingCycle: 'Updating practice round...',
+    batchGateTitle: 'Finish this batch first',
+    batchGateBody: 'Kindly complete all questions in this batch to unlock your next challenge.',
+    batchGateOk: 'OK',
+    batchGateClose: 'Close',
   },
   hi: {
     practice: 'अभ्यास',
@@ -156,6 +163,10 @@ const COPY = {
     emptySubtopicCatalog: 'इस उप-विषय में अभी कोई प्रश्न उपलब्ध नहीं है।',
     emptySubtopicCatalogSub: 'बाद में देखें या कोई अन्य उप-विषय देखें।',
     advancingCycle: 'अभ्यास राउंड अपडेट हो रहा है...',
+    batchGateTitle: 'पहले यह बैच पूरा करें',
+    batchGateBody: 'अगला बैच देखने के लिए इस बैच के सभी प्रश्न हल करें।',
+    batchGateOk: 'OK',
+    batchGateClose: 'Close',
   },
 };
 
@@ -249,6 +260,9 @@ export default function QuestionPractice({
   const [currentPageIds, setCurrentPageIds] = useState<string[]>(() =>
     resolvedInitialQuestions.map((question) => question.id),
   );
+  /** Display numbering offset so page 2 shows as 11–20 after page 1 is replaced. */
+  const [pageNumberOffset, setPageNumberOffset] = useState(0);
+  const [batchGateOpen, setBatchGateOpen] = useState(false);
   const [verifiedQuestionIds, setVerifiedQuestionIds] = useState<Set<string>>(new Set());
   const [verifyingBatchIds, setVerifyingBatchIds] = useState<Set<string>>(new Set());
   const [index, setIndex] = useState(() => {
@@ -333,20 +347,32 @@ export default function QuestionPractice({
   }, [correctQuestionIds, sessionHiddenIds]);
 
   const activeQuestions = useMemo(() => {
-    if (!isSubtopicBatchMode || !user) return questionPool;
+    let filtered: PublicQuestion[];
 
-    if (isSubtopicMasteryMode) {
-      return questionPool.filter(
+    if (!isSubtopicBatchMode || !user) {
+      filtered = questionPool;
+    } else if (isSubtopicMasteryMode) {
+      filtered = questionPool.filter(
         (question) =>
           verifiedQuestionIds.has(question.id) &&
           eligibleQuestionIds.has(question.id) &&
           !sessionPassRemovedIds.has(question.id),
       );
+    } else {
+      filtered = questionPool.filter(
+        (question) => verifiedQuestionIds.has(question.id) && !hiddenQuestionIds.has(question.id),
+      );
     }
 
-    return questionPool.filter(
-      (question) => verifiedQuestionIds.has(question.id) && !hiddenQuestionIds.has(question.id),
-    );
+    // Show only the current page of 10 so previous pages leave the UI when the next batch loads.
+    if (isSubtopicBatchMode && currentPageIds.length > 0) {
+      const byId = new Map(filtered.map((question) => [question.id, question]));
+      return currentPageIds
+        .map((id) => byId.get(id))
+        .filter((question): question is PublicQuestion => Boolean(question));
+    }
+
+    return filtered;
   }, [
     questionPool,
     isSubtopicBatchMode,
@@ -356,18 +382,24 @@ export default function QuestionPractice({
     hiddenQuestionIds,
     eligibleQuestionIds,
     sessionPassRemovedIds,
+    currentPageIds,
   ]);
 
   const isVerifyingNewBatch = verifyingBatchIds.size > 0;
 
   const current = activeQuestions[index];
   const total = activeQuestions.length;
+  const displayQuestionNumber = pageNumberOffset + index + 1;
   const knownSubtopicTotal =
     catalogQuestionCount != null && catalogQuestionCount > 0
       ? catalogQuestionCount
       : totalQuestionCount != null && totalQuestionCount > 0
         ? totalQuestionCount
         : null;
+  const displayQuestionTotal =
+    knownSubtopicTotal != null && knownSubtopicTotal > 0
+      ? knownSubtopicTotal
+      : Math.max(pageNumberOffset + total, total);
   const currentResult = current ? resultsByQuestion[current.id] : undefined;
 
   const displayTitle = titleLocalized
@@ -395,6 +427,8 @@ export default function QuestionPractice({
       nextCursorRef.current = cursor;
       hasMoreRef.current = more;
       setCurrentPageIds(initialBatch.map((question) => question.id));
+      setPageNumberOffset(0);
+      setBatchGateOpen(false);
       setVerifiedQuestionIds(new Set());
       setVerifyingBatchIds(new Set());
       setEligibleQuestionIds(new Set());
@@ -1085,7 +1119,6 @@ export default function QuestionPractice({
 
       const generation = requestGenerationRef.current;
       const scopeKey = activeScopeKeyRef.current ?? practiceScopeKey;
-      const previousCount = loadedQuestionsRef.current.length;
 
       try {
         let loadedNew = false;
@@ -1096,17 +1129,17 @@ export default function QuestionPractice({
 
         if (!loadedNew && canAdvanceCycle && (!hasMoreRef.current || !nextCursorRef.current)) {
           await advancePracticeCycle(generation, scopeKey);
+          setPageNumberOffset(0);
           setIndex(0);
+          setBatchGateOpen(false);
           resetQuestionState();
           return;
         }
 
         if (loadedNew) {
-          if (isSubtopicMasteryMode) {
-            setIndex(0);
-          } else {
-            setIndex(previousCount);
-          }
+          setPageNumberOffset((prev) => prev + completedQuestionIds.length);
+          setIndex(0);
+          setBatchGateOpen(false);
           resetQuestionState();
         }
       } finally {
@@ -1580,6 +1613,11 @@ export default function QuestionPractice({
 
         if (pageComplete) {
           void advanceToNextQuestionPage(pageIds);
+        } else if (index === total - 1 && pageIds.length > 0) {
+          // Attempted the last question of this batch without finishing the rest — gate next batch.
+          setIndex(0);
+          resetQuestionState();
+          setBatchGateOpen(true);
         }
       }
 
@@ -1608,6 +1646,9 @@ export default function QuestionPractice({
     activeQuestions,
     resultsByQuestion,
     advanceToNextQuestionPage,
+    index,
+    total,
+    resetQuestionState,
     c.errorSubmit,
     c.errorService,
     c.alreadyAttempted,
@@ -1643,12 +1684,37 @@ export default function QuestionPractice({
     void submitAnswer();
   };
 
+  const isQuestionAttempted = useCallback(
+    (questionId: string | undefined) => {
+      if (!questionId) return false;
+      return attemptedIds.has(questionId) || Boolean(resultsByQuestion[questionId]);
+    },
+    [attemptedIds, resultsByQuestion],
+  );
+
+  const isCurrentBatchComplete = useCallback(() => {
+    const pageIds = currentPageIds.length > 0 ? currentPageIds : activeQuestions.map((q) => q.id);
+    if (pageIds.length === 0) return false;
+    return pageIds.every((id) => isQuestionAttempted(id));
+  }, [currentPageIds, activeQuestions, isQuestionAttempted]);
+
+  const openBatchGateAtFirstQuestion = useCallback(() => {
+    setIndex(0);
+    resetQuestionState();
+    setBatchGateOpen(true);
+  }, [resetQuestionState]);
+
   const handleNextQuestion = () => {
     if (!current) return;
 
     if (isSubtopicMasteryMode) {
       if (index < total - 1) {
         setIndex((prev) => prev + 1);
+        return;
+      }
+
+      if (!isCurrentBatchComplete()) {
+        openBatchGateAtFirstQuestion();
         return;
       }
 
@@ -1669,6 +1735,10 @@ export default function QuestionPractice({
     }
 
     if (isSubtopicBatchMode) {
+      if (!isCurrentBatchComplete()) {
+        openBatchGateAtFirstQuestion();
+        return;
+      }
       const pageIds = currentPageIds.length > 0 ? currentPageIds : activeQuestions.map((q) => q.id);
       void advanceToNextQuestionPage(pageIds);
     }
@@ -1679,6 +1749,8 @@ export default function QuestionPractice({
   };
 
   const handleSelectQuestion = (qIndex: number) => {
+    if (qIndex === index) return;
+
     if (
       subtopicId &&
       user &&
@@ -1689,6 +1761,12 @@ export default function QuestionPractice({
       setSessionHiddenIds((prev) => new Set(prev).add(current.id));
     }
     setIndex(qIndex);
+  };
+
+  const handleCloseBatchGate = () => {
+    setBatchGateOpen(false);
+    setIndex(0);
+    resetQuestionState();
   };
 
   const handleReset = () => {
@@ -1728,6 +1806,8 @@ export default function QuestionPractice({
       consecutiveEmptyBatchesRef.current = 0;
       setBatchSafetyLimitReached(false);
       setBatchLoadError(null);
+      setPageNumberOffset(0);
+      setBatchGateOpen(false);
       setIndex(0);
       resetQuestionState();
       setPracticeProgress(null);
@@ -2049,7 +2129,7 @@ export default function QuestionPractice({
               </p>
             )}
             <p className="mt-1 text-sm font-medium text-slate-600">
-              {c.questionOf(index + 1, total)}
+              {c.questionOf(displayQuestionNumber, displayQuestionTotal)}
               {isSubtopicBatchMode && knownSubtopicTotal != null
                 ? ` | ${c.totalLabel}: ${knownSubtopicTotal}`
                 : ''}
@@ -2078,6 +2158,7 @@ export default function QuestionPractice({
             const isActive = qIndex === index;
             const isAttempted = attemptedIds.has(question.id);
             const result = resultsByQuestion[question.id];
+            const numberLabel = pageNumberOffset + qIndex + 1;
             return (
               <button
                 key={question.id}
@@ -2100,7 +2181,7 @@ export default function QuestionPractice({
                     : c.attempted
                 }
               >
-                {qIndex + 1}
+                {numberLabel}
               </button>
             );
           })}
@@ -2109,7 +2190,7 @@ export default function QuestionPractice({
         <div className="h-1.5 overflow-hidden rounded-full bg-[#EDE9FE]">
           <div
             className="h-full rounded-full bg-brand transition-all duration-300"
-            style={{ width: `${((index + 1) / total) * 100}%` }}
+            style={{ width: `${total > 0 ? ((index + 1) / total) * 100 : 0}%` }}
           />
         </div>
 
@@ -2193,9 +2274,6 @@ export default function QuestionPractice({
               <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 capitalize">
                 {current.difficulty}
               </span>
-            )}
-            {current.source && (
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">{current.source}</span>
             )}
             {current.year && (
               <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">{current.year}</span>
@@ -2299,6 +2377,12 @@ export default function QuestionPractice({
                   {explanation || c.noExplanation}
                 </p>
               </div>
+
+              <VerifiedSources
+                source={current.source}
+                isVerified
+                language={language === 'hi' ? 'hi' : 'en'}
+              />
 
               <p className="text-sm font-medium text-slate-600">{statsText}</p>
 
@@ -2414,6 +2498,41 @@ export default function QuestionPractice({
         open={reportComingSoonOpen}
         onClose={() => setReportComingSoonOpen(false)}
       />
+      <ModalPortal
+        open={batchGateOpen}
+        onClose={handleCloseBatchGate}
+        labelledBy="batch-gate-title"
+        panelClassName="max-w-md rounded-3xl border border-[#EDE9FE] bg-white p-6 shadow-2xl"
+      >
+        <button
+          type="button"
+          onClick={handleCloseBatchGate}
+          className="absolute right-4 top-4 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+          aria-label={c.batchGateClose}
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <h2 id="batch-gate-title" className="pr-8 text-lg font-bold text-slate-900">
+          {c.batchGateTitle}
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">{c.batchGateBody}</p>
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={handleCloseBatchGate}
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            {c.batchGateClose}
+          </button>
+          <button
+            type="button"
+            onClick={handleCloseBatchGate}
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-white transition hover:bg-[#6D28D9]"
+          >
+            {c.batchGateOk}
+          </button>
+        </div>
+      </ModalPortal>
     </>
   );
 }
