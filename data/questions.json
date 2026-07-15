@@ -1,0 +1,129 @@
+[
+  {
+    "id": "1",
+    "exam": "BPSC 67th 2022",
+    "askedIn": "BPSC 67th 2022",
+    "subject": "history",
+    "topic": "Ancient History",
+    "question": {
+      "en": "Which Mauryan emperor visited Hellenistic courts and is mentioned by Greek writers?",
+      "hi": "कौन सा मौर्य सम्राट हेलेनिस्टिक न्यायालयों में गया और यूनानी लेखकों द्वारा उल्लिखित है?"
+    },
+    "options": {
+      "A": {
+        "en": "Chandragupta Maurya",
+        "hi": "चंद्रगुप्त मौर्य"
+      },
+      "B": {
+        "en": "Bindusara",
+        "hi": "बिंदुसार"
+      },
+      "C": {
+        "en": "Ashoka",
+        "hi": "अशोक"
+      },
+      "D": {
+        "en": "Samprati",
+        "hi": "सम्प्रति"
+      },
+      "E": {
+        "en": "Bimbisara",
+        "hi": "बिम्बिसार"
+      }
+    },
+    "answer": "C",
+    "explanation": {
+      "en": "Ashoka maintained diplomatic relations with Hellenistic rulers and sent envoys to Greek courts after the Kalinga war.",
+      "hi": "अशोक ने कलिंग युद्ध के बाद हेलेनिस्टिक शासकों के साथ राजनयिक संबंध बनाए रखे और यूनानी न्यायालयों में दूत भेजे।"
+    }
+  },
+  {
+    "id": "2",
+    "exam": "BPSC 68th 2023",
+    "askedIn": "BPSC 68th 2023",
+    "subject": "science",
+    "topic": "Physics",
+    "question": {
+      "en": "What is the primary reason for the blue color of the sky?",
+      "hi": "आकाश के नीले रंग का मुख्य कारण क्या है?"
+    },
+    "options": {
+      "A": {
+        "en": "Absorption of blue light by air",
+        "hi": "वायु द्वारा नीली रोशनी का अवशोषण"
+      },
+      "B": {
+        "en": "Reflection from oceans",
+        "hi": "महासागरों से परावर्तन"
+      },
+      "C": {
+        "en": "Rayleigh scattering of sunlight",
+        "hi": "सूर्य की रोशनी का रेले स्कैटरिंग"
+      },
+      "D": {
+        "en": "Emission by ozone",
+        "hi": "ओजोन द्वारा उत्सर्जन"
+      },
+      "E": {
+        "en": "Diffraction of red light",
+        "hi": "लाल रोशनी का विवर्तन"
+      }
+    },
+    "answer": "C",
+    "explanation": {
+      "en": "Rayleigh scattering from small molecules in the atmosphere scatters shorter blue wavelengths more effectively than red wavelengths.",
+      "hi": "वायुमंडल में छोटे अणुओं से रेले स्कैटरिंग लाल तरंग दैर्ध्य की तुलना में छोटी नीली तरंग दैर्ध्य को अधिक प्रभावी ढंग से बिखेरती है।"
+    }
+  },
+  {
+    "id": "3",
+    "exam": "BPSC 69th 2024",
+    "askedIn": "BPSC 69th 2024",
+    "subject": "polity",
+    "topic": "Constitution",
+    "question": "Which article of the Indian Constitution guarantees the right to equality before law?",
+    "options": {
+      "A": "Article 12",
+      "B": "Article 14",
+      "C": "Article 19",
+      "D": "Article 21",
+      "E": "Article 32"
+    },
+    "answer": "B",
+    "explanation": "Article 14 of the Indian Constitution explicitly guarantees equality before the law and equal protection of the laws."
+  },
+  {
+    "id": "4",
+    "exam": "Bihar Special 2024",
+    "askedIn": "Bihar Special 2024",
+    "subject": "bihar",
+    "topic": "Culture",
+    "question": "Which festival is famously associated with the city of Gaya in Bihar?",
+    "options": {
+      "A": "Chhath Puja",
+      "B": "Durga Puja",
+      "C": "Holi",
+      "D": "Saraswati Puja",
+      "E": "Diwali"
+    },
+    "answer": "A",
+    "explanation": "Chhath Puja is one of the most important festivals in Bihar, especially around Gaya and the Gangetic plains."
+  },
+  {
+    "id": "5",
+    "exam": "BPSC 70th 2025",
+    "askedIn": "BPSC 70th 2025",
+    "subject": "history",
+    "topic": "Modern History",
+    "question": "Who founded the Indian National Congress in 1885?",
+    "options": {
+      "A": "Bal Gangadhar Tilak",
+      "B": "Dadabhai Naoroji",
+      "C": "A.O. Hume",
+      "D": "Gopal Krishna Gokhale",
+      "E": "Surendranath Banerjee"
+    },
+    "answer": "C",
+    "explanation": "Allan Octavian Hume, a retired British civil servant, played a leading role in founding the Indian National Congress in 1885."
+  }
+]

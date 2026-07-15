@@ -1,0 +1,103 @@
+'use client';
+
+import { useState } from 'react';
+import { getSupabaseBrowserClient } from '@/lib/supabaseBrowser';
+import { getSafeRedirectPath } from '@/lib/safeRedirect';
+
+type HomeGoogleCtaButtonProps = {
+  /** Kept for call-site compatibility; OAuth uses Supabase Google provider. */
+  clientId?: string;
+  disabled?: boolean;
+  redirectTo?: string;
+  onCredential?: (credential: string) => void;
+  onError: (message: string) => void;
+};
+
+function GoogleGLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 48 48"
+      className={className ?? 'h-[18px] w-[18px] shrink-0'}
+      aria-hidden="true"
+    >
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.59 2.96-2.26 5.48-4.78 7.18l7.73 6.01c4.51-4.18 7.09-10.36 7.09-17.66z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6.01c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+      />
+    </svg>
+  );
+}
+
+export default function HomeGoogleCtaButton({
+  disabled = false,
+  redirectTo = '/subjects',
+  onError,
+}: HomeGoogleCtaButtonProps) {
+  const [loading, setLoading] = useState(false);
+
+  const handleClick = async () => {
+    if (disabled || loading) return;
+
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) {
+      onError(
+        'Google sign-in is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY (or NEXT_PUBLIC_ equivalents).',
+      );
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const next = getSafeRedirectPath(redirectTo, '/subjects');
+      const redirectUrl = new URL('/auth/callback', window.location.origin);
+      redirectUrl.searchParams.set('next', next);
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl.toString(),
+          queryParams: {
+            prompt: 'select_account',
+          },
+        },
+      });
+
+      if (error) {
+        onError(error.message || 'Google sign-in failed. Please try again.');
+        setLoading(false);
+      }
+      // On success the browser navigates away to Google.
+    } catch {
+      onError('Google sign-in failed. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={() => void handleClick()}
+      disabled={disabled || loading}
+      aria-label="Continue with Google"
+      className={`relative flex h-10 w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-[#DADCE0] bg-white px-2.5 shadow-[0_1px_2px_rgba(60,64,67,0.15)] transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 min-[360px]:h-11 min-[360px]:gap-2.5 min-[360px]:px-3`}
+    >
+      <GoogleGLogo className="h-4 w-4 shrink-0 min-[360px]:h-[18px] min-[360px]:w-[18px]" />
+      <span className="min-w-0 text-center text-[11px] font-medium leading-snug text-[#3C4043] min-[360px]:whitespace-nowrap min-[360px]:text-[13px] min-[360px]:leading-normal">
+        {loading ? 'Redirecting…' : 'Continue with Google'}
+      </span>
+    </button>
+  );
+}

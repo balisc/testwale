@@ -1,0 +1,42 @@
+{
+  "name": "testwale",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "cross-env NEXT_TELEMETRY_DISABLED=1 next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings=0",
+    "verify": "npm run typecheck && npm run lint && npm run test:sources && npm run build",
+    "test:sources": "node --experimental-strip-types scripts/validate-parse-question-sources.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.4",
+    "@types/leaflet": "^1.9.21",
+    "framer-motion": "^12.40.0",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.14.0",
+    "next": "^16.2.9",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-leaflet": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.7",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "10.4.19",
+    "critters": "^0.0.23",
+    "cross-env": "^10.1.0",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.9",
+    "next-sitemap": "4.2.3",
+    "postcss": "^8.5.15",
+    "tailwindcss": "3.4.4",
+    "typescript": "5.5.4"
+  },
+  "overrides": {
+    "postcss": "^8.5.15"
+  }
+}
