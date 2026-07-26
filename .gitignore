@@ -17,7 +17,7 @@ asset_response.txt
 .env
 .env.*
 !.env.example
-
+.env.local
 # Logs
 *.log
 npm-debug.log*
