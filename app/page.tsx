@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import dynamic from 'next/dynamic';
+import '@/app/home/home.css';
 import HomeHero from '@/app/home/components/HomeHero';
 import HomeExamStrip from '@/app/home/components/HomeExamStrip';
 import HomeSubjects from '@/app/home/components/HomeSubjects';

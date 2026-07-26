@@ -1,0 +1,658 @@
+{
+  "base": "http://127.0.0.1:3014",
+  "passed": 46,
+  "failed": 0,
+  "blocked": 5,
+  "warnings": 0,
+  "total": 51,
+  "checks": [
+    {
+      "id": "route:home",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/ → HTTP 200, 136100B, 38ms, title=\"Government Exam MCQ Practice in Hindi &amp; English\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 136100,
+        "ms": 37.6151,
+        "title": "Government Exam MCQ Practice in Hindi &amp; English",
+        "h1": "Master Every Topic.One MCQ at a Time.",
+        "cacheControl": "s-maxage=300, stale-while-revalidate=31535700"
+      },
+      "ts": "2026-07-26T17:54:56.001Z"
+    },
+    {
+      "id": "route:subjects",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/subjects → HTTP 200, 37947B, 5ms, title=\"Subjects — MCQ Practice | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 37947,
+        "ms": 5.497700000000009,
+        "title": "Subjects — MCQ Practice | QuestionWale",
+        "h1": "Choose Your Subject",
+        "cacheControl": "s-maxage=31536000"
+      },
+      "ts": "2026-07-26T17:54:56.008Z"
+    },
+    {
+      "id": "route:about",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/about_us → HTTP 200, 46628B, 10ms, title=\"About QuestionWale - Exam MCQ Practice Platform | QuestionWa\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 46628,
+        "ms": 9.807000000000002,
+        "title": "About QuestionWale - Exam MCQ Practice Platform | QuestionWale",
+        "h1": "Empowering Aspirants.One Question at a Time.",
+        "cacheControl": "s-maxage=300, stale-while-revalidate=31535700"
+      },
+      "ts": "2026-07-26T17:54:56.018Z"
+    },
+    {
+      "id": "route:contact",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/contact → HTTP 200, 43915B, 7ms, title=\"Contact QuestionWale - Get Help &amp; Support | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 43915,
+        "ms": 7.052099999999996,
+        "title": "Contact QuestionWale - Get Help &amp; Support | QuestionWale",
+        "h1": "We&#x27;re Here to Help You",
+        "cacheControl": "s-maxage=31536000"
+      },
+      "ts": "2026-07-26T17:54:56.025Z"
+    },
+    {
+      "id": "route:privacy",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/privacy → HTTP 200, 23683B, 6ms, title=\"Privacy Policy | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 23683,
+        "ms": 6.495400000000004,
+        "title": "Privacy Policy | QuestionWale",
+        "h1": "Privacy Policy",
+        "cacheControl": "s-maxage=31536000"
+      },
+      "ts": "2026-07-26T17:54:56.032Z"
+    },
+    {
+      "id": "route:terms",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/terms → HTTP 200, 23152B, 4ms, title=\"Terms of Service | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 23152,
+        "ms": 4.303100000000001,
+        "title": "Terms of Service | QuestionWale",
+        "h1": "Terms of Service",
+        "cacheControl": "s-maxage=31536000"
+      },
+      "ts": "2026-07-26T17:54:56.036Z"
+    },
+    {
+      "id": "route:disclaimer",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/disclaimer → HTTP 200, 23956B, 3ms, title=\"Disclaimer | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 23956,
+        "ms": 3.0283000000000015,
+        "title": "Disclaimer | QuestionWale",
+        "h1": "Disclaimer",
+        "cacheControl": "s-maxage=31536000"
+      },
+      "ts": "2026-07-26T17:54:56.039Z"
+    },
+    {
+      "id": "route:refund-policy",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/refund-policy → HTTP 200, 23605B, 4ms, title=\"Refund Policy | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 23605,
+        "ms": 3.595099999999988,
+        "title": "Refund Policy | QuestionWale",
+        "h1": "Refund Policy",
+        "cacheControl": "s-maxage=31536000"
+      },
+      "ts": "2026-07-26T17:54:56.043Z"
+    },
+    {
+      "id": "route:login",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/login → HTTP 200, 43404B, 19ms, title=\"Sign In | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 43404,
+        "ms": 18.9396,
+        "title": "Sign In | QuestionWale",
+        "h1": "Your Progress Starts Here",
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate"
+      },
+      "ts": "2026-07-26T17:54:56.062Z"
+    },
+    {
+      "id": "route:signup",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/signup → HTTP 200, 43403B, 11ms, title=\"Sign Up | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 43403,
+        "ms": 11.247100000000003,
+        "title": "Sign Up | QuestionWale",
+        "h1": "Your Progress Starts Here",
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate"
+      },
+      "ts": "2026-07-26T17:54:56.074Z"
+    },
+    {
+      "id": "route:dashboard-logged-out",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/dashboard → HTTP 200, 21597B, 8ms, title=\"My Progress | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 21597,
+        "ms": 7.815499999999986,
+        "title": "My Progress | QuestionWale",
+        "h1": "",
+        "cacheControl": "private, no-store"
+      },
+      "ts": "2026-07-26T17:54:56.081Z"
+    },
+    {
+      "id": "route:profile-logged-out",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/profile → HTTP 200, 21581B, 13ms, title=\"My Profile | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 21581,
+        "ms": 12.973799999999983,
+        "title": "My Profile | QuestionWale",
+        "h1": "",
+        "cacheControl": "private, no-store"
+      },
+      "ts": "2026-07-26T17:54:56.095Z"
+    },
+    {
+      "id": "route:legacy-history",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/history → HTTP 200, 33854B, 5ms, title=\"History Topics &amp; MCQ Practice | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 33854,
+        "ms": 4.832799999999992,
+        "title": "History Topics &amp; MCQ Practice | QuestionWale",
+        "h1": "History",
+        "cacheControl": "s-maxage=3600, stale-while-revalidate=31532400"
+      },
+      "ts": "2026-07-26T17:54:56.100Z"
+    },
+    {
+      "id": "route:legacy-science",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/science → HTTP 200, 54235B, 4ms, title=\"Science Topics &amp; MCQ Practice | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 54235,
+        "ms": 3.8303999999999974,
+        "title": "Science Topics &amp; MCQ Practice | QuestionWale",
+        "h1": "Science",
+        "cacheControl": "s-maxage=3600, stale-while-revalidate=31532400"
+      },
+      "ts": "2026-07-26T17:54:56.103Z"
+    },
+    {
+      "id": "route:legacy-economics",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/economics → HTTP 200, 62780B, 4ms, title=\"Economics Topics &amp; MCQ Practice | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 62780,
+        "ms": 3.780699999999996,
+        "title": "Economics Topics &amp; MCQ Practice | QuestionWale",
+        "h1": "Economics",
+        "cacheControl": "s-maxage=3600, stale-while-revalidate=31532400"
+      },
+      "ts": "2026-07-26T17:54:56.107Z"
+    },
+    {
+      "id": "route:legacy-geography",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/geography → HTTP 200, 45888B, 4ms, title=\"Geography Topics &amp; MCQ Practice | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 45888,
+        "ms": 3.638200000000012,
+        "title": "Geography Topics &amp; MCQ Practice | QuestionWale",
+        "h1": "Geography",
+        "cacheControl": "s-maxage=3600, stale-while-revalidate=31532400"
+      },
+      "ts": "2026-07-26T17:54:56.111Z"
+    },
+    {
+      "id": "route:legacy-math",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/math → HTTP 200, 57383B, 3ms, title=\"Mathematics Topics &amp; MCQ Practice | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 57383,
+        "ms": 3.3629000000000246,
+        "title": "Mathematics Topics &amp; MCQ Practice | QuestionWale",
+        "h1": "Mathematics",
+        "cacheControl": "s-maxage=3600, stale-while-revalidate=31532400"
+      },
+      "ts": "2026-07-26T17:54:56.115Z"
+    },
+    {
+      "id": "route:legacy-reasoning",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/reasoning → HTTP 200, 81042B, 4ms, title=\"Reasoning Topics &amp; MCQ Practice | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 81042,
+        "ms": 3.795800000000014,
+        "title": "Reasoning Topics &amp; MCQ Practice | QuestionWale",
+        "h1": "Reasoning",
+        "cacheControl": "s-maxage=3600, stale-while-revalidate=31532400"
+      },
+      "ts": "2026-07-26T17:54:56.119Z"
+    },
+    {
+      "id": "route:map-practice",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/map-practice → HTTP 200, 30553B, 3ms, title=\"Map Practice | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 30553,
+        "ms": 3.0930999999999926,
+        "title": "Map Practice | QuestionWale",
+        "h1": "Map Practice",
+        "cacheControl": "s-maxage=31536000"
+      },
+      "ts": "2026-07-26T17:54:56.122Z"
+    },
+    {
+      "id": "route:pyq",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/pyq → HTTP 200, 23119B, 3ms, title=\"QuestionWale — Government Exam MCQ Practice in Hindi &amp; E\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 23119,
+        "ms": 3.0653999999999826,
+        "title": "QuestionWale — Government Exam MCQ Practice in Hindi &amp; English",
+        "h1": "",
+        "cacheControl": "s-maxage=31536000"
+      },
+      "ts": "2026-07-26T17:54:56.125Z"
+    },
+    {
+      "id": "route:demo",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/demo → HTTP 200, 23374B, 9ms, title=\"Sources of the Indian Constitution — Revision (Demo) | Quest\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 23374,
+        "ms": 8.594599999999986,
+        "title": "Sources of the Indian Constitution — Revision (Demo) | QuestionWale",
+        "h1": "Revision unavailable",
+        "cacheControl": "s-maxage=300, stale-while-revalidate=31535700"
+      },
+      "ts": "2026-07-26T17:54:56.134Z"
+    },
+    {
+      "id": "route:subject-indian-polity",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/subjects/indian-polity → HTTP 200, 204216B, 21ms, title=\"Indian Polity — Topics &amp; MCQ Practice | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 204216,
+        "ms": 21.130899999999997,
+        "title": "Indian Polity — Topics &amp; MCQ Practice | QuestionWale",
+        "h1": "Indian Polity",
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate"
+      },
+      "ts": "2026-07-26T17:54:56.155Z"
+    },
+    {
+      "id": "route:topic-constitutional-history",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/subjects/indian-polity/constitutional-history-making → HTTP 200, 52366B, 26ms, title=\"British Rule Acts and Constitution Making — Indian Polity | \"",
+      "evidence": {
+        "status": 200,
+        "bytes": 52366,
+        "ms": 26.054399999999987,
+        "title": "British Rule Acts and Constitution Making — Indian Polity | QuestionWale",
+        "h1": "British Rule Acts and Constitution Making",
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate"
+      },
+      "ts": "2026-07-26T17:54:56.181Z"
+    },
+    {
+      "id": "route:revision-company-rule",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision → HTTP 200, 135599B, 31ms, title=\"Company Rule and Early Acts Revision Notes in Hindi | Indian\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 135599,
+        "ms": 31.05770000000001,
+        "title": "Company Rule and Early Acts Revision Notes in Hindi | Indian Polity | QuestionWale",
+        "h1": "Company Rule Acts, 1773–1853",
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate"
+      },
+      "ts": "2026-07-26T17:54:56.213Z"
+    },
+    {
+      "id": "route:practice-company-rule",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/subjects/indian-polity/constitutional-history-making/practice/company-rule-acts-1773-1853 → HTTP 200, 61235B, 21ms, title=\"Company Rule Acts, 1773–1853 — MCQ Practice | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 61235,
+        "ms": 20.599800000000016,
+        "title": "Company Rule Acts, 1773–1853 — MCQ Practice | QuestionWale",
+        "h1": "",
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate"
+      },
+      "ts": "2026-07-26T17:54:56.233Z"
+    },
+    {
+      "id": "route:legacy-polity-alias",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/polity → HTTP 200, 24038B, 10ms, title=\"Polity Topics &amp; MCQ Practice | QuestionWale\"",
+      "evidence": {
+        "status": 200,
+        "bytes": 24038,
+        "ms": 10.236700000000042,
+        "title": "Polity Topics &amp; MCQ Practice | QuestionWale",
+        "h1": "",
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate"
+      },
+      "ts": "2026-07-26T17:54:56.244Z"
+    },
+    {
+      "id": "route:invalid-subject-slug",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/subjects/not-a-real-subject-xyz → HTTP 404, 9B, 2ms, title=\"\"",
+      "evidence": {
+        "status": 404,
+        "bytes": 9,
+        "ms": 1.6539999999999964,
+        "title": "",
+        "h1": "",
+        "cacheControl": "no-store"
+      },
+      "ts": "2026-07-26T17:54:56.246Z"
+    },
+    {
+      "id": "route:invalid-topic-slug",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/subjects/indian-polity/not-a-real-topic-xyz → HTTP 404, 9B, 5ms, title=\"\"",
+      "evidence": {
+        "status": 404,
+        "bytes": 9,
+        "ms": 5.381899999999973,
+        "title": "",
+        "h1": "",
+        "cacheControl": "no-store"
+      },
+      "ts": "2026-07-26T17:54:56.251Z"
+    },
+    {
+      "id": "route:invalid-subtopic-revision",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/subjects/indian-polity/constitutional-history-making/not-a-real-subtopic/revision → HTTP 404, 9B, 910ms, title=\"\"",
+      "evidence": {
+        "status": 404,
+        "bytes": 9,
+        "ms": 910.2488000000001,
+        "title": "",
+        "h1": "",
+        "cacheControl": "no-store"
+      },
+      "ts": "2026-07-26T17:54:57.161Z"
+    },
+    {
+      "id": "route:custom-404",
+      "category": "route-smoke",
+      "status": "PASS",
+      "detail": "/totally-unknown-route-404-test → HTTP 404, 9B, 3ms, title=\"\"",
+      "evidence": {
+        "status": 404,
+        "bytes": 9,
+        "ms": 3.1476000000000113,
+        "title": "",
+        "h1": "",
+        "cacheControl": "no-store"
+      },
+      "ts": "2026-07-26T17:54:57.165Z"
+    },
+    {
+      "id": "seo:/llms.txt",
+      "category": "seo",
+      "status": "PASS",
+      "detail": "/llms.txt status=200 ct=text/plain; charset=utf-8",
+      "evidence": {
+        "bytes": 1663,
+        "sample": "# QuestionWale\r\n\r\nQuestionWale is a bilingual learning and MCQ-practice platform for Indian competitive-exam preparation. It offers topic-wise revision notes, source-verified practice questions, and s"
+      },
+      "ts": "2026-07-26T17:54:57.174Z"
+    },
+    {
+      "id": "seo:/robots.txt",
+      "category": "seo",
+      "status": "PASS",
+      "detail": "/robots.txt status=200 ct=text/plain",
+      "evidence": {
+        "bytes": 103,
+        "sample": "User-Agent: *\nAllow: /\nDisallow: /api/\nDisallow: /auth/\n\nSitemap: https://questionwale.com/sitemap.xml\n"
+      },
+      "ts": "2026-07-26T17:54:57.177Z"
+    },
+    {
+      "id": "seo:/sitemap.xml",
+      "category": "seo",
+      "status": "PASS",
+      "detail": "/sitemap.xml status=200 ct=application/xml",
+      "evidence": {
+        "bytes": 6647,
+        "sample": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n<url>\n<loc>https://questionwale.com/</loc>\n<lastmod>2026-07-26T17:54:57.186Z</lastmod>\n<changefreq>w"
+      },
+      "ts": "2026-07-26T17:54:57.188Z"
+    },
+    {
+      "id": "sec:headers-home",
+      "category": "security",
+      "status": "PASS",
+      "detail": "CSP, X-Content-Type-Options, Referrer-Policy present",
+      "evidence": {
+        "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' http",
+        "hsts": "max-age=63072000; includeSubDomains; preload",
+        "xFrame": "DENY"
+      },
+      "ts": "2026-07-26T17:54:57.196Z"
+    },
+    {
+      "id": "sec:submit-logged-out",
+      "category": "security",
+      "status": "PASS",
+      "detail": "POST /api/practice/submit → 400, cache-control=private, no-store",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.202Z"
+    },
+    {
+      "id": "sec:auth-me-no-session",
+      "category": "security",
+      "status": "PASS",
+      "detail": "GET /api/auth/me → 200, hasUser=false",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.205Z"
+    },
+    {
+      "id": "sec:batch-invalid-subtopic-id",
+      "category": "security",
+      "status": "PASS",
+      "detail": "status=400 expected=400 cache-control=private, no-store",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.209Z"
+    },
+    {
+      "id": "sec:batch-oversized-batch",
+      "category": "security",
+      "status": "PASS",
+      "detail": "status=400 expected=400 cache-control=private, no-store",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.212Z"
+    },
+    {
+      "id": "sec:batch-invalid-scope",
+      "category": "security",
+      "status": "PASS",
+      "detail": "status=400 expected=400 cache-control=private, no-store",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.214Z"
+    },
+    {
+      "id": "sec:question-batch-payload",
+      "category": "security",
+      "status": "PASS",
+      "detail": "questions=10 forbiddenKeys=none cache-control=private, no-store",
+      "evidence": {
+        "sampleKeys": [
+          "id",
+          "question_text",
+          "options",
+          "difficulty",
+          "source",
+          "source_metadata",
+          "year",
+          "pyq_exam_name",
+          "exam_tags",
+          "attempt_count",
+          "correct_count"
+        ],
+        "bytes": 10589
+      },
+      "ts": "2026-07-26T17:54:57.235Z"
+    },
+    {
+      "id": "perf:batch-warm",
+      "category": "performance",
+      "status": "PASS",
+      "detail": "Warm repeat ~4ms",
+      "evidence": {
+        "bytes": 10589
+      },
+      "ts": "2026-07-26T17:54:57.239Z"
+    },
+    {
+      "id": "sec:history-api-payload",
+      "category": "security",
+      "status": "PASS",
+      "detail": "legacy history API forbidden fields: none",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.409Z"
+    },
+    {
+      "id": "auth:submission-idempotency",
+      "category": "auth",
+      "status": "BLOCKED",
+      "detail": "Mutating submit/progress tests skipped — .env.local points to live Supabase project; no dedicated staging test account confirmed",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.409Z"
+    },
+    {
+      "id": "auth:correct-question-exclusion",
+      "category": "auth",
+      "status": "BLOCKED",
+      "detail": "Requires authenticated non-production test user",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.409Z"
+    },
+    {
+      "id": "browser:e2e-playwright",
+      "category": "browser",
+      "status": "BLOCKED",
+      "detail": "No Playwright/Cypress in repository; browser console/hydration/responsive checks require PREVIEW or optional Playwright install",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.409Z"
+    },
+    {
+      "id": "a11y:basic-/",
+      "category": "accessibility",
+      "status": "PASS",
+      "detail": "lang=en h1Count=1 title=\"Government Exam MCQ Practice in Hindi &amp; Englis\"",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.420Z"
+    },
+    {
+      "id": "a11y:basic-/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "category": "accessibility",
+      "status": "PASS",
+      "detail": "lang=en h1Count=1 title=\"Company Rule and Early Acts Revision Notes in Hind\"",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.447Z"
+    },
+    {
+      "id": "i18n:runtime-switch",
+      "category": "i18n",
+      "status": "BLOCKED",
+      "detail": "Language toggle is client-side (localStorage/cookie); fetch-only audit cannot verify EN/HI/Both UI switching without browser automation. Both mode exists on rich revision client components (code review PASS).",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.447Z"
+    },
+    {
+      "id": "cache:home-repeat",
+      "category": "cache",
+      "status": "PASS",
+      "detail": "cold=6ms warm=11ms cc=s-maxage=300, stale-while-revalidate=31535700 x-next=STALE",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.465Z"
+    },
+    {
+      "id": "cache:private-batch-api",
+      "category": "cache",
+      "status": "PASS",
+      "detail": "API cache-control=private, no-store",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.476Z"
+    },
+    {
+      "id": "perf:lighthouse",
+      "category": "performance",
+      "status": "BLOCKED",
+      "detail": "Lighthouse/Chrome not executed in this audit run (no bundled browser). Use Vercel Preview or local Chrome for scores.",
+      "evidence": {},
+      "ts": "2026-07-26T17:54:57.476Z"
+    }
+  ]
+}

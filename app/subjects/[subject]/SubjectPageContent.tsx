@@ -3,11 +3,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { FileText, Globe, LayoutList } from 'lucide-react';
-import ExamFilterPills from '@/components/ExamFilterPills';
+import TargetExamSelector from '@/components/TargetExamSelector';
 import IconByKey from '@/components/IconByKey';
 import { useLanguage } from '@/lib/LanguageContext';
 import { pickCatalogText, useCatalogText } from '@/lib/useCatalogText';
 import type { Exam, Subject, Topic, TopicWithPriority } from '@/types/polity';
+import type { PolityRankedExamOption } from '@/types/polityExamRankingV2';
 import SubjectTopicGrid from './SubjectTopicGrid';
 
 const COPY = {
@@ -34,6 +35,7 @@ type SubjectPageContentProps = {
   subjectSlug: string;
   topics: Topic[] | TopicWithPriority[];
   exams: Exam[];
+  rankedExams?: PolityRankedExamOption[];
   examCode: string | null;
   topicCount: number;
   questionCount: number;
@@ -44,6 +46,7 @@ export default function SubjectPageContent({
   subjectSlug,
   topics,
   exams,
+  rankedExams,
   examCode,
   topicCount,
   questionCount,
@@ -93,7 +96,13 @@ export default function SubjectPageContent({
               </p>
             )}
 
-            <ExamFilterPills subjectSlug={subjectSlug} exams={exams} selectedExam={examCode} />
+            <TargetExamSelector
+              subjectSlug={subjectSlug}
+              exams={exams}
+              rankedExams={rankedExams}
+              selectedExam={examCode}
+              className="mt-5"
+            />
           </div>
 
           <div className="relative flex min-h-[200px] items-center justify-center">
@@ -150,6 +159,7 @@ export default function SubjectPageContent({
         topics={topics}
         examCode={examCode}
         exams={exams}
+        rankedExams={rankedExams}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 /**
- * Single 24h snapshot of fixed catalog tables (subjects / topics / subtopics / exams).
+ * Single cached snapshot of fixed catalog tables (subjects / topics / subtopics / exams).
  * All public catalog UI should read from here to avoid repeated Supabase egress.
  */
 import { unstable_cache } from 'next/cache';
@@ -201,7 +201,7 @@ async function fetchCatalogSnapshot(): Promise<CatalogSnapshot> {
 }
 
 /** One small catalog round-trip set per five minutes (or explicit tag invalidation). */
-export const getCatalogSnapshot = unstable_cache(fetchCatalogSnapshot, ['catalog-snapshot-v2'], {
+export const getCatalogSnapshot = unstable_cache(fetchCatalogSnapshot, ['catalog-snapshot-v3'], {
   revalidate: CATALOG_REVALIDATE_SECONDS,
   tags: [CATALOG_CACHE_TAG],
 });

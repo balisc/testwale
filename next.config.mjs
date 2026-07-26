@@ -1,4 +1,8 @@
 /** @type {import('next').NextConfig} */
+import nextEnv from '@next/env';
+
+nextEnv.loadEnvConfig(process.cwd());
+
 const isDevelopment = process.env.NODE_ENV !== 'production';
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -53,6 +57,16 @@ const nextConfig = {
         destination: '/',
         permanent: true,
       },
+      {
+        source: '/subjects/:subject/:topic/company-rule-and-early-acts/:path*',
+        destination: '/subjects/:subject/:topic/company-rule-acts-1773-1853/:path*',
+        permanent: true,
+      },
+      {
+        source: '/subjects/:subject/:topic/company-rule-early-acts/:path*',
+        destination: '/subjects/:subject/:topic/company-rule-acts-1773-1853/:path*',
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
@@ -92,6 +106,18 @@ const nextConfig = {
     ];
 
     return [
+      {
+        source: '/profile',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/dashboard',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/llms.txt',
+        headers: [{ key: 'Content-Type', value: 'text/plain; charset=utf-8' }],
+      },
       {
         source: '/home/:path*',
         headers: [

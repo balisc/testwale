@@ -7,7 +7,7 @@ import {
 import SourcesRevisionClient from './SourcesRevisionClient';
 
 export const metadata: Metadata = {
-  title: 'Sources of the Indian Constitution — Revision (Demo) | QuestionWale',
+  title: 'Sources of the Indian Constitution — Revision (Demo)',
   description:
     'Interactive demo revision UI. The indexable public revision page lives under /subjects/.../revision.',
   robots: { index: false, follow: true },

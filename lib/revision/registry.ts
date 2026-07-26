@@ -1,11 +1,15 @@
+import { companyRuleEarlyActsRevision } from '@/content/revision/indian-polity/company-rule-and-early-acts.seo';
 import { preambleMeaningImportanceRevision } from '@/content/revision/indian-polity/preamble-meaning-importance.seo';
+import { regulatingAct1773Revision } from '@/content/revision/indian-polity/regulating-act-1773.seo';
 import { sourcesOfIndianConstitutionRevision } from '@/content/revision/indian-polity/sources-of-indian-constitution.seo';
+import { canonicalRevisionSubtopicSlug } from '@/lib/revision/richRevision';
 import type { RevisionDocument } from '@/lib/revision/types';
-
 /** All revision modules that exist in the repo (published or draft). */
 export const REVISION_DOCUMENTS: RevisionDocument[] = [
   sourcesOfIndianConstitutionRevision,
   preambleMeaningImportanceRevision,
+  regulatingAct1773Revision,
+  companyRuleEarlyActsRevision,
 ];
 
 function matchKey(subjectSlug: string, topicSlug: string, subtopicSlug: string) {
@@ -21,7 +25,8 @@ export function getRevisionDocument(
   topicSlug: string,
   subtopicSlug: string,
 ): RevisionDocument | null {
-  return byKey.get(matchKey(subjectSlug, topicSlug, subtopicSlug)) ?? null;
+  const canonical = canonicalRevisionSubtopicSlug(subtopicSlug);
+  return byKey.get(matchKey(subjectSlug, topicSlug, canonical)) ?? null;
 }
 
 /** Indexable, sitemapped revision pages only. */

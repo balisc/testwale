@@ -11,7 +11,7 @@ const config: Config = {
         brand: '#7C3AED',
         surface: '#F8FAFC',
         works: '#F1F5F9',
-        muted: '#64748B',
+        muted: '#475569',
       },
       boxShadow: {
         soft: '0 24px 80px rgba(15, 23, 42, 0.08)',

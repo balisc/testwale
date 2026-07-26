@@ -1,0 +1,502 @@
+/* Regulating Act 1773 — reference-matched revision design */
+
+.ra-revision {
+  --ra-brand: #7c3aed;
+  --ra-brand-dark: #6d28d9;
+  --ra-brand-soft: #f5f3ff;
+  --ra-ink: #0f172a;
+  --ra-muted: #64748b;
+  --ra-border: #e2e8f0;
+  --ra-page: #f8fafc;
+}
+
+.ra-revision {
+  background: var(--ra-page);
+}
+
+/* —— Hero card —— */
+.ra-hero-card {
+  border-radius: 1.25rem;
+  border: 1px solid var(--ra-border);
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.ra-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.ra-tag--purple { background: #f3e8ff; color: #7e22ce; }
+.ra-tag--lavender { background: #ede9fe; color: #6d28d9; }
+.ra-tag--violet { background: #f5f3ff; color: #7c3aed; }
+.ra-tag--amber { background: #fef3c7; color: #b45309; }
+.ra-tag--green { background: #dcfce7; color: #15803d; }
+.ra-tag--blue { background: #dbeafe; color: #1d4ed8; }
+
+.ra-hero-title-hi {
+  margin-top: 0.25rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--ra-brand);
+}
+
+.ra-meta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ra-brand);
+}
+
+.ra-btn-primary {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  background: var(--ra-brand);
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  transition: background 0.15s ease;
+}
+
+.ra-btn-primary:hover { background: var(--ra-brand-dark); }
+
+.ra-btn-secondary {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid var(--ra-border);
+  background: #fff;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ra-ink);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ra-btn-secondary:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+/* —— Section shell —— */
+.ra-section {
+  scroll-margin-top: 6.5rem;
+}
+
+.ra-section-block {
+  border-radius: 1.25rem;
+  border: 1px solid var(--ra-border);
+  background: #fff;
+  padding: 1.25rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+@media (min-width: 640px) {
+  .ra-section-block { padding: 1.5rem; }
+}
+
+.ra-section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ra-ink);
+  line-height: 1.3;
+}
+
+.ra-section-subtitle {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--ra-muted);
+}
+
+/* —— TOC —— */
+.ra-toc {
+  border-radius: 1rem;
+  border: 1px solid var(--ra-border);
+  background: #fff;
+}
+
+.ra-toc-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.8125rem;
+  color: var(--ra-muted);
+  transition: background 0.15s, color 0.15s;
+}
+
+.ra-toc-link:hover { background: #f8fafc; color: var(--ra-brand); }
+
+.ra-toc-link--active {
+  background: var(--ra-brand-soft);
+  color: var(--ra-brand-dark);
+  font-weight: 600;
+}
+
+/* —— Snapshot cards —— */
+.ra-snap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 8.5rem;
+  border-radius: 1rem;
+  border: 1.5px solid;
+  padding: 1rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ra-snap:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.ra-snap--violet { background: #faf5ff; border-color: #ddd6fe; }
+.ra-snap--indigo { background: #eef2ff; border-color: #c7d2fe; }
+.ra-snap--amber { background: #fffbeb; border-color: #fde68a; }
+.ra-snap--green { background: #ecfdf5; border-color: #a7f3d0; }
+.ra-snap--rose { background: #fff1f2; border-color: #fecdd3; }
+.ra-snap--sky { background: #f0f9ff; border-color: #bae6fd; }
+
+.ra-snap-emoji { font-size: 1.25rem; line-height: 1; }
+.ra-snap-label { font-size: 0.6875rem; font-weight: 600; color: #94a3b8; text-transform: capitalize; }
+.ra-snap-value { margin-top: 0.25rem; font-size: 0.9375rem; font-weight: 700; color: var(--ra-ink); line-height: 1.3; }
+.ra-snap-hi { margin-top: 0.125rem; font-size: 0.6875rem; color: #94a3b8; }
+.ra-snap-extra { margin-top: auto; padding-top: 0.5rem; font-size: 0.625rem; color: #94a3b8; line-height: 1.4; }
+
+/* —— Story cards —— */
+.ra-story-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-radius: 1.25rem;
+  border: 1px solid var(--ra-border);
+  background: #fff;
+  padding: 1.5rem 1.25rem;
+  height: 100%;
+}
+
+.ra-story-num {
+  display: flex;
+  height: 1.75rem;
+  width: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--ra-brand);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.ra-story-icon-wrap {
+  margin-top: 1rem;
+  display: flex;
+  height: 5rem;
+  width: 5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+/* —— Why passed rows —— */
+.ra-why-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  border-radius: 0.875rem;
+  border: 1px solid var(--ra-border);
+  background: #fff;
+  padding: 1rem 1.125rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ra-why-row:hover {
+  border-color: #c4b5fd;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.06);
+}
+
+.ra-why-icon {
+  display: flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.625rem;
+  font-size: 1.125rem;
+}
+
+/* —— Tabs —— */
+.ra-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  border: 1px solid var(--ra-border);
+  background: #f8fafc;
+  padding: 0.25rem;
+}
+
+.ra-tab {
+  min-height: 2.25rem;
+  border-radius: 9999px;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ra-muted);
+  transition: background 0.15s, color 0.15s;
+}
+
+.ra-tab--active {
+  background: var(--ra-brand);
+  color: #fff;
+}
+
+/* —— Provision / fact rows —— */
+.ra-provision-row {
+  border-radius: 0.875rem;
+  border: 1px solid #f1f5f9;
+  background: #fafafa;
+  padding: 1rem 1.125rem;
+}
+
+.ra-hi-line {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ra-brand);
+}
+
+.ra-exam-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+  margin-top: 0.625rem;
+  border-radius: 0.5rem;
+  background: #fffbeb;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #92400e;
+  line-height: 1.45;
+}
+
+/* —— Source badge —— */
+.ra-src-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  background: #f3e8ff;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--ra-brand);
+  transition: background 0.15s;
+}
+
+.ra-src-badge:hover { background: #ede9fe; }
+
+/* —— Significance cards —— */
+.ra-sig-card {
+  border-radius: 1rem;
+  border: 1.5px solid;
+  padding: 1.25rem;
+  height: 100%;
+}
+
+.ra-sig-card--pos { background: #f0fdf4; border-color: #bbf7d0; }
+.ra-sig-card--neg { background: #fef2f2; border-color: #fecaca; }
+
+/* —— Comparison table —— */
+.ra-table-wrap {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.ra-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.ra-table thead th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--ra-brand);
+  background: #faf5ff;
+}
+
+.ra-table tbody th {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--ra-ink);
+  vertical-align: top;
+}
+
+.ra-table tbody td {
+  padding: 0.875rem 1rem;
+  color: var(--ra-muted);
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+/* —— Fact cards —— */
+.ra-fact-card {
+  position: relative;
+  border-radius: 0.875rem;
+  border: 1px solid var(--ra-border);
+  background: #fff;
+  padding: 1rem 1.125rem;
+}
+
+.ra-fact-dot {
+  margin-top: 0.375rem;
+  height: 0.5rem;
+  width: 0.5rem;
+  shrink: 0;
+  border-radius: 9999px;
+  background: #22c55e;
+}
+
+/* —— Exam warning —— */
+.ra-exam-warn {
+  display: flex;
+  gap: 0.75rem;
+  border-radius: 0.875rem;
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  padding: 1rem 1.125rem;
+}
+
+/* —— Trap rows —— */
+.ra-trap-row {
+  border-radius: 0.875rem;
+  border: 1px solid var(--ra-border);
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .ra-trap-row { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .ra-trap-cell + .ra-trap-cell { border-left: 1px solid var(--ra-border); }
+}
+
+.ra-trap-cell { padding: 1rem; }
+
+/* —— Timeline —— */
+.ra-timeline {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding-top: 2rem;
+}
+
+.ra-timeline::before {
+  content: '';
+  position: absolute;
+  top: 2.75rem;
+  left: 8%;
+  right: 8%;
+  height: 3px;
+  background: var(--ra-brand);
+  border-radius: 2px;
+}
+
+.ra-timeline-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 0.25rem;
+}
+
+.ra-timeline-icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 2.75rem;
+  width: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 2px solid var(--ra-brand);
+  background: #fff;
+  font-size: 1.125rem;
+}
+
+.ra-timeline-year {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--ra-brand);
+}
+
+/* —— Coverage sidebar —— */
+.ra-coverage {
+  border-radius: 1rem;
+  border: 1px solid var(--ra-border);
+  background: #fff;
+  overflow: hidden;
+}
+
+.ra-coverage-header {
+  background: linear-gradient(135deg, var(--ra-brand), #6366f1);
+  padding: 1rem 1.25rem;
+  color: #fff;
+}
+
+/* —— FAQ —— */
+.ra-faq-item {
+  border-radius: 0.75rem;
+  border: 1px solid var(--ra-border);
+  background: #fff;
+  overflow: hidden;
+}
+
+/* —— Final CTA —— */
+.ra-final-cta {
+  border-radius: 1.25rem;
+  border: 1px solid #ddd6fe;
+  background: linear-gradient(135deg, #faf5ff, #fff);
+  padding: 1.5rem;
+}
+
+@media (max-width: 767px) {
+  .ra-timeline {
+    grid-template-columns: 1fr;
+    padding-top: 0;
+  }
+  .ra-timeline::before { display: none; }
+  .ra-timeline-step {
+    flex-direction: row;
+    text-align: left;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .ra-timeline-year { margin-top: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ra-snap:hover { transform: none; }
+}

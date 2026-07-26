@@ -1,0 +1,576 @@
+QUESTIONWALE PRE-DEPLOYMENT FIX REPORT
+================================================================================
+
+1. FINAL VERDICT
+--------------------------------------------------------------------------------
+
+READY WITH WARNINGS
+
+Safe to deploy to Vercel Preview for CDN, browser, Lighthouse, and authenticated
+mutation verification. Not a full production sign-off: npm audit still reports
+high-severity advisories on next and sharp; browser E2E/responsive/Lighthouse and
+authenticated submit/progress tests remain BLOCKED in this environment.
+
+
+2. COMMIT/HASH AND WORKING-TREE STATE TESTED
+--------------------------------------------------------------------------------
+
+Git commit (HEAD):     d6ea358
+Working tree:          DIRTY — 39 modified, many untracked (prior launch/revision
+                       work plus this fix pass)
+Node:                  v24.15.0
+npm:                   11.17.0
+Next.js (installed):   16.2.9
+React:                 19.2.7
+Local BASE_URL tested: http://127.0.0.1:3014 (next start, production build)
+AUTH_SECRET:           Set in shell for local next start only (not printed)
+
+Evidence directory:    test-results/pre-deployment-fixes/
+Original audit:        docs/PRE_DEPLOYMENT_FULL_TEST_REPORT.txt (unchanged)
+
+
+3. COMPLETE ORIGINAL ISSUE CHECKLIST
+--------------------------------------------------------------------------------
+
+Each item from docs/PRE_DEPLOYMENT_FULL_TEST_REPORT.txt and supporting logs.
+
+
+--- H1. Invalid routes return HTTP 200 (soft 404) ---
+
+Original issue:     4 route-smoke FAILs + 5 audit FAILs; invalid slugs returned
+                    HTTP 200 with not-found UI.
+Reproduction:       REPRODUCED on original audit (port 3010).
+Root cause:         App Router `notFound()` streamed HTTP 200 on `next start`;
+                    catch-all `app/[subject]/page.tsx` accepted unknown segments.
+Files changed:      proxy.ts
+                    app/api/catalog/path-exists/route.ts
+                    lib/catalogRouteGuards.ts
+                    app/subjects/[subject]/layout.tsx
+                    app/subjects/[subject]/not-found.tsx
+                    app/subjects/[subject]/[topicSlug]/layout.tsx
+                    app/subjects/[subject]/[topicSlug]/[subtopicSlug]/layout.tsx
+                    app/subjects/[subject]/[topicSlug]/practice/[subtopicSlug]/layout.tsx
+                    app/subjects/[subject]/page.tsx
+                    app/subjects/[subject]/[topicSlug]/page.tsx
+                    app/subjects/[subject]/[topicSlug]/[subtopicSlug]/revision/page.tsx
+                    app/subjects/[subject]/[topicSlug]/practice/page.tsx
+                    app/subjects/[subject]/[topicSlug]/practice/[subtopicSlug]/page.tsx
+                    app/[subject]/page.tsx
+                    scripts/verify-soft-404.mjs
+                    package.json (test:verify-routes)
+Fix implemented:    Proxy-level HTTP 404 for unknown top-level routes, unknown
+                    catalog subjects, and invalid nested catalog paths (via
+                    /api/catalog/path-exists). Layout guards call notFound() for
+                    correct UI on valid proxy-passed routes.
+Verification:       node scripts/verify-soft-404.mjs http://127.0.0.1:3014
+                    → 7/7 PASS
+                    node scripts/pre-deployment-full-audit.mjs (BASE_URL=3014)
+                    → invalid route checks PASS (HTTP 404)
+Final status:       FIXED
+Evidence:           test-results/pre-deployment/audit-results.json
+                    (route:invalid-* status 404)
+                    test-results/pre-deployment-fixes/full-audit.log
+
+
+--- H2. Authenticated mutation tests BLOCKED ---
+
+Original issue:     Submit/idempotency/progress not runtime-tested; live Supabase.
+Reproduction:       BLOCKED by policy (same as original).
+Root cause:         .env.local targets live Supabase project; no staging test users.
+Files changed:      None (intentional — no mutations on live DB).
+Fix implemented:    Skipped per safety rules; code paths reviewed only.
+Verification:       auth:submission-idempotency BLOCKED in audit script.
+Final status:       BLOCKED
+Evidence:           test-results/pre-deployment/audit-results.json
+                    auth:submission-idempotency, auth:correct-question-exclusion
+
+
+--- H3. npm audit — production dependencies (3 high) ---
+
+Original issue:     next, postcss, sharp high-severity advisories.
+Reproduction:       REPRODUCED (npm audit --omit=dev exit 1).
+Root cause:         Installed versions below patched minimums for several GHSA/CVEs.
+Files changed:      package.json, package-lock.json (postcss ^8.5.18 + overrides)
+Fix implemented:    Bumped postcss to ^8.5.18 (GHSA-r28c-9q8g-f849 resolved).
+                    next@16.2.9 and sharp@0.34.5 remain — no compatible patch
+                    without npm audit fix --force / major upgrade (not performed).
+Verification:       npm audit --omit=dev --json → prod high: 2 (was 3)
+                    npm audit --json → all high: 3 (was 4)
+Final status:       PARTIALLY FIXED (postcss FIXED; next/sharp UNRESOLVED)
+Evidence:           test-results/pre-deployment-fixes/npm-audit-prod.log
+                    test-results/pre-deployment-fixes/npm-audit-dev.log
+
+
+--- H4. /dashboard and /profile publicly static-cached when logged out ---
+
+Original issue:     HTTP 200 with s-maxage=31536000 on logged-out dashboard/profile.
+Reproduction:       REPRODUCED on original audit (port 3010).
+Root cause:         Pages statically prerendered without private cache policy.
+Files changed:      app/dashboard/page.tsx
+                    app/profile/page.tsx
+                    next.config.mjs
+Fix implemented:    export const dynamic = 'force-dynamic' on both pages;
+                    Cache-Control: private, no-store headers for /dashboard and
+                    /profile in next.config.mjs.
+Verification:       curl -I http://127.0.0.1:3014/dashboard → private, no-store
+                    curl -I http://127.0.0.1:3014/profile → private, no-store
+                    audit route:dashboard-logged-out, route:profile-logged-out PASS
+Final status:       FIXED
+Evidence:           test-results/pre-deployment/audit-results.json
+                    cacheControl: "private, no-store"
+
+
+--- M1. Catalog pages dynamic (performance warning) ---
+
+Original issue:     Catalog routes marked ƒ; each visit invokes a function.
+Reproduction:       REPRODUCED (build output).
+Root cause:         Intentional — searchParams, auth context, unstable_cache pattern.
+Files changed:      None (not a defect; accepted trade-off).
+Fix implemented:    N/A — documented as expected behaviour.
+Verification:       Build shows ƒ for catalog routes; baseline warm revision ~26ms.
+Final status:       NOT REPRODUCIBLE AS BUG (expected architecture)
+Evidence:           test-results/pre-deployment-fixes/build.log
+                    test-results/pre-deployment-fixes/launch-baseline.log
+
+
+--- M2. No Playwright/Cypress ---
+
+Original issue:     No browser automation in repository.
+Reproduction:       REPRODUCED (no test framework in package.json).
+Root cause:         Tooling not present; Chrome not installed for Lighthouse.
+Files changed:      None.
+Fix implemented:    N/A — defer to Vercel Preview + optional Playwright add.
+Verification:       browser:e2e-playwright BLOCKED in audit.
+Final status:       BLOCKED
+Evidence:           test-results/pre-deployment/audit-results.json
+
+
+--- M3. Debug console.log in lib/polity.ts / examRankingV2.ts ---
+
+Original issue:     console.log in server modules.
+Reproduction:       NOT REPRODUCIBLE as production issue.
+Root cause:         Both modules gate logging with DEBUG = NODE_ENV !== 'production'.
+Files changed:      None required.
+Fix implemented:    Verified gating; logs suppressed in production NODE_ENV.
+Verification:       Static review of lib/polity.ts, lib/polity/examRankingV2.ts
+Final status:       NOT REPRODUCIBLE (production-safe)
+Evidence:           lib/polity/examRankingV2.ts lines 14–15, 34–40
+
+
+--- M4. Duplicate "| QuestionWale | QuestionWale" SEO titles ---
+
+Original issue:     Revision/demo pages duplicated site suffix in title.
+Reproduction:       REPRODUCED on original smoke (company-rule revision).
+Root cause:         Content SEO title included "| QuestionWale" while root layout
+                    template also appends site name.
+Files changed:      content/revision/indian-polity/company-rule-and-early-acts.seo.ts
+                    app/demo/page.tsx
+Fix implemented:    Removed trailing "| QuestionWale" from page-level titles.
+Verification:       audit a11y revision title:
+                    "Company Rule and Early Acts Revision Notes in Hindi | Indian…"
+                    (single site suffix from layout template)
+Final status:       FIXED
+Evidence:           test-results/pre-deployment/audit-results.json
+                    a11y:basic-.../revision
+
+
+--- M5. npm ci failed (EPERM file lock) ---
+
+Original issue:     npm ci exit -4048; next-swc binary locked by running process.
+Reproduction:       NOT REPRODUCIBLE after stopping conflicting locks / clean run.
+Root cause:         Windows file lock from concurrent Node/Next process.
+Files changed:      None.
+Fix implemented:    Ran npm ci with no dev server holding node_modules locks.
+Verification:       npm ci → exit 0 (twice in this fix pass)
+                    npm ci && npm run build → exit 0 (second verification)
+Final status:       FIXED
+Evidence:           npm ci exit code 0 in fix-pass shell runs
+Note:               npm warn allow-scripts for sharp/unrs-resolver persists;
+                    build still succeeds after ci.
+
+
+--- L1. npm warn Unknown env config "devdir" ---
+
+Original issue:     Local npmrc configuration warning on every npm command.
+Reproduction:       REPRODUCED (environment).
+Root cause:         User/machine npmrc, not application code.
+Files changed:      None.
+Final status:       NOT REPRODUCIBLE AS APP ISSUE (environmental)
+Evidence:           npm output in validation logs
+
+
+--- L2. test:sources MODULE_TYPELESS_PACKAGE_JSON warning ---
+
+Original issue:     ESM/CJS warning for .mjs scripts without "type":"module".
+Reproduction:       REPRODUCED (cosmetic).
+Root cause:         package.json has no "type":"module" (intentional for Next.js).
+Files changed:      None (adding type module risks broader breakage).
+Final status:       UNRESOLVED (low priority, non-blocking)
+Evidence:           test-results/pre-deployment-fixes/test-sources.log
+
+
+--- L3. /pyq empty H1 ---
+
+Original issue:     Fetch-based smoke found empty H1.
+Reproduction:       Not re-tested with browser; likely client-rendered heading.
+Files changed:      None (no redesign requested).
+Final status:       UNRESOLVED (low priority)
+Evidence:           Original report section 6 L3
+
+
+--- L4. Practice page empty H1 ---
+
+Original issue:     H1 may be in client component.
+Reproduction:       Not changed in this pass.
+Files changed:      None (no redesign requested).
+Final status:       UNRESOLVED (low priority)
+Evidence:           Original report section 6 L4
+
+
+--- L5. AUTH_SECRET not in .env.local ---
+
+Original issue:     Must be set on Vercel production manually.
+Reproduction:       Expected operational requirement.
+Files changed:      None.
+Final status:       NOT REPRODUCIBLE AS CODE BUG (deployment checklist item)
+Evidence:           Vercel env configuration required at deploy time
+
+
+--- Route smoke: 4 invalid-route FAILs (section 9) ---
+
+Same as H1. Final status: FIXED (see H1 evidence).
+
+
+--- Runtime audit: GET /api/auth/me logged-out WARN ---
+
+Original issue:     HTTP 200 with user=null flagged as WARN; cache not verified.
+Reproduction:       REPRODUCED (200 response is intentional contract).
+Root cause:         Session probe endpoint; missing private no-store header.
+Files changed:      app/api/auth/me/route.ts
+                    scripts/pre-deployment-full-audit.mjs (expect private no-store)
+Fix implemented:    Cache-Control: private, no-store on GET and DELETE; contract
+                    preserved (200 + { user: null } when logged out).
+Verification:       curl -I /api/auth/me → cache-control: private, no-store
+                    Body: {"user":null}
+                    sec:auth-me-no-session → PASS
+Final status:       FIXED
+Evidence:           app/api/auth/me/route.ts
+                    test-results/pre-deployment/audit-results.json sec:auth-me-no-session
+
+
+--- TypeScript baseUrl deprecation ---
+
+Original issue:     tsconfig.json "baseUrl": "." deprecated.
+Reproduction:       REPRODUCED in original typecheck/build warnings.
+Root cause:         baseUrl redundant with paths "@/*": ["./*"].
+Files changed:      tsconfig.json
+Fix implemented:    Removed "baseUrl"; kept paths mapping.
+Verification:       npm run typecheck → exit 0
+                    npm run build → exit 0
+Final status:       FIXED
+Evidence:           test-results/pre-deployment-fixes/typecheck.log
+                    test-results/pre-deployment-fixes/build.log
+
+
+--- seo:/robots.txt FAIL (fix-pass audit script false positive) ---
+
+Original issue:     Audit expected literal "User-agent"; robots.txt uses "User-Agent".
+Reproduction:       REPRODUCED in first fix-pass audit run (1 FAIL).
+Root cause:         Case-sensitive mustInclude check in audit script.
+Files changed:      scripts/pre-deployment-full-audit.mjs
+Fix implemented:    Case-insensitive mustInclude comparison.
+Verification:       Re-run audit → PASS=46 FAIL=0
+Final status:       FIXED (audit script; robots.txt content was always valid)
+Evidence:           /robots.txt sample: "User-Agent: *"
+                    test-results/pre-deployment-fixes/full-audit.log
+
+
+--- BLOCKED: browser E2E, Lighthouse, i18n runtime, auth mutations ---
+
+Final status:       BLOCKED (unchanged from original audit)
+Evidence:           audit-results.json blocked checks (5 total)
+
+
+4. SOFT 404 RESULTS
+--------------------------------------------------------------------------------
+
+Test command: node scripts/verify-soft-404.mjs http://127.0.0.1:3014
+
+Route                                                                    Before  After   Expected
+------------------------------------------------------------------------------------------------
+/subjects/not-a-real-subject-xyz                                         200     404     404
+/subjects/indian-polity/not-a-real-topic-xyz                             200     404     404
+/.../not-a-real-subtopic/revision                                        200     404     404
+/.../practice/not-a-real-subtopic                                        200*    404     404
+/totally-unknown-route-404-test                                          200     404     404
+/subjects/indian-polity (valid)                                          200     200     200
+/subjects/indian-polity/constitutional-history-making (valid)            200     200     200
+
+* practice invalid path not in original 28-route list; added in verify-soft-404.mjs
+
+All 7 automated checks PASS after fix.
+
+
+5. PRIVATE CACHING RESULTS
+--------------------------------------------------------------------------------
+
+Route / API                         Cache-Control evidence (port 3014)
+---------------------------------------------------------------------------
+/dashboard (logged out)             private, no-store          FIXED
+/profile (logged out)               private, no-store          FIXED
+GET /api/auth/me                    private, no-store          FIXED
+POST /api/practice/submit           private, no-store          PASS (unchanged)
+GET /api/practice/question-batch    private, no-store          PASS (unchanged)
+/login, /signup                     private, no-cache, no-store PASS (unchanged)
+/ (public home)                     s-maxage=300               PASS (public ISR kept)
+/subjects                           s-maxage=31536000          PASS (public ISR kept)
+
+User-specific responses are not publicly shared-cached at the Next.js layer.
+
+
+6. /api/auth/me FINAL CONTRACT
+--------------------------------------------------------------------------------
+
+Method:       GET (session probe), DELETE (sign out)
+Logged out:   HTTP 200, body { "user": null }
+Logged in:    HTTP 200, body { "user": { id, email, ... } } (no secrets in response)
+Cache:        Cache-Control: private, no-store (mandatory)
+Consumers:    AuthContext treats missing user as signed-out; status 200 preserved
+              intentionally to avoid breaking client auth bootstrap.
+Rationale:    Not changed to 401 — would break existing AuthContext session probe.
+
+
+7. DEPENDENCY SECURITY RESULTS
+--------------------------------------------------------------------------------
+
+                        Before (original audit)    After (fix pass)
+Production high:        3                          2
+Production total:      3                          2
+All-deps high:         4                          3
+All-deps total:        4                          3
+
+Packages updated:
+  postcss ^8.5.18 (devDependency + overrides) — GHSA-r28c-9q8g-f849 FIXED
+
+Unresolved advisories (production):
+  next@16.2.9 — multiple GHSA (middleware/proxy bypass, Server Actions DoS/SSRF,
+                cache confusion, image optimization DoS, etc.)
+                Minimum fix per npm audit: newer next line; requires framework
+                patch upgrade beyond current lock without --force.
+  sharp@0.34.5 — GHSA-f88m-g3jw-g9cj (libvips CVEs); fix requires sharp >=0.35.0
+                (transitive via next image optimization).
+
+Dev-only remaining: brace-expansion (eslint dependency tree) — 1 high in full audit.
+
+Did NOT run: npm audit fix --force
+
+
+8. TYPESCRIPT baseUrl DEPRECATION RESULT
+--------------------------------------------------------------------------------
+
+Removed "baseUrl": "." from tsconfig.json; "@/*" paths retained.
+npm run typecheck → exit 0
+npm run build → exit 0
+No ignoreDeprecations added.
+
+
+9. DEBUG/LOGGING CLEANUP
+--------------------------------------------------------------------------------
+
+Reviewed lib/polity.ts and lib/polity/examRankingV2.ts — DEBUG gated.
+No production console.log/debugger statements removed from intentional server
+error paths. No new debug output introduced in fix pass.
+
+
+10. SEO METADATA FIXES
+--------------------------------------------------------------------------------
+
+Fixed duplicate site suffix on:
+  content/revision/indian-polity/company-rule-and-early-acts.seo.ts
+  app/demo/page.tsx
+
+Verified revision page title (post-fix):
+  "Company Rule and Early Acts Revision Notes in Hindi | Indian Polity MCQs | QuestionWale"
+  (single QuestionWale suffix via layout template)
+
+/llms.txt, /robots.txt, /sitemap.xml — PASS in audit (valid plain text / XML).
+Invalid routes return HTTP 404 plain "Not Found" — no indexable SEO metadata.
+
+
+11. npm ci RESULT
+--------------------------------------------------------------------------------
+
+Command:  npm ci
+Exit:     0 (verified twice in fix pass)
+Follow-up: npm run build after npm ci → exit 0 (second verification)
+Note:     npm warn allow-scripts for sharp@0.34.5, unrs-resolver@1.11.1
+Original EPERM (-4048) not reproduced when no concurrent Next lock on node_modules.
+
+
+12. STATIC VALIDATION RESULTS
+--------------------------------------------------------------------------------
+
+Command                              Exit    Evidence file
+---------------------------------------------------------------------------
+npm ci                               0       (shell exit code)
+npm run typecheck                    0       test-results/pre-deployment-fixes/typecheck.log
+npm run lint                         0       test-results/pre-deployment-fixes/lint.log
+npm run test:sources                 0       18/18 passed — test-sources.log
+npm audit --omit=dev                 1       2 high — npm-audit-prod.log
+npm audit (full)                     1       3 high — npm-audit-dev.log
+node validate-merge-official-sources —       Not re-run (passed in original audit)
+Unit/integration tests               N/A     No scripts in package.json
+
+
+13. PRODUCTION BUILD RESULT
+--------------------------------------------------------------------------------
+
+Command:  npm run build
+Exit:     0
+Duration: ~12s (Turbopack)
+Log:      test-results/pre-deployment-fixes/build.log
+
+Notable routes:
+  ƒ /dashboard, ƒ /profile (dynamic — force-dynamic)
+  ƒ /subjects/[subject]/* catalog tree (dynamic)
+  ○ /, /subjects list, static legal pages (ISR preserved)
+  ƒ Proxy (Middleware) expanded beyond /api/* for catalog 404 guards
+
+
+14. ROUTE AND BROWSER E2E RESULT
+--------------------------------------------------------------------------------
+
+Automated route/audit (no browser):
+  node scripts/pre-deployment-full-audit.mjs BASE_URL=http://127.0.0.1:3014
+  → PASS=46 FAIL=0 BLOCKED=5 WARN=0
+
+  node scripts/verify-soft-404.mjs → 7/7 PASS
+
+Browser E2E (360×800, 390×844, 768×1024, 1366×768, 1440×900):
+  BLOCKED — no Playwright/Cypress; no screenshots captured under
+  test-results/pre-deployment-fixes/screenshots/
+
+
+15. ACCESSIBILITY AND LIGHTHOUSE RESULT
+--------------------------------------------------------------------------------
+
+Fetch-based checks (audit script):
+  /                           lang=en h1Count=1  PASS
+  revision company-rule page  lang=en h1Count=1  PASS
+
+Lighthouse:
+  BLOCKED — ChromeNotInstalledError (same as original audit)
+
+Full WCAG compliance: NOT claimed.
+
+
+16. AUTHENTICATED-TEST RESULT
+--------------------------------------------------------------------------------
+
+Status: BLOCKED BY SAFE-ENVIRONMENT REQUIREMENT
+
+.env.local points to live Supabase project. Per instructions:
+  - No user creation
+  - No answer submission
+  - No progress mutation
+  - No cross-user isolation runtime test
+
+Code review only for submit RPC, idempotency, progress snapshot patterns.
+
+
+17. QUESTION-PAYLOAD SECURITY RESULT
+--------------------------------------------------------------------------------
+
+GET /api/practice/question-batch — PASS
+  Forbidden keys absent (correct_option, explanation, correct_answer)
+  Cache-Control: private, no-store
+  10 questions, ~10.6–13.1 KB
+
+GET /api/history/questions — PASS (legacy columns)
+
+Validation bounds (400 on invalid subtopic, batch size, scope) — PASS
+
+
+18. LOCAL LOAD-TEST RESULT
+--------------------------------------------------------------------------------
+
+Command:  npm run test:launch-load (BASE_URL=http://127.0.0.1:3014)
+Exit:     0
+Errors:   0 across 3 phases (30 req × 3, concurrency 5)
+
+Phase                  RPS      p50    p95    Errors
+warm-public-home       292.0    15ms   28ms   0
+warm-revision-page      59.0    78ms  127ms   0
+warm-subjects          529.4     9ms   10ms   0
+
+Log: test-results/pre-deployment-fixes/launch-load.log
+
+
+19. REMAINING VERCEL PREVIEW REQUIREMENTS
+--------------------------------------------------------------------------------
+
+  [ ] CDN cache HIT/MISS on /, /subjects at edge
+  [ ] Dashboard/profile Cache-Control on Vercel edge (logged out + logged in)
+  [ ] Authenticated submit, idempotency, progress, exclusion, cross-user tests
+  [ ] Browser E2E all viewports + screenshots
+  [ ] Lighthouse Performance/A11y/SEO/Best Practices
+  [ ] Google OAuth end-to-end
+  [ ] Patch next/sharp advisories on staging after compatibility review
+  [ ] Set AUTH_SECRET and all server env vars on Preview
+  [ ] Update CATALOG_SUBJECT_SLUGS in proxy.ts when new catalog subjects launch
+
+
+20. EVERY FILE CREATED OR MODIFIED (FIX PASS — security/routing/cache/SEO/audit)
+--------------------------------------------------------------------------------
+
+Created:
+  lib/catalogRouteGuards.ts
+  app/api/catalog/path-exists/route.ts
+  app/subjects/[subject]/layout.tsx
+  app/subjects/[subject]/not-found.tsx
+  app/subjects/[subject]/[topicSlug]/layout.tsx
+  app/subjects/[subject]/[topicSlug]/[subtopicSlug]/layout.tsx
+  app/subjects/[subject]/[topicSlug]/practice/[subtopicSlug]/layout.tsx
+  scripts/verify-soft-404.mjs
+  docs/PRE_DEPLOYMENT_FIX_REPORT.txt
+  test-results/pre-deployment-fixes/ (logs)
+
+Modified (fix-related):
+  proxy.ts
+  next.config.mjs
+  app/dashboard/page.tsx
+  app/profile/page.tsx
+  app/api/auth/me/route.ts
+  app/demo/page.tsx
+  content/revision/indian-polity/company-rule-and-early-acts.seo.ts
+  tsconfig.json
+  package.json
+  package-lock.json
+  scripts/pre-deployment-full-audit.mjs
+  app/[subject]/page.tsx
+  app/subjects/[subject]/page.tsx
+  app/subjects/[subject]/[topicSlug]/page.tsx
+  app/subjects/[subject]/[topicSlug]/[subtopicSlug]/revision/page.tsx
+  app/subjects/[subject]/[topicSlug]/practice/page.tsx
+  app/subjects/[subject]/[topicSlug]/practice/[subtopicSlug]/page.tsx
+
+Note: Working tree contains additional modified/untracked files from prior launch
+and revision work (not all listed above). No verified question content or database
+schema semantics were changed in this fix pass.
+
+
+21. FINAL RECOMMENDED NEXT ACTIONS
+--------------------------------------------------------------------------------
+
+ 1. Deploy current branch to Vercel Preview with AUTH_SECRET and server env vars.
+ 2. Re-run test:launch-baseline and test:launch-load against Preview URL.
+ 3. Run authenticated mutation tests on staging Supabase with dedicated test users.
+ 4. Add Playwright (or use Preview manual QA) for responsive/browser journeys.
+ 5. Run Lighthouse on Preview with Chrome.
+ 6. Plan next/sharp patch upgrade on staging (review Next.js 16.3+ / sharp 0.35+).
+ 7. Extend CATALOG_SUBJECT_SLUGS in proxy.ts when launching new catalog subjects.
+ 8. Optionally approve npm allow-scripts for sharp postinstall on CI machines.
+
+
+================================================================================
+END OF FIX REPORT

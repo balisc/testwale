@@ -8,6 +8,7 @@ import HistoryClient from '../history/HistoryClient';
 import { buildSubjectMetadata } from '@/lib/seo';
 import { fetchTopicsForLegacySubject, type TopicItem } from '@/lib/catalogTopics';
 import { LEGACY_SUBJECT_SLUG_MAP } from '@/lib/subjectRoutes';
+import { NOT_FOUND_METADATA } from '@/lib/catalogRouteGuards';
 import SubjectPageClient from './SubjectPageClient';
 
 const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
@@ -34,11 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ subject: 
   const subjectConfig = SUBJECT_TABLES[subjectKey];
 
   if (!subjectConfig) {
-    return {
-      title: 'Subject not found',
-      description: 'The requested subject does not exist.',
-      robots: { index: false, follow: true },
-    };
+    return NOT_FOUND_METADATA;
   }
 
   return buildSubjectMetadata(subjectConfig.label, `/${subjectKey}`);

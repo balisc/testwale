@@ -1,16 +1,13 @@
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import JsonLd from '@/components/JsonLd';
 import RevisionPageView from '@/components/revision/RevisionPageView';
 import { buildBreadcrumbListSchema } from '@/lib/breadcrumbSchema';
+import { requireSubtopicByRouteSlugs, loadSubtopicByRouteSlugs, NOT_FOUND_METADATA } from '@/lib/catalogRouteGuards';
 import { getLocalizedText } from '@/lib/localizedText';
 import {
   getQuestionsBySubtopic,
-  getSubjectBySlug,
-  getSubtopicBySlug,
   getSubtopicsByTopic,
-  getTopicBySlug,
 } from '@/lib/polity';
 import { mergeOfficialSources } from '@/lib/revision/mergeOfficialSources';
 import {
@@ -19,15 +16,33 @@ import {
   isRevisionPublished,
   publishedRevisionPath,
 } from '@/lib/revision/registry';
-import type { RelatedRevisionLink } from '@/lib/revision/types';
+import { isRichRevision, loadRichRevisionFaqs, normalizeRichRevisionSlug } from '@/lib/revision/richRevision';
+import { loadRichRevisionClient } from '@/lib/revision/richRevisionClients';import type { RelatedRevisionLink } from '@/lib/revision/types';
 import { absoluteUrl, buildCatalogRevisionMetadata, buildPageMetadata } from '@/lib/seo';
-import { resolveSubjectSlug } from '@/lib/subjectRoutes';
 
 export const revalidate = 3600;
 
 type PageProps = {
   params: Promise<{ subject: string; topicSlug: string; subtopicSlug: string }>;
+  searchParams: Promise<{ exam?: string | string[] }>;
 };
+
+function resolveExamParam(raw: string | string[] | undefined): string | null {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return value?.trim() || null;
+}
+
+function buildFaqSchema(faqs: { q: { en: string }; a: { en: string } }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.q.en,
+      acceptedAnswer: { '@type': 'Answer', text: faq.a.en },
+    })),
+  };
+}
 
 function buildLearningResourceSchema(options: {
   title: string;
@@ -55,7 +70,9 @@ function buildLearningResourceSchema(options: {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { subject: routeSubject, topicSlug, subtopicSlug } = await params;
-  const subjectSlug = resolveSubjectSlug(routeSubject);
+  const row = await loadSubtopicByRouteSlugs(routeSubject, topicSlug, subtopicSlug);
+  if (!row) return NOT_FOUND_METADATA;
+  const { subjectSlug } = row;
   const published = getPublishedRevision(subjectSlug, topicSlug, subtopicSlug);
   if (published) {
     return buildCatalogRevisionMetadata({
@@ -116,22 +133,23 @@ function UnpublishedRevisionNotice({
   );
 }
 
-export default async function SubtopicRevisionPage({ params }: PageProps) {
+export default async function SubtopicRevisionPage({ params, searchParams }: PageProps) {
   const { subject: routeSubject, topicSlug, subtopicSlug } = await params;
-  const subjectSlug = resolveSubjectSlug(routeSubject);
+  const resolvedSearchParams = await searchParams;
+  const examParam = resolveExamParam(resolvedSearchParams.exam);
 
-  const subject = await getSubjectBySlug(subjectSlug);
-  if (!subject) notFound();
+  const { subject, subjectSlug, topic, subtopic } = await requireSubtopicByRouteSlugs(
+    routeSubject,
+    topicSlug,
+    subtopicSlug,
+  );
 
-  const topic = await getTopicBySlug(subject.id, topicSlug);
-  if (!topic) notFound();
-
-  const subtopic = await getSubtopicBySlug(topic.id, subtopicSlug);
-  if (!subtopic) notFound();
-
-  const subjectTitle = getLocalizedText(subject.title, 'en');
-  const topicTitle = getLocalizedText(topic.title, 'en');
-  const subtopicTitle = getLocalizedText(subtopic.title, 'en');
+  const subjectTitle = subject.title;
+  const topicTitle = topic.title;
+  const subtopicTitle = subtopic.title;
+  const subjectTitleEn = getLocalizedText(subject.title, 'en');
+  const topicTitleEn = getLocalizedText(topic.title, 'en');
+  const subtopicTitleEn = getLocalizedText(subtopic.title, 'en');
   const subjectHref = `/subjects/${subjectSlug}`;
   const topicHref = `/subjects/${subjectSlug}/${topicSlug}`;
   const practiceHref = `/subjects/${subjectSlug}/${topicSlug}/${subtopicSlug}/practice`;
@@ -144,7 +162,7 @@ export default async function SubtopicRevisionPage({ params }: PageProps) {
           subjectHref={subjectHref}
           topicHref={topicHref}
           practiceHref={practiceHref}
-          subtopicTitle={subtopicTitle || subtopicSlug}
+          subtopicTitle={subtopicTitleEn || subtopicSlug}
         />
       </div>
     );
@@ -177,47 +195,92 @@ export default async function SubtopicRevisionPage({ params }: PageProps) {
   }
   related.push({
     href: topicHref,
-    title: `All subtopics in ${topicTitle}`,
+    title: `All subtopics in ${topicTitleEn}`,
     kind: 'topic',
   });
   related.push({
     href: practiceHref,
-    title: `Practice MCQs for ${subtopicTitle}`,
+    title: `Practice MCQs for ${subtopicTitleEn}`,
     kind: 'practice',
   });
 
   const breadcrumbSchema = buildBreadcrumbListSchema([
     { name: 'Home', href: '/' },
-    { name: subjectTitle, href: subjectHref },
-    { name: topicTitle, href: topicHref },
-    { name: `${subtopicTitle} revision` },
+    { name: subjectTitleEn, href: subjectHref },
+    { name: topicTitleEn, href: topicHref },
+    { name: `${subtopicTitleEn} revision` },
   ]);
 
   const learningSchema = buildLearningResourceSchema({
     title: doc.seo.title,
     description: doc.seo.description,
     path,
-    topicTitle: subtopicTitle,
+    topicTitle: subtopicTitleEn,
     dateModified: doc.lastReviewed,
   });
+
+  const useRich = isRichRevision(subtopicSlug);
+  const richSlug = normalizeRichRevisionSlug(subtopicSlug);
+  const jsonLd: Record<string, unknown>[] = [breadcrumbSchema, learningSchema];
+
+  if (useRich && richSlug) {
+    const faqs = await loadRichRevisionFaqs(richSlug);
+    jsonLd.push(buildFaqSchema(faqs));
+  }
+
+  const RichClient = useRich && richSlug ? await loadRichRevisionClient(richSlug) : null;
+
+  const revisionSiblings = siblings.filter((s) => s.slug !== subtopicSlug);
+  const currentIndex = siblings.findIndex((s) => s.slug === subtopicSlug);
+  const prevSibling = currentIndex > 0 ? siblings[currentIndex - 1] : null;
+  const nextSibling = currentIndex >= 0 && currentIndex < siblings.length - 1 ? siblings[currentIndex + 1] : null;
+  const siblingNav = {
+    prev: prevSibling && isRevisionPublished(subjectSlug, topicSlug, prevSibling.slug)
+      ? {
+          href: `/subjects/${subjectSlug}/${topicSlug}/${prevSibling.slug}/revision`,
+          title: getLocalizedText(prevSibling.title, 'en'),
+        }
+      : undefined,
+    next: nextSibling && isRevisionPublished(subjectSlug, topicSlug, nextSibling.slug)
+      ? {
+          href: `/subjects/${subjectSlug}/${topicSlug}/${nextSibling.slug}/revision`,
+          title: getLocalizedText(nextSibling.title, 'en'),
+        }
+      : undefined,
+  };
 
   // Security: never pass correct_option, explanations, user IDs, or service role data.
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
-      <JsonLd data={[breadcrumbSchema, learningSchema]} />
-      <RevisionPageView
-        doc={doc}
-        breadcrumb={{
-          subjectHref,
-          subjectTitle,
-          topicHref,
-          topicTitle,
-          subtopicTitle,
-        }}
-        practiceHref={practiceHref}
-        sources={sources}
-        related={related}
-      />
+      <JsonLd data={jsonLd} />
+      {RichClient ? (
+        <RichClient
+          practiceHref={practiceHref}
+          examQuery={examParam}
+          breadcrumb={{
+            subjectHref,
+            subjectTitle,
+            topicHref,
+            topicTitle,
+            subtopicTitle,
+          }}
+          siblingNav={siblingNav}
+        />
+      ) : (
+        <RevisionPageView
+          doc={doc}
+          breadcrumb={{
+            subjectHref,
+            subjectTitle,
+            topicHref,
+            topicTitle,
+            subtopicTitle,
+          }}
+          practiceHref={practiceHref}
+          sources={sources}
+          related={related}
+        />
+      )}
     </div>
   );
 }

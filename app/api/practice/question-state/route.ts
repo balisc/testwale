@@ -1,5 +1,6 @@
 import { getAuthUserFromCookies } from '@/lib/authCookies';
 import { getSubtopicBatchQuestionState } from '@/lib/practiceServer';
+import { resolvePracticeExamQuestionTag } from '@/lib/polity/practiceExamFilter';
 import {
   isTextBodyTooLarge,
   parseBatchQuestionIdsPayload,
@@ -67,8 +68,9 @@ export async function POST(request: Request) {
     return errorResponse(parsedIds.error, 400);
   }
 
-  const examCode =
+  const rawExamCode =
     typeof row.examCode === 'string' && row.examCode.trim() ? row.examCode.trim() : null;
+  const examCode = rawExamCode ? (await resolvePracticeExamQuestionTag(rawExamCode)) ?? null : null;
 
   const stateResult = await getSubtopicBatchQuestionState(
     admin,

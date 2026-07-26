@@ -6,15 +6,22 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 export function Reveal({
   children,
   className = '',
+  eager = false,
 }: {
   children: ReactNode;
   className?: string;
+  /** Paint immediately for above-the-fold / LCP content instead of waiting for IntersectionObserver. */
+  eager?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(eager);
   const [reduce, setReduce] = useState(false);
 
   useEffect(() => {
+    if (eager) {
+      setVisible(true);
+      return;
+    }
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     setReduce(mq.matches);
     if (mq.matches) {
@@ -34,7 +41,7 @@ export function Reveal({
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [eager]);
 
   return (
     <div

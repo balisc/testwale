@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { buildPageMetadata } from '@/lib/seo';
 import DashboardClient from './DashboardClient';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = buildPageMetadata({
   title: 'My Progress',
   description: 'Track your MCQ practice attempts, accuracy, and subject-wise progress on QuestionWale.',

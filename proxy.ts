@@ -1,15 +1,128 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { checkRateLimit, getApiRateLimitKey, getClientIp } from '@/lib/rateLimit';
+import { SUBJECT_KEYS } from '@/lib/subjects';
 
 const API_RATE_LIMIT = 120;
 const API_RATE_WINDOW_MS = 60_000;
+const LEGACY_TOP_LEVEL = new Set(SUBJECT_KEYS.map((key) => key.toLowerCase()));
+/** Active catalog subject slugs served under /subjects/:slug (extend when new subjects launch). */
+const CATALOG_SUBJECT_SLUGS = new Set(['indian-polity']);
+
+function isReservedTopLevelSegment(segment: string): boolean {
+  const reserved = new Set([
+    'subjects',
+    'about_us',
+    'contact',
+    'privacy',
+    'terms',
+    'disclaimer',
+    'refund-policy',
+    'login',
+    'signup',
+    'dashboard',
+    'profile',
+    'auth',
+    'api',
+    'question',
+    'demo',
+    'map-practice',
+    'pyq',
+    'pcb_page',
+    'loading-test',
+    'classic',
+    'examples',
+    'sitemaps',
+    'robots.txt',
+    'sitemap.xml',
+    'llms.txt',
+    '_next',
+  ]);
+  return reserved.has(segment);
+}
+
+function maybeRejectUnknownCatalogSubject(pathname: string): NextResponse | null {
+  const match = pathname.match(/^\/subjects\/([^/]+)(?:\/|$)/i);
+  if (!match) return null;
+  const slug = match[1]!.toLowerCase();
+  if (CATALOG_SUBJECT_SLUGS.has(slug)) return null;
+  return new NextResponse('Not Found', {
+    status: 404,
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+
+async function maybeRejectUnknownCatalogPath(
+  request: NextRequest,
+): Promise<NextResponse | null> {
+  const { pathname } = request.nextUrl;
+  if (!pathname.startsWith('/subjects/')) return null;
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length < 3) return null;
+
+  const checkUrl = new URL('/api/catalog/path-exists', request.nextUrl.origin);
+  checkUrl.searchParams.set('path', pathname);
+
+  try {
+    const res = await fetch(checkUrl.toString(), {
+      method: 'GET',
+      cache: 'no-store',
+      headers: { 'x-catalog-path-check': '1' },
+    });
+    if (res.status === 404) {
+      return new NextResponse('Not Found', {
+        status: 404,
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'no-store',
+        },
+      });
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function maybeRejectUnknownTopLevel(pathname: string): NextResponse | null {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length !== 1) return null;
+  const segment = segments[0]!.toLowerCase();
+  if (LEGACY_TOP_LEVEL.has(segment) || isReservedTopLevelSegment(segment)) {
+    return null;
+  }
+  return new NextResponse('Not Found', {
+    status: 404,
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
+  });
+}
 
 /**
  * Next.js 16 request proxy. Keep this lightweight: API abuse protection only.
  * Route handlers also validate and rate-limit sensitive actions independently.
  */
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const unknownCatalogSubject = maybeRejectUnknownCatalogSubject(pathname);
+  if (unknownCatalogSubject) return unknownCatalogSubject;
+
+  const unknownCatalogPath = await maybeRejectUnknownCatalogPath(request);
+  if (unknownCatalogPath) return unknownCatalogPath;
+
+  const unknownTopLevel = maybeRejectUnknownTopLevel(pathname);
+  if (unknownTopLevel) return unknownTopLevel;
+
+  if (!pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
   const ip = getClientIp(request.headers);
   const rateLimitKey = getApiRateLimitKey(ip, request.nextUrl.pathname);
   const result = checkRateLimit(rateLimitKey, {
@@ -40,5 +153,9 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/api/:path*',
+  matcher: [
+    '/api/:path*',
+    '/subjects/:path*',
+    '/((?!_next/static|_next/image|favicon.ico|logo|images|home).*)',
+  ],
 };

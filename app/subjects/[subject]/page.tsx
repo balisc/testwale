@@ -1,15 +1,18 @@
-import { notFound } from 'next/navigation';
 import { getLocalizedText } from '@/lib/localizedText';
+import { requireSubjectByRouteSlug, loadSubjectByRouteSlug, NOT_FOUND_METADATA } from '@/lib/catalogRouteGuards';
 import SubjectPageContent from './SubjectPageContent';
 import {
   buildExamQuery,
   getAllExams,
   getExamWiseTopics,
-  getSubjectBySlug,
   getTopicsBySubject,
   resolveExamCodeFromDb,
 } from '@/lib/polity';
-import { resolveSubjectSlug } from '@/lib/subjectRoutes';
+import {
+  getExamWiseTopicsV2,
+  listRankedExamOptions,
+  validateRankedExamCode,
+} from '@/lib/polity/examRankingV2';
 import type { Metadata } from 'next';
 import { buildCatalogSubjectMetadata } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
@@ -30,16 +33,9 @@ function resolveExamParam(raw: string | string[] | undefined): string | null {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { subject: routeSubject } = await params;
-  const subjectSlug = resolveSubjectSlug(routeSubject);
-  const subject = await getSubjectBySlug(subjectSlug);
-
-  if (!subject) {
-    return {
-      title: 'Subject not found',
-      description: 'The requested subject does not exist.',
-      robots: { index: false, follow: true },
-    };
-  }
+  const row = await loadSubjectByRouteSlug(routeSubject);
+  if (!row) return NOT_FOUND_METADATA;
+  const { subject, subjectSlug } = row;
 
   const titleEn = getLocalizedText(subject.title, 'en');
   const descEn = getLocalizedText(subject.description, 'en');
@@ -54,15 +50,46 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function SubjectSlugPage({ params, searchParams }: PageProps) {
   const { subject: routeSubject } = await params;
-  const subjectSlug = resolveSubjectSlug(routeSubject);
   const resolvedSearchParams = await searchParams;
   const examParam = resolveExamParam(resolvedSearchParams.exam);
   const examCode = buildExamQuery(examParam);
 
-  const [subject, exams] = await Promise.all([getSubjectBySlug(subjectSlug), getAllExams()]);
+  const { subject, subjectSlug } = await requireSubjectByRouteSlug(routeSubject);
+  const exams = await getAllExams();
 
-  if (!subject) {
-    notFound();
+  if (subjectSlug === 'indian-polity') {
+    const rankedExams = await listRankedExamOptions();
+    const validation = validateRankedExamCode(rankedExams, examCode);
+    const topics =
+      validation.valid && validation.normalized
+        ? await getExamWiseTopicsV2(subject.id, validation.normalized)
+        : await getTopicsBySubject(subject.id);
+
+    const topicCount = validation.valid ? topics.length : (subject.topic_count ?? topics.length);
+    const questionCount = subject.question_count ?? 0;
+    const titleEn = getLocalizedText(subject.title, 'en');
+
+    const breadcrumbSchema = buildBreadcrumbListSchema([
+      { name: 'Home', href: '/' },
+      { name: 'Subjects', href: '/subjects' },
+      { name: titleEn },
+    ]);
+
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
+        <JsonLd data={breadcrumbSchema} />
+        <SubjectPageContent
+          subject={subject}
+          subjectSlug={subjectSlug}
+          topics={topics}
+          exams={exams}
+          rankedExams={rankedExams}
+          examCode={examParam}
+          topicCount={topicCount}
+          questionCount={questionCount}
+        />
+      </div>
+    );
   }
 
   const dbExamCode = examCode ? resolveExamCodeFromDb(exams, examCode) : undefined;

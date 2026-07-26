@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "baseUrl": ".",
+    "target": "ES2022",
     "paths": {
       "@/*": [
         "./*"
@@ -10,7 +9,7 @@
     "lib": [
       "dom",
       "dom.iterable",
-      "es2020"
+      "es2022"
     ],
     "allowJs": false,
     "skipLibCheck": true,
@@ -44,8 +43,6 @@
   "exclude": [
     "node_modules",
     "scripts/validate-parse-question-sources.ts",
-    "scripts/validate-merge-official-sources.ts",
-    "scripts/_tmp_revision_parity.js",
-    "scripts/_seo_html"
+    "scripts/validate-merge-official-sources.ts"
   ]
 }

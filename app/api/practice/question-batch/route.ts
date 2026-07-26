@@ -1,9 +1,12 @@
 import {
-  getAllExams,
   getQuestionBatchBySubtopic,
   getQuestionBatchByTopic,
   normalizeExamCode,
 } from '@/lib/polity';
+import {
+  isKnownExamSelection,
+  resolvePracticeExamQuestionTag,
+} from '@/lib/polity/practiceExamFilter';
 import {
   isUuid,
   parseStrictBatchSize,
@@ -25,13 +28,13 @@ async function resolveExamCodeParam(
   const normalized = normalizeExamCode(trimmed);
   if (!normalized || normalized === 'ALL') return {};
 
-  const exams = await getAllExams();
-  const match = exams.find((exam) => normalizeExamCode(exam.code) === normalized);
-  if (!match) {
+  const known = await isKnownExamSelection(normalized);
+  if (!known) {
     return { error: 'invalid_exam_code' };
   }
 
-  return { examCode: match.code };
+  const questionTag = await resolvePracticeExamQuestionTag(normalized);
+  return { examCode: questionTag };
 }
 
 export async function GET(request: Request) {

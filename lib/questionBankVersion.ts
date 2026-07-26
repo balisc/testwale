@@ -1,5 +1,12 @@
 import { createHash } from 'crypto';
+import { unstable_cache } from 'next/cache';
 import supabase from '@/lib/supabase';
+import {
+  QUESTION_BATCH_REVALIDATE_SECONDS,
+  QUESTION_BATCH_TAG,
+  questionBatchSubtopicTag,
+  questionBatchTopicTag,
+} from '@/lib/questionBatchCache';
 
 const BANK_VERSION_ID_CAP = 5000;
 
@@ -41,6 +48,29 @@ export async function getQuestionBankVersion(
   const ids = (data ?? []).map((row: { id: string }) => String(row.id));
   const digest = createHash('sha1').update(ids.join(',')).digest('hex').slice(0, 16);
   return `${ids.length}:${digest}`;
+}
+
+/**
+ * Cached bank fingerprint — avoids a Supabase id-list query on every practice request
+ * while still participating in question-batch tag invalidation.
+ */
+export async function getQuestionBankVersionCached(
+  scope: 'subtopic' | 'topic',
+  scopeId: string,
+): Promise<string> {
+  const id = String(scopeId ?? '').trim();
+  if (!id) return 'empty';
+
+  const tags =
+    scope === 'subtopic'
+      ? [QUESTION_BATCH_TAG, questionBatchSubtopicTag(id)]
+      : [QUESTION_BATCH_TAG, questionBatchTopicTag(id)];
+
+  return unstable_cache(
+    async () => getQuestionBankVersion(scope, id),
+    ['question-bank-version', scope, id],
+    { revalidate: QUESTION_BATCH_REVALIDATE_SECONDS, tags },
+  )();
 }
 
 /** Keep only IDs that still exist as public practice questions. */

@@ -18,7 +18,7 @@ import {
   questionBatchSubtopicTag,
   questionBatchTopicTag,
 } from '@/lib/questionBatchCache';
-import { getQuestionBankVersion } from '@/lib/questionBankVersion';
+import { getQuestionBankVersionCached } from '@/lib/questionBankVersion';
 import {
   clampQuestionLimit,
   MAX_QUESTION_LIMIT,
@@ -584,7 +584,7 @@ export async function getQuestionBatchBySubtopic(
 
   const cursorKey = trimmedCursor || FIRST_PAGE_CURSOR_KEY;
   const queryCursor = trimmedCursor || null;
-  const bankVersion = await getQuestionBankVersion('subtopic', subtopicId);
+  const bankVersion = await getQuestionBankVersionCached('subtopic', subtopicId);
 
   return unstable_cache(
     async () =>
@@ -637,7 +637,7 @@ export async function getQuestionBatchByTopic(
 
   const cursorKey = trimmedCursor || FIRST_PAGE_CURSOR_KEY;
   const queryCursor = trimmedCursor || null;
-  const bankVersion = await getQuestionBankVersion('topic', topicId);
+  const bankVersion = await getQuestionBankVersionCached('topic', topicId);
 
   return unstable_cache(
     async () =>

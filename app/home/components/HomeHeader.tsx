@@ -65,7 +65,7 @@ function LanguageDropdown() {
           viewBox="0 0 12 12"
           fill="none"
           aria-hidden
-          className={`text-[#667085] transition ${open ? 'rotate-180' : ''}`}
+          className={`text-[#475569] transition ${open ? 'rotate-180' : ''}`}
         >
           <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
@@ -88,7 +88,7 @@ function LanguageDropdown() {
                     setOpen(false);
                   }}
                   className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm font-medium transition hover:bg-[#F5F3FF] ${
-                    selected ? 'text-[#6D28D9]' : 'text-[#344054]'
+                    selected ? 'text-[#5521BF]' : 'text-[#344054]'
                   }`}
                 >
                   {option.label}
@@ -118,6 +118,8 @@ export default function HomeHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [readProgress, setReadProgress] = useState(0);
+  const isRevisionPage = Boolean(pathname?.includes('/revision'));
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -125,6 +127,21 @@ export default function HomeHeader() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    if (!isRevisionPage) return;
+
+    function onScroll() {
+      const el = document.documentElement;
+      const max = el.scrollHeight - el.clientHeight;
+      const pct = max > 0 ? (el.scrollTop / max) * 100 : 0;
+      setReadProgress(Math.min(100, Math.max(0, pct)));
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [isRevisionPage]);
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -155,8 +172,8 @@ export default function HomeHeader() {
                 href={item.href}
                 className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-[15px] font-medium transition ${
                   active
-                    ? 'text-[#6D28D9]'
-                    : 'text-[#667085] hover:bg-[#F5F3FF] hover:text-[#18181B]'
+                    ? 'text-[#5521BF]'
+                    : 'text-[#475569] hover:bg-[#F5F3FF] hover:text-[#18181B]'
                 }`}
               >
                 {item.label}
@@ -214,7 +231,7 @@ export default function HomeHeader() {
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className={`rounded-xl px-3 py-3 text-[15px] font-medium hover:bg-[#F5F3FF] ${
-                  isActivePath(pathname, item.href) ? 'text-[#6D28D9]' : 'text-[#18181B]'
+                  isActivePath(pathname, item.href) ? 'text-[#5521BF]' : 'text-[#18181B]'
                 }`}
               >
                 {item.label}
@@ -229,7 +246,7 @@ export default function HomeHeader() {
             </Link>
 
             <div className="mt-3 border-t border-[#F2F4F7] pt-3">
-              <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[#98A2B3]">
+              <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[#475569]">
                 Language
               </p>
               <div className="flex items-center gap-1 rounded-xl border border-[#E4E7EC] bg-[#FAFAFC] p-1">
@@ -242,8 +259,8 @@ export default function HomeHeader() {
                       onClick={() => setLanguage(option.id)}
                       className={`min-h-[44px] flex-1 rounded-lg px-3 text-sm font-semibold transition ${
                         selected
-                          ? 'bg-white text-[#6D28D9] shadow-sm'
-                          : 'text-[#667085] hover:text-[#18181B]'
+                          ? 'bg-white text-[#5521BF] shadow-sm'
+                          : 'text-[#475569] hover:text-[#18181B]'
                       }`}
                       aria-pressed={selected}
                     >
@@ -254,6 +271,22 @@ export default function HomeHeader() {
               </div>
             </div>
           </nav>
+        </div>
+      ) : null}
+
+      {isRevisionPage ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] bg-[#E8E2F8] print:hidden"
+          role="progressbar"
+          aria-valuenow={Math.round(readProgress)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Page read progress"
+        >
+          <div
+            className="h-full bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] transition-[width] duration-100 ease-out"
+            style={{ width: `${readProgress}%` }}
+          />
         </div>
       ) : null}
     </header>

@@ -1,0 +1,27 @@
+# QuestionWale
+
+QuestionWale is a bilingual learning and MCQ-practice platform for Indian competitive-exam preparation. It offers topic-wise revision notes, source-verified practice questions, and structured study guides for UPSC, SSC, Railway, and State exams in English and Hindi.
+
+## Main pages
+
+- [QuestionWale Home](https://questionwale.com/)
+- [Browse Subjects](https://questionwale.com/subjects)
+- [About Us](https://questionwale.com/about_us)
+- [Contact](https://questionwale.com/contact)
+
+## Subjects and learning resources
+
+- [Indian Polity — Topics & MCQ Practice](https://questionwale.com/subjects/indian-polity)
+- [Sources of Indian Constitution — Revision Notes](https://questionwale.com/subjects/indian-polity/constitution-basics-salient-features/sources-of-indian-constitution/revision)
+- [Preamble Meaning & Importance — Revision Notes](https://questionwale.com/subjects/indian-polity/preamble-union-citizenship/preamble-meaning-importance/revision)
+- [Regulating Act, 1773 — Revision Notes](https://questionwale.com/subjects/indian-polity/constitutional-history-making/regulating-act-1773/revision)
+- [Company Rule Acts 1773–1853 — Revision Notes](https://questionwale.com/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision)
+
+## Policies and discovery
+
+- [Privacy Policy](https://questionwale.com/privacy)
+- [Terms of Service](https://questionwale.com/terms)
+- [Disclaimer](https://questionwale.com/disclaimer)
+- [Refund Policy](https://questionwale.com/refund-policy)
+- [Sitemap](https://questionwale.com/sitemap.xml)
+- [Robots](https://questionwale.com/robots.txt)

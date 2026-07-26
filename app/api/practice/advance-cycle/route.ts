@@ -1,5 +1,6 @@
 import { getAuthUserFromCookies } from '@/lib/authCookies';
 import { advanceSubtopicPracticeCycle } from '@/lib/practiceServer';
+import { resolvePracticeExamQuestionTag } from '@/lib/polity/practiceExamFilter';
 import { isUuid, privateNoStoreJsonResponse } from '@/lib/publicQuestionApiGuards';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -42,8 +43,9 @@ export async function POST(request: Request) {
     return errorResponse('invalid_scope_id', 400);
   }
 
-  const examCode =
+  const rawExamCode =
     typeof row.examCode === 'string' && row.examCode.trim() ? row.examCode.trim() : null;
+  const examCode = rawExamCode ? (await resolvePracticeExamQuestionTag(rawExamCode)) ?? null : null;
 
   const result = await advanceSubtopicPracticeCycle(admin, user.id, scopeId, examCode);
   if (!result.ok) {

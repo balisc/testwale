@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { buildPageMetadata } from '@/lib/seo';
 import ProfileClient from './ProfileClient';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = buildPageMetadata({
   title: 'My Profile',
   description: 'Your QuestionWale profile with stats, readiness score, strengths, weaknesses, and activity.',

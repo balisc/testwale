@@ -1,16 +1,13 @@
-import { notFound } from 'next/navigation';
 import { getLocalizedText } from '@/lib/localizedText';
+import { requireTopicByRouteSlugs, loadTopicByRouteSlugs, NOT_FOUND_METADATA } from '@/lib/catalogRouteGuards';
 import TopicPageContent from './TopicPageContent';
 import {
   buildExamQuery,
   getAllExams,
-  getSubjectBySlug,
   getSubtopicsByTopic,
-  getTopicBySlug,
-  resolveExamCodeFromDb,
+  normalizeExamCode,
 } from '@/lib/polity';
 import { hasPublishedRevisionForTopic, isRevisionPublished } from '@/lib/revision/registry';
-import { resolveSubjectSlug } from '@/lib/subjectRoutes';
 import type { Metadata } from 'next';
 import { buildCatalogTopicMetadata } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
@@ -36,15 +33,9 @@ function withExamQuery(path: string, examParam: string | null) {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { subject: routeSubject, topicSlug } = await params;
-  const subjectSlug = resolveSubjectSlug(routeSubject);
-  const subject = await getSubjectBySlug(subjectSlug);
-  if (!subject) {
-    return { title: 'Topic not found', robots: { index: false, follow: true } };
-  }
-  const topic = await getTopicBySlug(subject.id, topicSlug);
-  if (!topic) {
-    return { title: 'Topic not found', robots: { index: false, follow: true } };
-  }
+  const row = await loadTopicByRouteSlugs(routeSubject, topicSlug);
+  if (!row) return NOT_FOUND_METADATA;
+  const { subject, subjectSlug, topic } = row;
 
   const topicTitle = getLocalizedText(topic.title, 'en');
   const subjectTitle = getLocalizedText(subject.title, 'en');
@@ -68,23 +59,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function TopicPage({ params, searchParams }: PageProps) {
   const { subject: routeSubject, topicSlug } = await params;
-  const subjectSlug = resolveSubjectSlug(routeSubject);
   const resolvedSearchParams = await searchParams;
   const examParam = resolveExamParam(resolvedSearchParams.exam);
 
-  const subject = await getSubjectBySlug(subjectSlug);
-  if (!subject) notFound();
-
-  const topic = await getTopicBySlug(subject.id, topicSlug);
-  if (!topic) notFound();
+  const { subject, subjectSlug, topic } = await requireTopicByRouteSlugs(routeSubject, topicSlug);
 
   const exams = await getAllExams();
   const normalizedExam = buildExamQuery(examParam);
-  const dbExamCode = normalizedExam ? resolveExamCodeFromDb(exams, normalizedExam) : undefined;
+  const legacyExamMatch = normalizedExam
+    ? exams.find((exam) => normalizeExamCode(exam.code) === normalizeExamCode(normalizedExam))
+    : null;
 
   const subtopics = await getSubtopicsByTopic({
     topicId: topic.id,
-    examCode: dbExamCode,
+    examCode: legacyExamMatch?.code,
   });
   const subjectHref = withExamQuery(`/subjects/${subjectSlug}`, examParam);
   const mixedPracticeHref = withExamQuery(
@@ -98,7 +86,10 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
       examParam,
     ),
     revisionHref: isRevisionPublished(subjectSlug, topicSlug, subtopic.slug)
-      ? `/subjects/${subjectSlug}/${topicSlug}/${subtopic.slug}/revision`
+      ? withExamQuery(
+          `/subjects/${subjectSlug}/${topicSlug}/${subtopic.slug}/revision`,
+          examParam,
+        )
       : null,
   }));
 
@@ -119,7 +110,7 @@ export default async function TopicPage({ params, searchParams }: PageProps) {
         subtopics={subtopicsWithLinks}
         subjectSlug={subjectSlug}
         subjectHref={subjectHref}
-        examParam={examParam}
+        examParam={legacyExamMatch ? examParam : null}
         mixedPracticeHref={mixedPracticeHref}
       />
     </div>

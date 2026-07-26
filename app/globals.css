@@ -99,4 +99,41 @@ h1, h2, h3, h4, h5, h6 {
   display: none;  /* Chrome, Safari and Opera */
 }
 
+/* Regulating Act revision — print styles */
+@media print {
+  header,
+  footer,
+  nav[aria-label="On this page"],
+  nav[aria-label="इस पेज पर"],
+  .revision-final-cta {
+    display: none !important;
+  }
+
+  .revision-section {
+    break-inside: avoid;
+    box-shadow: none !important;
+  }
+
+  [role="tabpanel"][hidden] {
+    display: block !important;
+  }
+
+  .revision-hero {
+    background: white !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up-in,
+  .court-timeline-progress {
+    animation: none !important;
+    transition: none !important;
+  }
+}
 

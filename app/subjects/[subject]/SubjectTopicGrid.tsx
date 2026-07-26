@@ -9,6 +9,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { useCatalogText } from '@/lib/useCatalogText';
 import { normalizeExamCode } from '@/lib/polity';
 import type { Exam, Topic, TopicWithPriority } from '@/types/polity';
+import type { PolityRankedExamOption } from '@/types/polityExamRankingV2';
 import { topicMatchesSearch } from './SubjectPageContent';
 
 type SubjectTopicGridProps = {
@@ -17,6 +18,7 @@ type SubjectTopicGridProps = {
   topics: Topic[] | TopicWithPriority[];
   examCode: string | null;
   exams: Exam[];
+  rankedExams?: PolityRankedExamOption[];
 };
 
 function isPriorityTopic(topic: Topic | TopicWithPriority): topic is TopicWithPriority {
@@ -141,15 +143,21 @@ export default function SubjectTopicGrid({
   topics,
   examCode,
   exams,
+  rankedExams,
 }: SubjectTopicGridProps) {
   const { language } = useLanguage();
   const c = COPY[language];
   const [search, setSearch] = useState('');
   const isExamPath = Boolean(examCode && examCode.toUpperCase() !== 'ALL');
+  const matchedRankedExam = rankedExams?.find(
+    (exam) => examCode && normalizeExamCode(exam.exam_code) === normalizeExamCode(examCode),
+  );
   const matchedExam = exams.find(
     (exam) => examCode && normalizeExamCode(exam.code) === normalizeExamCode(examCode),
   );
-  const localizedExamTitle = useCatalogText(matchedExam?.title ?? examCode);
+  const localizedExamTitle = useCatalogText(
+    matchedRankedExam?.title ?? matchedExam?.title ?? (isExamPath ? examCode : null),
+  );
 
   const filteredTopics = useMemo(() => {
     if (!search.trim()) return topics;
@@ -162,7 +170,7 @@ export default function SubjectTopicGrid({
 
   return (
     <>
-      <section className="mt-10 sm:mt-12">
+      <section id="subject-topics" className="mt-10 sm:mt-12 scroll-mt-24">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">{sectionTitle}</h2>
@@ -205,7 +213,12 @@ export default function SubjectTopicGrid({
         )}
       </section>
 
-      <PracticePathBuilder subjectSlug={subjectSlug} exams={exams} />
+      <PracticePathBuilder
+        subjectSlug={subjectSlug}
+        exams={exams}
+        rankedExams={rankedExams}
+        selectedExam={examCode}
+      />
     </>
   );
 }

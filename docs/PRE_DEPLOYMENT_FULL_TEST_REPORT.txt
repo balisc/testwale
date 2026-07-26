@@ -1,0 +1,556 @@
+QUESTIONWALE PRE-DEPLOYMENT FULL TEST REPORT
+================================================================================
+
+1. EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+
+Overall verdict: READY WITH WARNINGS
+
+Short reason:
+  Production build, static validation, local production-server smoke tests,
+  question-payload security checks, cache behaviour, and bounded load tests
+  all passed with real evidence. Several industry-grade checks remain BLOCKED
+  locally (authenticated mutation tests, browser E2E/responsive screenshots,
+  Lighthouse) because .env.local targets a live Supabase project and no Chrome
+  browser is installed in the audit environment. SEO soft-404 behaviour and
+  npm audit findings require attention before calling production fully ready.
+
+Date/time:     2026-07-26 (UTC audit run ~17:19–17:24 UTC)
+Git commit:    d6ea3587cd948586e7b1b619bb8f8205af404042
+Working tree:  DIRTY — 33 modified, many untracked (revision/polity/launch work)
+Node:          v24.15.0
+npm:           11.17.0
+Next.js:       16.2.9 (from package.json / build output)
+React:         19.2.7
+Supabase JS:   ^2.105.4 (@supabase/supabase-js)
+
+Local production BASE_URL tested: http://127.0.0.1:3010
+Server mode: next start (NOT next dev)
+AUTH_SECRET:   Set for local production server only (not in .env.local)
+
+IMPORTANT LOCAL LIMITATION:
+  .env.local points to Supabase project ref pkualuuwgadosctvwaep (live project).
+  Mutating authenticated tests (submit, progress, idempotency load) were NOT
+  executed. Read-only and validation-only tests were used instead.
+
+
+2. TEST TOTALS
+--------------------------------------------------------------------------------
+
+Category                          Passed  Failed  Blocked  Warn  N/A
+------------------------------------------------------------------------
+Static validation (commands)         6       2       1       0     2
+Production build                       1       0       0       0     0
+Route smoke (28 routes)             24       4       0       0     0
+Runtime audit script (51 checks)    40       5       5       1     0
+Launch baseline script                 9       0       1       0     0
+Launch load script (3 phases)        3       0       0       0     0
+Content validation (20 tests)       20       0       0       0     0
+Browser E2E / responsive               0       0       1       0     0
+Lighthouse                             0       0       1       0     0
+Authenticated submit/progress          0       0       2       0     0
+Unit/integration test suites           0       0       0       0     2
+Final regression re-run                3       0       0       0     0
+------------------------------------------------------------------------
+Approximate distinct checks:        ~106     ~11      ~10      ~1     ~4
+
+Note: Some checks overlap (baseline vs audit). Failed route checks are mostly
+intentional soft-404 design returning HTTP 200 (see section 9).
+
+
+3. CRITICAL LAUNCH BLOCKERS
+--------------------------------------------------------------------------------
+
+None identified that prevent deploying to Vercel Preview for further testing.
+
+The following are NOT launch blockers for Preview but block calling production
+"fully verified" without follow-up:
+  - Authenticated submit/idempotency/progress tests not run (live DB safety)
+  - No browser E2E or Lighthouse evidence in this environment
+  - npm audit reports high-severity advisories on next/postcss/sharp
+
+
+4. HIGH-PRIORITY ISSUES
+--------------------------------------------------------------------------------
+
+H1. Invalid / unknown routes return HTTP 200 instead of 404
+    Evidence: Runtime audit (http://127.0.0.1:3010)
+      /subjects/not-a-real-subject-xyz          → 200 "Subject not found"
+      /subjects/indian-polity/not-a-real-topic  → 200 "Topic not found"
+      /totally-unknown-route-404-test           → 200 (catch-all [subject] route)
+    Impact: SEO crawlers may index soft-404 pages; monitoring may miss errors.
+    Recommendation: Return notFound() (404) or noindex + explicit 404 status.
+
+H2. Authenticated mutation tests BLOCKED (live Supabase)
+    Reason: .env.local uses production Supabase credentials; no confirmed
+    staging-only test account. Submit/idempotency/progress exclusion not
+    runtime-verified in this audit (code review only).
+
+H3. npm audit — production dependencies (3 high)
+    Command: npm audit --omit=dev  → exit 1
+    Packages: next, postcss, sharp (multiple GHSA/CVE advisories)
+    Action: Review advisories; patch on staging before production promotion.
+    Did NOT run npm audit fix (per safety rules).
+
+H4. /dashboard and /profile accessible logged-out with static cache
+    Evidence: HTTP 200, Cache-Control s-maxage=31536000, no redirect to login.
+    Client shows sign-in prompt (DashboardClient) — private data not exposed
+    in HTML, but page is publicly cacheable at CDN layer on Vercel Preview.
+    Recommendation: force-dynamic + private/no-store or server redirect.
+
+
+5. MEDIUM-PRIORITY ISSUES
+--------------------------------------------------------------------------------
+
+M1. Catalog subject/topic/revision/practice pages are dynamic (HTTP private,no-store)
+    Build output marks them ƒ (dynamic). Server-side unstable_cache still reduces
+    Supabase reads, but each visit invokes a Vercel Function.
+    Performance warning — not a functional failure.
+
+M2. No Playwright/Cypress/Vitest/Jest in repository
+    Browser console, hydration, responsive layout, mobile menu, and screenshots
+    could not be automated locally without adding tooling.
+
+M3. Debug console.log in lib/polity.ts and lib/polity/examRankingV2.ts
+    Guarded by NODE_ENV !== 'production' in some paths; examRankingV2 logs always.
+    Low risk in production bundle if tree-shaken; review before launch.
+
+M4. Duplicate "| QuestionWale | QuestionWale" in some revision/demo titles
+    Evidence: revision-company-rule page title in smoke test.
+
+M5. npm ci failed (EPERM)
+    Command: npm ci → exit -4048
+    Error: Cannot unlink next-swc.win32-x64-msvc.node (file in use — dev server)
+    Recovery: npm install succeeded. Lockfile consistency not fully re-validated
+    via npm ci.
+
+
+6. LOW-PRIORITY ISSUES
+--------------------------------------------------------------------------------
+
+L1. npm warn Unknown env config "devdir" on every npm command (local npmrc).
+
+L2. test:sources MODULE_TYPELESS_PACKAGE_JSON warning (no "type":"module").
+
+L3. /pyq page has empty H1 in HTML smoke check.
+
+L4. Practice page has empty H1 (heading may be in client component).
+
+L5. AUTH_SECRET not in .env.local — required on Vercel production; set manually.
+
+
+7. STATIC VALIDATION RESULTS
+--------------------------------------------------------------------------------
+
+7.1 Environment discovery
+  Package manager:     npm (package-lock.json present)
+  App Router:            yes (app/)
+  Middleware/proxy:      proxy.ts — matcher /api/:path* only (rate limit 120/min)
+  Test frameworks:       NONE (no Playwright, Cypress, Vitest, Jest)
+  Launch scripts:        test:launch-baseline, test:launch-load (present)
+  Content scripts:       test:sources, validate-merge-official-sources.ts
+
+7.2 Commands executed
+
+  Command                              Exit   Result    Duration  Notes
+  ---------------------------------------------------------------------------
+  npm ci                               -4048  FAIL      ~5s       EPERM file lock
+  npm install (recovery)               0      PASS      ~51s      After ci failure
+  npm run typecheck                    0      PASS      ~19s      Final re-run OK
+  npm run lint                         0      PASS      ~19s      max-warnings=0
+  npm run test:sources                 0      PASS      ~0.4s     18/18 passed
+  node validate-merge-official-sources 0      PASS      ~0.8s     2/2 passed
+  npm audit --omit=dev                 1      FAIL      ~2.6s     3 high vulns
+  npm audit (full)                     1      FAIL      ~1.7s     4 high vulns
+  npm run build                        0      PASS      ~16.7s    See section 8
+  Unit tests                           —      N/A       —         No script exists
+  Integration tests                    —      N/A       —         No script exists
+
+7.3 Static code review (non-destructive)
+
+  select('*') in hot paths:          PASS — none found in TS/TSX
+  Hardcoded hierarchy UUIDs:         PASS — none in app/lib source
+  Hardcoded localhost URLs:          PASS in app code; localhost only in env guard
+  Service role in browser bundle:    PASS — only server modules reference
+                                       SUPABASE_SERVICE_ROLE_KEY
+  dangerouslySetInnerHTML:           WARN — JsonLd, QuizJsonLd, seo-example
+                                       (JSON-LD serialization — review acceptable)
+  console.log in production paths:   WARN — lib/polity.ts (DEBUG gated),
+                                       examRankingV2.ts (always logs)
+  Secrets in tracked files:           PASS — .env.local gitignored; no service
+                                       role in committed source
+  Client/server boundary:             PASS — no direct service-role client import
+                                       in client components found
+
+
+8. PRODUCTION BUILD RESULT
+--------------------------------------------------------------------------------
+
+Command:  npm run build
+Exit:     0
+Duration: ~16.7 seconds (Turbopack)
+Warnings: None fatal; experimental optimizeCss, scrollRestoration enabled
+
+Route rendering summary (from build output):
+  Static (○):  /, /subjects, /about_us, /contact, /terms, /privacy, legacy
+                subject landing pages, /robots.txt, several API routes (300s ISR)
+  Dynamic (ƒ): practice pages, auth, all /api/practice/*, catalog pages with
+                searchParams, /sitemap.xml, /login, /signup
+  Middleware:   ƒ Proxy (middleware) on /api/:path*
+
+Performance warnings (intentional or accepted):
+  - /subjects/[subject], topic, revision, practice → dynamic (exam searchParams)
+  - /sitemap.xml → dynamic (catalog fetch)
+
+No missing env vars during build (.env.local loaded).
+No hydration build warnings reported.
+
+
+9. ROUTE SMOKE-TEST RESULT
+--------------------------------------------------------------------------------
+
+Base: http://127.0.0.1:3010 (next start + AUTH_SECRET)
+
+Route                                                          Status  Result  Notes
+------------------------------------------------------------------------------------------
+/                                                              200     PASS    H1 present, ISR cache HIT warm
+/subjects                                                      200     PASS
+/about_us                                                      200     PASS
+/contact                                                       200     PASS
+/privacy                                                       200     PASS
+/terms                                                         200     PASS
+/disclaimer                                                    200     PASS
+/refund-policy                                                 200     PASS
+/login                                                         200     PASS    private,no-store
+/signup                                                        200     PASS    private,no-store
+/dashboard (logged out)                                        200     PASS*   *see H4 cache concern
+/profile (logged out)                                          200     PASS*   *see H4
+/history, /science, /economics, /geography, /math, /reasoning  200     PASS    legacy subject pages
+/map-practice, /pyq, /demo                                     200     PASS
+/subjects/indian-polity                                        200     PASS    dynamic shell
+/.../constitutional-history-making                             200     PASS
+/.../company-rule-acts-1773-1853/revision                      200     PASS    H1 present
+/.../practice/company-rule-acts-1773-1853                    200     PASS
+/polity (legacy alias)                                         200     PASS
+/subjects/not-a-real-subject-xyz                               200     FAIL    Expected 404, got soft 404
+/subjects/indian-polity/not-a-real-topic-xyz                   200     FAIL    Expected 404
+/.../not-a-real-subtopic/revision                              200     FAIL    "Revision not published" 200
+/totally-unknown-route-404-test                                200     FAIL    Catch-all [subject] route
+/llms.txt                                                      200     PASS    text/plain; # QuestionWale
+/robots.txt                                                    200     PASS    User-Agent: * (valid)
+/sitemap.xml                                                   200     PASS    valid urlset XML
+
+Totals: 28 routes tested, 24 PASS, 4 FAIL (soft-404 semantics)
+
+
+10. BROWSER AND RESPONSIVE RESULT
+--------------------------------------------------------------------------------
+
+Status: BLOCKED
+
+Reason: No Playwright/Cypress configuration in repository. No Chrome installation
+found for Lighthouse (chrome-launcher: ChromeNotInstalledError).
+
+Screenshots: NOT captured (test-results/pre-deployment/ has logs/JSON only).
+
+Required on Vercel Preview: mobile/desktop journeys, console errors, hydration,
+responsive layout, back-button, mobile menu.
+
+
+11. ENGLISH / HINDI / BOTH RESULT
+--------------------------------------------------------------------------------
+
+Code review PASS:
+  - LanguageProvider: en | hi via localStorage + cookie (path=/, SameSite=Lax)
+  - HomeHeader: English / हिंदी dropdown
+  - Rich revision clients support LangMode en | hi | both (demo + company-rule)
+
+Runtime UI switch: BLOCKED (requires browser automation)
+
+Fetch audit: HTML lang="en" on tested pages; Hindi content present in RSC
+payloads for bilingual fields (Unicode in JSON escaped — not mojibake).
+
+
+12. AUTHENTICATION AND PRIVATE-ROUTE RESULT
+--------------------------------------------------------------------------------
+
+Logged-out POST /api/practice/submit     → 400 PASS (rejects; private,no-store)
+Logged-out GET  /api/auth/me             → 200 user=null WARN (expected empty session)
+Login/signup pages                       → 200 PASS (forms render)
+Dashboard/profile logged out             → 200 client sign-in prompt (see H4)
+Protected API cache headers              → PASS private/no-store on practice APIs
+
+Session cookie attributes: Not fully inspected (no authenticated session created).
+
+Mutating auth tests: BLOCKED (live Supabase).
+
+
+13. QUESTION-PAYLOAD AND ANSWER-SECURITY RESULT
+--------------------------------------------------------------------------------
+
+GET /api/practice/question-batch?scope=subtopic&subtopicId=<valid>&batchSize=10
+  Status: 200
+  Cache-Control: private, no-store
+  Payload size: ~10,589–13,089 bytes (10 questions)
+  Keys: id, question_text, options, difficulty, source, source_metadata,
+        year, pyq_exam_name, exam_tags, attempt_count, correct_count
+  Forbidden fields: NONE (correct_option, explanation, correct_answer absent)
+  Result: PASS
+
+GET /api/history/questions?topic=modern history&limit=3
+  Forbidden fields: NONE
+  Result: PASS (uses LEGACY_PRE_SUBMIT_COLUMNS)
+
+Validation bounds:
+  invalid subtopic UUID        → 400 PASS
+  batchSize=99999              → 400 PASS
+  invalid scope                → 400 PASS
+
+
+14. SUBMISSION, IDEMPOTENCY AND PROGRESS RESULT
+--------------------------------------------------------------------------------
+
+Status: BLOCKED (all mutating tests)
+
+Code review only (not runtime-verified this audit):
+  - submit_question_answer RPC with ON CONFLICT DO NOTHING
+  - build_scoped_progress_snapshot in RPC response
+  - Client correct-question exclusion via /api/practice/correct-ids
+
+Mandatory Vercel Preview checks:
+  - duplicate submit idempotency
+  - progress counter accuracy
+  - correct-question exclusion
+  - cross-user data isolation
+
+
+15. SECURITY REVIEW
+--------------------------------------------------------------------------------
+
+Headers on / (local production):
+  Content-Security-Policy:     PRESENT (self, supabase, google auth, OSM tiles)
+  X-Content-Type-Options:      nosniff
+  Referrer-Policy:             strict-origin-when-cross-origin
+  X-Frame-Options:             DENY
+  Strict-Transport-Security:   PRESENT (set in production next.config — local HTTP still returns header)
+  Permissions-Policy:          camera/mic/geo disabled
+
+Rate limiting: proxy.ts 120 req/min/IP on /api/* — PASS
+
+CORS: Same-origin API default — no permissive CORS observed
+
+CSRF: Cookie-based auth; mutating routes use JSON POST — review origin checks on Preview
+
+Cache poisoning: Public ISR on / and /subjects; private APIs use no-store — PASS
+
+Service role exposure: NOT in NEXT_PUBLIC_* or client bundles — PASS
+
+Open redirect: auth callback routes — not fuzz-tested; Preview review recommended
+
+
+16. ACCESSIBILITY REVIEW
+--------------------------------------------------------------------------------
+
+Automated axe/Lighthouse: BLOCKED (no Chrome)
+
+Fetch-based checks:
+  /                           lang=en, h1Count=1  PASS
+  revision company-rule page  lang=en, h1Count=1  PASS
+  /dashboard logged out       h1 empty            WARN
+  /practice company-rule      h1 empty            WARN
+
+Prior manual fixes (contrast tokens in revision-ui.css) not re-run with Lighthouse.
+
+Full WCAG compliance: NOT claimed.
+
+
+17. SEO REVIEW
+--------------------------------------------------------------------------------
+
+/llms.txt          PASS — H1, real questionwale.com links, text/plain charset
+/robots.txt        PASS — Allow /, Disallow /api/ /auth/, sitemap URL
+/sitemap.xml       PASS — valid XML, questionwale.com URLs (not localhost)
+Canonical/OG       Present on tested pages (title + meta from build)
+Soft 404           FAIL — invalid slugs return 200 (section H1)
+/dashboard noIndex  PASS (metadata noIndex: true)
+Duplicate titles   WARN on some revision pages
+
+
+18. PERFORMANCE RESULTS
+--------------------------------------------------------------------------------
+
+Lighthouse: BLOCKED — No Chrome installations found
+
+Local warm latency (launch-readiness-baseline, port 3010):
+  home warm:      7 ms,  136,100 B, x-nextjs-cache: HIT, s-maxage=300
+  subjects warm:  5 ms,   37,947 B, x-nextjs-cache: HIT
+  revision warm: 26 ms,  134,798 B, dynamic shell
+  question-batch: 3 ms,   13,089 B, private,no-store
+
+Initial question batch payload: ~1.3 KB/question (10 questions ≈ 13 KB)
+
+Load test summary: see section 20
+
+
+19. CACHE VERIFICATION
+--------------------------------------------------------------------------------
+
+Runtime-tested (local next start — NOT Vercel CDN):
+
+  Public ISR:
+    / warm repeat:     x-nextjs-cache: HIT, s-maxage=300        PASS
+    /subjects:         x-nextjs-cache: HIT, s-maxage=31536000   PASS
+
+  Private (must not shared-cache):
+    /api/practice/question-batch  → private, no-store           PASS
+    /login, /signup               → private, no-cache           PASS
+    Catalog pages w/ searchParams → private, no-store           PASS (dynamic)
+
+  Next.js server data cache:
+    Question batch warm ~3–4 ms (Supabase origin not hit every request)
+
+NOT verified locally (Preview required):
+  - Vercel CDN HIT/MISS
+  - Supabase Cached Egress (Storage CDN)
+  - Per-user cache key isolation on Vercel edge
+
+
+20. LOAD-TEST RESULTS
+--------------------------------------------------------------------------------
+
+Target:   http://127.0.0.1:3010 (local next start)
+Script:   npm run test:launch-load
+Profile:  3 phases × 30 requests, concurrency 5 (NOT production site)
+
+Phase                  RPS      p50    p95    p99   Errors
+--------------------------------------------------------------
+warm-public-home       382.3    12ms   18ms   18ms   0
+warm-revision-page      90.1    53ms   73ms   80ms   0
+warm-subjects          727.1     7ms    8ms    9ms   0
+
+Total errors: 0
+Limitation: Small local load only; does NOT prove 10k user capacity.
+No submit load (live Supabase safety rule).
+
+
+21. DEPENDENCY AND SECRET REVIEW
+--------------------------------------------------------------------------------
+
+Production vulnerabilities (npm audit --omit=dev): 3 high
+  - next (multiple GHSA advisories)
+  - postcss (GHSA-r28c-9q8g-f849)
+  - sharp (GHSA-f88m-g3jw-g9cj)
+
+Dev vulnerabilities add: brace-expansion (eslint tree)
+
+.env.local (not committed) contains:
+  SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
+  NEXT_PUBLIC_SUPABASE_*, NEXT_PUBLIC_GOOGLE_CLIENT_ID
+  Missing for production: AUTH_SECRET (must set on Vercel)
+
+Never printed secret values in this report.
+
+
+22. UNUSED / DEAD-RESOURCE CANDIDATES
+--------------------------------------------------------------------------------
+
+Not deleted during audit. Evidence-based candidates only:
+
+  - app/examples/seo-example/page.tsx — example route, likely non-production
+  - app/loading-test/page.tsx — dev test page
+  - app/demo/page.tsx — demo revision shell
+  - app/classic/page.tsx — verify traffic before removal
+  - scripts/_seo_audit_summary.* — already deleted in working tree
+  - next-sitemap.config.js — deleted; sitemap now app/sitemap.ts
+
+Dynamic imports (richRevisionClients) must be kept.
+
+
+23. FILES CHANGED OR CREATED DURING TESTING
+--------------------------------------------------------------------------------
+
+Created for this audit (test artifacts — do not deploy blindly):
+  docs/PRE_DEPLOYMENT_FULL_TEST_REPORT.txt          (this file)
+  scripts/pre-deployment-full-audit.mjs             (runtime audit runner)
+  test-results/pre-deployment/                      (logs, JSON, build log)
+    audit-results.json
+    build.log
+    typecheck.log, lint.log, test-sources.log
+    validate-merge-sources.log
+    full-audit.log, launch-baseline.log, launch-load.log
+    npm-audit-prod.log, npm-audit-dev.log
+    lighthouse-home.log (Chrome missing — failed)
+
+Pre-existing untracked from prior work (not created this audit session):
+  docs/LAUNCH_READINESS_REPORT.md
+  scripts/launch-readiness-baseline.mjs
+  scripts/launch-readiness-load.mjs
+  scripts/migrate_launch_readiness_indexes.sql
+  (plus revision/polity component files — see git status)
+
+No application source files modified during this audit session.
+No user files deleted.
+
+
+24. REQUIRES VERCEL PREVIEW VERIFICATION
+--------------------------------------------------------------------------------
+
+  [ ] Real CDN cache HIT/MISS on /, /subjects, static assets
+  [ ] HTTPS-only behaviour and HSTS at edge
+  [ ] Vercel Active CPU / Fluid Compute / function invocation metrics
+  [ ] Preview-region latency vs Supabase region
+  [ ] Production environment variables (AUTH_SECRET, service role, revalidate secret)
+  [ ] Authenticated E2E: submit, duplicate idempotency, progress, exclusion
+  [ ] Cross-user isolation (two test accounts)
+  [ ] Browser E2E all viewports (360, 390, 768, 1366, 1440)
+  [ ] Lighthouse Performance/A11y/SEO/BP on critical routes
+  [ ] Google OAuth login flow end-to-end
+  [ ] Supabase dashboard egress/CPU after warm traffic
+  [ ] Soft-404 HTTP status behaviour decision (200 vs 404)
+  [ ] Dashboard/profile cache headers when logged out on Vercel edge
+
+
+25. EXACT RECOMMENDED NEXT ACTIONS (PRIORITY ORDER)
+--------------------------------------------------------------------------------
+
+ 1. Deploy to Vercel Preview with AUTH_SECRET + all server env vars set.
+ 2. Run authenticated submit/idempotency/progress tests on Preview (staging users).
+ 3. Fix or document soft-404 policy (return 404 or noindex strict).
+ 4. Set /dashboard and /profile to force-dynamic + private cache when logged out.
+ 5. Run Lighthouse + Playwright on Preview (mobile + desktop screenshots).
+ 6. Review npm audit advisories; patch next/postcss/sharp on staging.
+ 7. Apply migrate_launch_readiness_indexes.sql on staging Supabase only.
+ 8. Configure Supabase/Vercel usage alerts before production promotion.
+ 9. Re-run: BASE_URL=<preview> npm run test:launch-baseline && test:launch-load
+
+
+26. FINAL SIGN-OFF
+--------------------------------------------------------------------------------
+
+Verdict: READY WITH WARNINGS — safe to proceed to VERCEL PREVIEW deployment for
+the remaining industry-grade checks. Do NOT treat this audit as full production
+sign-off.
+
+Why not NOT READY:
+  - Production build passes
+  - 24/28 public routes render without server errors
+  - Question payloads verified answer-free at runtime
+  - Private API cache headers correct
+  - Load smoke test 0 errors locally
+  - Static analysis (typecheck, lint, 20 content tests) passes
+
+Why not fully READY:
+  - Authenticated mutation/security tests blocked (live Supabase)
+  - No browser/Lighthouse evidence
+  - Soft-404 SEO failures (HTTP 200)
+  - npm audit high vulnerabilities unresolved
+  - Dashboard/profile public static caching concern
+
+Auditor note: Local production server was left on port 3010 if still running;
+stop manually after review. npm ci could not run while dev server held file locks.
+
+Evidence files: test-results/pre-deployment/
+Report path:     docs/PRE_DEPLOYMENT_FULL_TEST_REPORT.txt
+
+================================================================================
+END OF REPORT

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronRight, FileText, Layers, Rocket } from 'lucide-react';
+import { BookOpen, ChevronRight, FileText, Layers, Rocket } from 'lucide-react';
 import IconByKey from '@/components/IconByKey';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useCatalogText } from '@/lib/useCatalogText';
@@ -32,6 +32,7 @@ const COPY = {
     tryMixed: 'Try mixed practice instead',
     startMixed: 'Start Mixed Practice',
     startPractice: 'Start Practice',
+    reviseSubtopic: 'Revise Subtopic',
     comingSoon: 'Coming soon',
     subtopicsLabel: 'subtopics',
     questionsLabel: 'questions',
@@ -45,6 +46,7 @@ const COPY = {
     tryMixed: 'इसके बजाय मिश्रित अभ्यास करें',
     startMixed: 'मिश्रित अभ्यास शुरू करें',
     startPractice: 'अभ्यास शुरू करें',
+    reviseSubtopic: 'उप-विषय पुनरावृत्ति',
     comingSoon: 'जल्द उपलब्ध',
     subtopicsLabel: 'उप-विषय',
     questionsLabel: 'प्रश्न',
@@ -53,6 +55,7 @@ const COPY = {
 
 type SubtopicWithPracticeHref = SubtopicWithExamPriority & {
   practiceHref: string;
+  revisionHref: string | null;
 };
 
 type TopicPageContentProps = {
@@ -68,11 +71,13 @@ type TopicPageContentProps = {
 function SubtopicCard({
   subtopic,
   practiceHref,
+  revisionHref,
   isExamPath,
   c,
 }: {
   subtopic: SubtopicWithExamPriority;
   practiceHref: string;
+  revisionHref: string | null;
   isExamPath: boolean;
   c: (typeof COPY)['en'];
 }) {
@@ -99,23 +104,34 @@ function SubtopicCard({
       {description && (
         <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-500">{description}</p>
       )}
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
         <span className="text-xs font-medium text-slate-500">
           {questionCount.toLocaleString()} {c.questionsLabel}
         </span>
-        {questionCount > 0 ? (
-          <Link
-            href={practiceHref}
-            className="inline-flex items-center gap-1 rounded-full bg-[#F3E8FF] px-4 py-2 text-xs font-semibold text-brand transition hover:bg-brand hover:text-white"
-          >
-            {c.startPractice}
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        ) : (
-          <span className="inline-flex rounded-full bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-500">
-            {c.comingSoon}
-          </span>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {revisionHref ? (
+            <Link
+              href={revisionHref}
+              className="inline-flex min-h-11 items-center gap-1 rounded-full border border-[#DDD6FE] bg-white px-4 py-2 text-xs font-semibold text-brand transition hover:border-brand hover:bg-[#FAF5FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+            >
+              <BookOpen className="h-4 w-4" aria-hidden />
+              {c.reviseSubtopic}
+            </Link>
+          ) : null}
+          {questionCount > 0 ? (
+            <Link
+              href={practiceHref}
+              className="inline-flex min-h-11 items-center gap-1 rounded-full bg-[#F3E8FF] px-4 py-2 text-xs font-semibold text-brand transition hover:bg-brand hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+            >
+              {c.startPractice}
+              <ChevronRight className="h-4 w-4" aria-hidden />
+            </Link>
+          ) : (
+            <span className="inline-flex min-h-11 items-center rounded-full bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-500">
+              {c.comingSoon}
+            </span>
+          )}
+        </div>
       </div>
     </article>
   );
@@ -233,6 +249,7 @@ export default function TopicPageContent({
                 key={subtopic.id}
                 subtopic={subtopic}
                 practiceHref={subtopic.practiceHref}
+                revisionHref={subtopic.revisionHref}
                 isExamPath={isExamPath}
                 c={c}
               />
