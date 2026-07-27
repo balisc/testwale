@@ -16,8 +16,12 @@ export function getSupabaseBrowserClient() {
   if (!url || !key) return null;
 
   if (!browserClient) {
-    // @supabase/ssr stores PKCE verifier in document cookies so the server callback can exchange the code.
-    browserClient = createBrowserClient(url, key);
+    browserClient = createBrowserClient(url, key, {
+      auth: {
+        flowType: 'pkce',
+        detectSessionInUrl: false,
+      },
+    });
   }
 
   return browserClient;

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { listExamsFromCache } from '@/lib/catalogCache';
 import { buildPageMetadata } from '@/lib/seo';
 import OnboardingClient from './OnboardingClient';
 
@@ -12,11 +11,10 @@ export const metadata: Metadata = buildPageMetadata({
   noIndex: true,
 });
 
-export default async function OnboardingPage() {
-  const exams = await listExamsFromCache();
+export default function OnboardingPage() {
   return (
     <main className="min-h-screen bg-[#F8FAFC]">
-      <OnboardingClient exams={exams} />
+      <OnboardingClient />
     </main>
   );
 }

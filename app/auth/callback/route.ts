@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     return redirectWithFlash(origin, 'oauth_failed');
   }
 
-  const next = getSafeRedirectPath(requestUrl.searchParams.get('next'), '/dashboard');
+  const next = getSafeRedirectPath(requestUrl.searchParams.get('next'), '/');
   const response = authRedirectResponse(`${origin}${next}`);
   const cookieStore = await cookies();
 

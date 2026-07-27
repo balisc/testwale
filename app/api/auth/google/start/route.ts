@@ -24,7 +24,7 @@ function redirectToLogin(request: Request, kind: 'oauth_failed' | 'oauth_config'
  */
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-  const next = getSafeRedirectPath(requestUrl.searchParams.get('next'), '/dashboard');
+  const next = getSafeRedirectPath(requestUrl.searchParams.get('next'), '/');
 
   let redirectTo: string;
   try {

@@ -57,7 +57,7 @@ export default function HomeGoogleCtaButton({
       startUrl.searchParams.set('next', next);
       window.location.assign(startUrl.toString());
     } catch {
-      onError('Google sign-in failed. Please try again.');
+      onError("We couldn't complete Google sign-in. Please try again.");
       setLoading(false);
     }
   };

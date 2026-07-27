@@ -46,6 +46,19 @@ test('auth callback route exchanges code server-side and avoids signup error que
   assert.doesNotMatch(source, /console\.(log|error|warn)/);
 });
 
+test('proxy forwards stray OAuth code params to /auth/callback', () => {
+  const source = readFileSync(join(process.cwd(), 'proxy.ts'), 'utf8');
+  assert.match(source, /maybeForwardStrayOAuthCode/);
+  assert.match(source, /buildOAuthCallbackForwardUrl/);
+  assert.match(source, /pathnameHasStrayOAuthParams/);
+});
+
+test('supabase server auth client uses PKCE flow', () => {
+  const source = readFileSync(join(process.cwd(), 'lib/supabaseServerAuth.ts'), 'utf8');
+  assert.match(source, /flowType:\s*['"]pkce['"]/);
+  assert.match(source, /detectSessionInUrl:\s*false/);
+});
+
 test('safe redirect rejects malicious next values used after OAuth', () => {
   for (const raw of ['//evil.example', 'https://evil.example', '/%2F%2Fevil.example']) {
     assert.equal(getSafeRedirectPath(raw, '/dashboard'), '/dashboard');

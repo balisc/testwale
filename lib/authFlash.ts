@@ -9,8 +9,8 @@ const FLASH_MAX_AGE_SECONDS = 120;
 
 const MESSAGES: Record<AuthFlashKind, { en: string; hi: string }> = {
   oauth_failed: {
-    en: 'Sign-in could not be completed. Please try again.',
-    hi: 'साइन-इन पूरा नहीं हो सका। कृपया पुनः प्रयास करें।',
+    en: "We couldn't complete Google sign-in. Please try again.",
+    hi: 'Google साइन-इन पूरा नहीं हो सका। कृपया पुनः प्रयास करें।',
   },
   oauth_config: {
     en: 'Sign-in is temporarily unavailable. Please try again later.',

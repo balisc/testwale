@@ -3,8 +3,15 @@
  * Call assertProductionEnv() from server entry points (instrumentation / root layout server path).
  */
 
+import { validateTrustedOrigin } from './publicOrigin';
+
 function isProductionRuntime() {
   return process.env.NODE_ENV === 'production';
+}
+
+/** True when deployed to Vercel production (not preview/local next start). */
+function isVercelProductionDeployment(): boolean {
+  return process.env.VERCEL_ENV === 'production';
 }
 
 /** True for Vercel preview, local, or hosts that should never be indexed as production. */
@@ -50,6 +57,17 @@ export function assertProductionEnv(): void {
     process.env.SUPABASE_ANON_KEY?.trim() ||
     '';
   if (!anon) missing.push('NEXT_PUBLIC_SUPABASE_ANON_KEY (or SUPABASE_ANON_KEY)');
+
+  if (isVercelProductionDeployment()) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() ?? '';
+    const validated = validateTrustedOrigin(siteUrl, {
+      allowLocalhost: false,
+      requireHttps: true,
+    });
+    if (!validated) {
+      missing.push('NEXT_PUBLIC_SITE_URL (HTTPS canonical origin, e.g. https://questionwale.com)');
+    }
+  }
 
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
     missing.push('SUPABASE_SERVICE_ROLE_KEY');

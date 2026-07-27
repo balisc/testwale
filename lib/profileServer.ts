@@ -334,9 +334,13 @@ export async function getUserProfilePage(userId: string): Promise<ProfilePageDat
 
   const dbFields = await getUserProfileRow(userId);
   if (dbFields) {
+    if (dbFields.bio != null) profile.profile.bio = dbFields.bio;
+    if (dbFields.country != null) profile.profile.country = dbFields.country;
+    if (dbFields.state != null) profile.profile.state = dbFields.state;
+    if (dbFields.city != null) profile.profile.city = dbFields.city;
     profile.profile.exam_date =
       dbFields.exam_date != null ? String(dbFields.exam_date).slice(0, 10) : profile.profile.exam_date;
-    if (dbFields.target_exam?.trim()) {
+    if (dbFields.target_exam != null) {
       profile.profile.target_exam = dbFields.target_exam;
     }
   }

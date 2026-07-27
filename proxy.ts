@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { AUTH_PRIVATE_HEADERS } from '@/lib/authRedirectResponse';
 import { renderBrandedNotFoundHtml } from '@/lib/brandedNotFoundHtml';
+import {
+  buildOAuthCallbackForwardUrl,
+  pathnameHasStrayOAuthParams,
+} from '@/lib/oauthCodeRedirect';
 import { checkRateLimit, getApiRateLimitKey, getClientIp } from '@/lib/rateLimit';
 import { SUBJECT_KEYS } from '@/lib/subjects';
 
@@ -106,11 +111,25 @@ function maybeRejectUnknownTopLevel(pathname: string): NextResponse | null {
   return notFoundResponse();
 }
 
+function maybeForwardStrayOAuthCode(request: NextRequest): NextResponse | null {
+  const { pathname, searchParams, origin } = request.nextUrl;
+  if (!pathnameHasStrayOAuthParams(pathname, searchParams)) return null;
+
+  const target = buildOAuthCallbackForwardUrl(origin, pathname, searchParams);
+  return NextResponse.redirect(target, {
+    status: 302,
+    headers: AUTH_PRIVATE_HEADERS,
+  });
+}
+
 /**
  * Next.js 16 request proxy. Keep this lightweight: API abuse protection only.
  * Route handlers also validate and rate-limit sensitive actions independently.
  */
 export async function proxy(request: NextRequest) {
+  const strayOAuth = maybeForwardStrayOAuthCode(request);
+  if (strayOAuth) return strayOAuth;
+
   const pathname = request.nextUrl.pathname;
   const unknownCatalogSubject = maybeRejectUnknownCatalogSubject(pathname);
   if (unknownCatalogSubject) return unknownCatalogSubject;

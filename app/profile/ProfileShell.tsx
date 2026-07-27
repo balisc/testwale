@@ -34,6 +34,7 @@ export default function ProfileShell({ activeTab, title, subtitle, children }: P
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [editMode, setEditMode] = useState<'full' | 'examGoal'>('full');
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState({ bio: '', country: '', target_exam: '', exam_date: '' });
   const [sessionChecked, setSessionChecked] = useState(false);
@@ -103,6 +104,12 @@ export default function ProfileShell({ activeTab, title, subtitle, children }: P
       if (!res.ok) throw new Error('save failed');
       const json = (await res.json()) as ProfilePageData;
       setData(json);
+      setEditForm({
+        bio: json.profile.bio ?? '',
+        country: json.profile.country ?? '',
+        target_exam: json.profile.target_exam ?? '',
+        exam_date: json.profile.exam_date?.slice(0, 10) ?? '',
+      });
       setEditOpen(false);
     } catch {
       /* keep modal open */
@@ -111,12 +118,16 @@ export default function ProfileShell({ activeTab, title, subtitle, children }: P
     }
   };
 
-  const openEdit = () => setEditOpen(true);
+  const openEdit = () => {
+    setEditMode('full');
+    setEditOpen(true);
+  };
   const openTargetExam = () => {
     if (data && needsProfileOnboarding(data.profile)) {
       router.push('/onboarding?redirect=%2Fprofile');
       return;
     }
+    setEditMode('examGoal');
     setEditOpen(true);
   };
 
@@ -162,6 +173,8 @@ export default function ProfileShell({ activeTab, title, subtitle, children }: P
         open={editOpen}
         onClose={() => setEditOpen(false)}
         copy={copy}
+        language={language}
+        mode={editMode}
         form={editForm}
         onChange={(field, value) => setEditForm((prev) => ({ ...prev, [field]: value }))}
         onSave={() => void handleSaveProfile()}

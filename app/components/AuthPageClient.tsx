@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   BarChart3,
@@ -107,6 +108,11 @@ const LEFT_ICONS = [Target, FileText, BarChart3] as const;
 const CARD_ICONS = [Shield, Cloud, MonitorSmartphone, Lock] as const;
 const BOTTOM_ICONS = [Target, Languages, BarChart3, FileText] as const;
 
+const OAUTH_CALLBACK_ERROR_MESSAGE = {
+  en: "We couldn't complete Google sign-in. Please try again.",
+  hi: 'Google साइन-इन पूरा नहीं हो सका। कृपया पुनः प्रयास करें।',
+};
+
 export default function AuthPageClient({
   googleClientId = '',
   redirectTo = '/profile',
@@ -117,6 +123,7 @@ export default function AuthPageClient({
   const { language } = useLanguage();
   const lang = language as Lang;
   const c = CONTENT[lang];
+  const searchParams = useSearchParams();
 
   const [errorModal, setErrorModal] = useState<{ open: boolean; message: string }>({
     open: false,
@@ -134,6 +141,19 @@ export default function AuthPageClient({
 
   const handleFlashMessage = useCallback((message: string) => showAuthError(message), [showAuthError]);
   const handleHashScrubbed = useCallback((message: string) => showAuthError(message), [showAuthError]);
+
+  useEffect(() => {
+    const oauthError = searchParams.get('error');
+    if (oauthError !== 'oauth_callback_failed') return;
+
+    const copy = OAUTH_CALLBACK_ERROR_MESSAGE[lang];
+    showAuthError(copy);
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete('error');
+    const clean = `${url.pathname}${url.search}${url.hash}`;
+    window.history.replaceState(null, '', clean);
+  }, [searchParams, lang, showAuthError]);
 
   return (
     <div className="relative flex min-h-screen min-w-0 flex-col overflow-x-hidden bg-[#F8FAFC] text-slate-900">

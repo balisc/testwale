@@ -70,6 +70,9 @@ export default function ProfileSummaryPanel({
             {user.email ? (
               <p className="mt-1 truncate text-sm text-slate-500">{maskEmail(user.email)}</p>
             ) : null}
+            {profile.bio?.trim() ? (
+              <p className="mt-2 break-words text-sm text-slate-600">{profile.bio.trim()}</p>
+            ) : null}
             <div className="mt-3 flex flex-wrap items-start gap-2">
               {profile.target_exam ? (
                 <div className="flex flex-col items-start gap-2">
@@ -81,6 +84,13 @@ export default function ProfileSummaryPanel({
                       <ExamCountdownBadge examDate={profile.exam_date} copy={copy} language={language} />
                     </div>
                   ) : null}
+                  <button
+                    type="button"
+                    onClick={onSetTargetExam}
+                    className="inline-flex min-h-[32px] items-center text-xs font-medium text-brand hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                  >
+                    {copy.changeExamAndDate}
+                  </button>
                 </div>
               ) : (
                 <button

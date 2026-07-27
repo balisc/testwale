@@ -12,7 +12,7 @@ export function buildOAuthCallbackUrl(trustedOrigin: string, nextPath?: string |
     throw new Error('Invalid trusted origin for OAuth callback.');
   }
 
-  const next = getSafeRedirectPath(nextPath, '/dashboard');
+  const next = getSafeRedirectPath(nextPath, '/');
   const url = new URL('/auth/callback', validatedOrigin);
   url.searchParams.set('next', next);
   return url.toString();

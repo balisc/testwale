@@ -11,7 +11,13 @@ type ModalPortalProps = {
   /** Extra classes for the centered panel wrapper. */
   panelClassName?: string;
   labelledBy?: string;
+  describedBy?: string;
   zClassName?: string;
+  /** When false, backdrop clicks do not call onClose. Default true. */
+  closeOnBackdropClick?: boolean;
+  /** When false, Escape does not call onClose. Default true. */
+  closeOnEscape?: boolean;
+  backdropClassName?: string;
 };
 
 /**
@@ -24,7 +30,11 @@ export default function ModalPortal({
   children,
   panelClassName = '',
   labelledBy,
+  describedBy,
   zClassName = 'z-[300]',
+  closeOnBackdropClick = true,
+  closeOnEscape = true,
+  backdropClassName = 'bg-slate-900/50',
 }: ModalPortalProps) {
   const [mounted, setMounted] = useState(false);
   useBodyScrollLock(open);
@@ -34,13 +44,13 @@ export default function ModalPortal({
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !closeOnEscape) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, onClose]);
+  }, [open, onClose, closeOnEscape]);
 
   if (!open || !mounted) return null;
 
@@ -49,16 +59,21 @@ export default function ModalPortal({
       className={`fixed inset-0 ${zClassName} flex items-center justify-center p-4`}
       role="presentation"
     >
-      <button
-        type="button"
-        aria-label="Close"
-        className="absolute inset-0 bg-slate-900/50"
-        onClick={onClose}
-      />
+      {closeOnBackdropClick ? (
+        <button
+          type="button"
+          aria-label="Close"
+          className={`absolute inset-0 ${backdropClassName}`}
+          onClick={onClose}
+        />
+      ) : (
+        <div aria-hidden className={`absolute inset-0 ${backdropClassName}`} />
+      )}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
+        aria-describedby={describedBy}
         className={`relative z-10 my-auto max-h-[min(92dvh,100%)] w-full overflow-y-auto overscroll-contain ${panelClassName}`}
       >
         {children}

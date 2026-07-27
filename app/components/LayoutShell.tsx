@@ -6,6 +6,8 @@ import Template from './Template';
 import HomeHeader from '@/app/home/components/HomeHeader';
 import HomeFooter from '@/app/home/components/HomeFooter';
 import SmoothHashScroll, { SCROLL_INTENT_KEY } from './SmoothHashScroll';
+import QualityUpgradeAnnouncement from '@/components/QualityUpgradeAnnouncement';
+import OAuthCodeQueryGuard from '@/components/OAuthCodeQueryGuard';
 
 const HIDDEN_CHROME_PATHS = ['/loading-test'];
 const PageChromeVisibilityContext = createContext<((visible: boolean) => void) | null>(null);
@@ -38,10 +40,12 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
 
   return (
     <PageChromeVisibilityContext.Provider value={setShowPageChrome}>
+      <OAuthCodeQueryGuard />
       <SmoothHashScroll />
       {showPageChrome ? <HomeHeader /> : null}
       <Template disableTopPadding={!showPageChrome}>{children}</Template>
       {showPageChrome ? <HomeFooter /> : null}
+      <QualityUpgradeAnnouncement />
     </PageChromeVisibilityContext.Provider>
   );
 }
