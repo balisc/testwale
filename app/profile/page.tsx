@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { buildPageMetadata } from '@/lib/seo';
-import ProfileClient from './ProfileClient';
+import ProfileOverviewPage from './ProfileOverviewPage';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,8 +13,8 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default function ProfilePage() {
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#F8FAFC]">
-      <ProfileClient />
+    <main className="min-h-screen overflow-x-hidden bg-white">
+      <ProfileOverviewPage />
     </main>
   );
 }

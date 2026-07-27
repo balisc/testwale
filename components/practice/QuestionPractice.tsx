@@ -26,6 +26,7 @@ import ReportComingSoonModal from '@/components/practice/ReportComingSoonModal';
 import VerifiedSources from '@/components/questions/VerifiedSources';
 import ModalPortal from '@/components/ModalPortal';
 import { useAuth } from '@/lib/AuthContext';
+import { useRequireOnboarding } from '@/lib/useRequireOnboarding';
 import { useLanguage } from '@/lib/LanguageContext';
 import {
   formatCorrectPercentage,
@@ -84,25 +85,30 @@ const OPTION_KEYS: OptionKey[] = ['A', 'B', 'C', 'D'];
 const MAX_AUTO_BATCH_FETCHES = 10;
 
 function isAbortError(error: unknown): boolean {
-  return (
+  if (
     (error instanceof DOMException && error.name === 'AbortError') ||
     (error instanceof Error && error.name === 'AbortError')
-  );
-}
-
-/** Cancel in-flight fetches without surfacing dev overlay AbortError noise. */
-function safeAbortController(controller: AbortController | null | undefined, reason = 'cancelled') {
-  if (!controller || controller.signal.aborted) return;
-  try {
-    controller.abort(reason);
-  } catch {
-    /* expected during navigation/unmount */
+  ) {
+    return true;
   }
+  if (typeof error === 'string') return true;
+  if (error instanceof Error && /aborted/i.test(error.message)) return true;
+  return false;
 }
 
-function safeAbortRef(ref: MutableRefObject<AbortController | null>, reason = 'cancelled') {
-  safeAbortController(ref.current, reason);
+/** Drop a controller ref without calling abort() — avoids dev overlay AbortError noise. */
+function releaseAbortRef(ref: MutableRefObject<AbortController | null>) {
   ref.current = null;
+}
+
+function invalidateInflightWork(generationRef: MutableRefObject<number>) {
+  generationRef.current += 1;
+}
+
+function ignoreAbort(promise: Promise<unknown>): void {
+  void promise.catch((error) => {
+    if (isAbortError(error)) return;
+  });
 }
 
 type QuestionResult = SubmitAnswerResponse;
@@ -244,6 +250,17 @@ function applyAttemptRows(attempts: PracticeAttemptRestoreRow[]): {
   return { nextResults, nextAttempted };
 }
 
+function dedupeIdsPreserveOrder(ids: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const id of ids) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
 function mergeQuestionsById(existing: PublicQuestion[], incoming: PublicQuestion[]): PublicQuestion[] {
   const seen = new Set(existing.map((question) => question.id));
   const merged = [...existing];
@@ -279,7 +296,8 @@ export default function QuestionPractice({
   totalQuestionCount,
 }: QuestionPracticeProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { ready: onboardingReady } = useRequireOnboarding({ enabled: Boolean(user) });
   const { language, setLanguage } = useLanguage();
   const c = COPY[language];
 
@@ -296,7 +314,7 @@ export default function QuestionPractice({
   const isSubtopicBatchMode =
     questionBatchScope === 'subtopic' && Boolean(questionBatchScopeId);
 
-  const isSubtopicMasteryMode = isSubtopicBatchMode && Boolean(user);
+  const isSubtopicMasteryMode = isSubtopicBatchMode && Boolean(user) && !authLoading;
 
   const practiceScopeKey = useMemo(
     () => buildPracticeScopeKey(questionBatchScope, questionBatchScopeId, examCode),
@@ -356,6 +374,8 @@ export default function QuestionPractice({
   const [advancingCycle, setAdvancingCycle] = useState(false);
   const [progressRefreshKey, setProgressRefreshKey] = useState(0);
   const [practiceProgress, setPracticeProgress] = useState<PracticeProgress | null>(null);
+  /** Keeps explanation visible after a correct answer removes the question from the batch strip. */
+  const [reviewQuestion, setReviewQuestion] = useState<PublicQuestion | null>(null);
 
   const questionStartedAt = useRef<number>(Date.now());
   const isFirstGuestSubmit = useRef(true);
@@ -371,6 +391,7 @@ export default function QuestionPractice({
   const phaseEpochRef = useRef('unseen:0');
   const batchAbortRef = useRef<AbortController | null>(null);
   const personalizeAbortRef = useRef<AbortController | null>(null);
+  const personalizedForUserRef = useRef<string | null>(null);
   const requestGenerationRef = useRef(0);
   const activeScopeKeyRef = useRef<string | null>(null);
   const questionStateChainRef = useRef(Promise.resolve());
@@ -381,6 +402,13 @@ export default function QuestionPractice({
   const nextCursorRef = useRef<string | null>(initialNextCursor);
   const hasMoreRef = useRef(initialHasMore);
   const loadedQuestionsRef = useRef<PublicQuestion[]>(resolvedInitialQuestions);
+  const currentPageIdsRef = useRef<string[]>(resolvedInitialQuestions.map((q) => q.id));
+  const sessionHiddenIdsRef = useRef<Set<string>>(new Set());
+  const correctQuestionIdsRef = useRef<Set<string>>(new Set());
+  const sessionPassRemovedIdsRef = useRef<Set<string>>(new Set());
+  const masteredQuestionIdsRef = useRef<Set<string>>(new Set());
+  const backfillScheduledRef = useRef<Set<string>>(new Set());
+  const backfillChainRef = useRef(Promise.resolve());
 
   useEffect(() => {
     nextCursorRef.current = nextCursor;
@@ -394,41 +422,71 @@ export default function QuestionPractice({
     loadedQuestionsRef.current = loadedQuestions;
   }, [loadedQuestions]);
 
+  useEffect(() => {
+    currentPageIdsRef.current = currentPageIds;
+  }, [currentPageIds]);
+
+  useEffect(() => {
+    sessionHiddenIdsRef.current = sessionHiddenIds;
+  }, [sessionHiddenIds]);
+
+  useEffect(() => {
+    correctQuestionIdsRef.current = correctQuestionIds;
+  }, [correctQuestionIds]);
+
+  useEffect(() => {
+    sessionPassRemovedIdsRef.current = sessionPassRemovedIds;
+  }, [sessionPassRemovedIds]);
+
+  useEffect(() => {
+    masteredQuestionIdsRef.current = masteredQuestionIds;
+  }, [masteredQuestionIds]);
+
   const questionPool = isSubtopicBatchMode ? loadedQuestions : questions;
 
   const hiddenQuestionIds = useMemo(() => {
     const ids = new Set(correctQuestionIds);
     for (const id of sessionHiddenIds) ids.add(id);
+    for (const id of masteredQuestionIds) ids.add(id);
+    for (const [id, result] of Object.entries(resultsByQuestion)) {
+      if (result?.is_correct) ids.add(id);
+    }
     return ids;
-  }, [correctQuestionIds, sessionHiddenIds]);
+  }, [correctQuestionIds, sessionHiddenIds, masteredQuestionIds, resultsByQuestion]);
 
   const activeQuestions = useMemo(() => {
-    let filtered: PublicQuestion[];
+    // Current batch page: always show the full page (up to 10), including attempted
+    // questions on this page. Eligibility only gates new batch fetches, not in-page nav.
+    if (isSubtopicBatchMode && currentPageIds.length > 0) {
+      const byId = new Map(questionPool.map((question) => [question.id, question]));
+      return dedupeIdsPreserveOrder(currentPageIds)
+        .map((id) => byId.get(id))
+        .filter((question): question is PublicQuestion => {
+          if (!question) return false;
+          if (!user?.id) return true;
+          if (!verifiedQuestionIds.has(question.id)) return false;
+          if (sessionPassRemovedIds.has(question.id)) return false;
+          if (hiddenQuestionIds.has(question.id)) return false;
+          return true;
+        });
+    }
 
     if (!isSubtopicBatchMode || !user?.id) {
-      filtered = questionPool;
-    } else if (isSubtopicMasteryMode) {
-      filtered = questionPool.filter(
+      return questionPool;
+    }
+
+    if (isSubtopicMasteryMode) {
+      return questionPool.filter(
         (question) =>
           verifiedQuestionIds.has(question.id) &&
           eligibleQuestionIds.has(question.id) &&
           !sessionPassRemovedIds.has(question.id),
       );
-    } else {
-      filtered = questionPool.filter(
-        (question) => verifiedQuestionIds.has(question.id) && !hiddenQuestionIds.has(question.id),
-      );
     }
 
-    // Show only the current page of 10 so previous pages leave the UI when the next batch loads.
-    if (isSubtopicBatchMode && currentPageIds.length > 0) {
-      const byId = new Map(filtered.map((question) => [question.id, question]));
-      return currentPageIds
-        .map((id) => byId.get(id))
-        .filter((question): question is PublicQuestion => Boolean(question));
-    }
-
-    return filtered;
+    return questionPool.filter(
+      (question) => verifiedQuestionIds.has(question.id) && !hiddenQuestionIds.has(question.id),
+    );
   }, [
     questionPool,
     isSubtopicBatchMode,
@@ -443,7 +501,8 @@ export default function QuestionPractice({
 
   const isVerifyingNewBatch = verifyingBatchIds.size > 0;
 
-  const current = activeQuestions[index];
+  const navigableCurrent = activeQuestions[index] ?? null;
+  const current = reviewQuestion ?? navigableCurrent;
   const total = activeQuestions.length;
   const displayQuestionNumber = pageNumberOffset + index + 1;
   const knownSubtopicTotal =
@@ -467,6 +526,7 @@ export default function QuestionPractice({
     setSubmitted(false);
     setSubmitError(null);
     setSubmitNotice(null);
+    setReviewQuestion(null);
     questionStartedAt.current = Date.now();
   }, []);
 
@@ -515,6 +575,8 @@ export default function QuestionPractice({
       questionStateInFlightRef.current = false;
       advanceCycleInFlightRef.current = false;
       batchCompleteInFlightRef.current = false;
+      backfillScheduledRef.current.clear();
+      backfillChainRef.current = Promise.resolve();
       resetQuestionState();
     },
     [resetQuestionState],
@@ -522,8 +584,9 @@ export default function QuestionPractice({
 
   useEffect(() => {
     return () => {
-      safeAbortRef(batchAbortRef, 'unmount');
-      safeAbortRef(personalizeAbortRef, 'unmount');
+      invalidateInflightWork(requestGenerationRef);
+      releaseAbortRef(batchAbortRef);
+      releaseAbortRef(personalizeAbortRef);
     };
   }, []);
 
@@ -606,6 +669,19 @@ export default function QuestionPractice({
           for (const id of state.masteredQuestionIds) next.add(id);
           return next;
         });
+        setCorrectQuestionIds((prev) => {
+          const next = new Set(prev);
+          for (const id of state.masteredQuestionIds) next.add(id);
+          return next;
+        });
+        setSessionHiddenIds((prev) => {
+          const next = new Set(prev);
+          for (const id of state.masteredQuestionIds) next.add(id);
+          return next;
+        });
+        for (const id of state.masteredQuestionIds) {
+          checkedCorrectIdsRef.current.add(id);
+        }
       }
     },
     [],
@@ -670,7 +746,7 @@ export default function QuestionPractice({
           applyQuestionBatchState(state, unchecked);
           setQuestionStateError(null);
         } catch (error) {
-          if ((error as Error).name === 'AbortError') return;
+          if (isAbortError(error)) return;
           if (isStaleGeneration(generation, scopeKey)) return;
 
           // Still surface newly fetched public questions if mastery RPC fails mid-session.
@@ -777,6 +853,11 @@ export default function QuestionPractice({
             for (const id of masteredIds) next.add(id);
             return next;
           });
+          setSessionHiddenIds((prev) => {
+            const next = new Set(prev);
+            for (const id of masteredIds) next.add(id);
+            return next;
+          });
         }
 
         setCorrectIdsError(null);
@@ -840,7 +921,6 @@ export default function QuestionPractice({
     async (generation: number, scopeKey: string) => {
       fetchedCursorsRef.current.clear();
       checkedQuestionStateRef.current.clear();
-      setLoadedQuestions([]);
       setVerifiedQuestionIds(new Set());
       setEligibleQuestionIds(new Set());
       setSessionPassRemovedIds(new Set());
@@ -872,7 +952,7 @@ export default function QuestionPractice({
           );
         }
       } catch (error) {
-        if ((error as Error).name === 'AbortError') return;
+        if (isAbortError(error)) return;
         if (!isStaleGeneration(generation, scopeKey)) {
           setBatchLoadError(c.loadMoreFailed);
         }
@@ -895,7 +975,7 @@ export default function QuestionPractice({
     const generationAtStart = requestGenerationRef.current;
     const scopeKey = practiceScopeKey;
 
-    void (async () => {
+    ignoreAbort((async () => {
       const candidateIds = loadedQuestionsRef.current.map((question) => question.id);
       const sessionSource = 'initialQuestions/unstable_cache';
 
@@ -1032,7 +1112,7 @@ export default function QuestionPractice({
           },
         });
       }
-    })();
+    })());
 
     return () => {
       cancelled = true;
@@ -1164,6 +1244,19 @@ export default function QuestionPractice({
           scopeKey,
           options,
         );
+        if (isStaleGeneration(generation, scopeKey)) return;
+        try {
+          await fetchAttemptsRestore(
+            batchQuestions.map((question) => question.id),
+            signal,
+            generation,
+            scopeKey,
+          );
+        } catch (error) {
+          if (isAbortError(error)) return;
+          if (isStaleGeneration(generation, scopeKey)) return;
+          setAttemptsError(c.loadError);
+        }
         return;
       }
 
@@ -1189,12 +1282,12 @@ export default function QuestionPractice({
         try {
           await fetchAttemptsRestore(newIds, signal, generation, scopeKey);
         } catch (error) {
-          if ((error as Error).name === 'AbortError') return;
+          if (isAbortError(error)) return;
           if (isStaleGeneration(generation, scopeKey)) return;
           setAttemptsError(c.loadError);
         }
       } catch (error) {
-        if ((error as Error).name === 'AbortError') return;
+        if (isAbortError(error)) return;
         if (isStaleGeneration(generation, scopeKey)) return;
         const message =
           (error as Error).message === 'unauthorized' ? c.sessionExpired : c.correctIdsError;
@@ -1238,6 +1331,136 @@ export default function QuestionPractice({
     [processNewBatchQuestions],
   );
 
+  /** Hide a first-attempt-correct question and pull the next unseen question into this batch page. */
+  const backfillBatchAfterPass = useCallback(
+    async (passedQuestionId: string) => {
+      if (!isSubtopicBatchMode || !user) return;
+
+      const runBackfill = async () => {
+        if (!currentPageIdsRef.current.includes(passedQuestionId)) return;
+
+        const generation = requestGenerationRef.current;
+        const scopeKey = activeScopeKeyRef.current ?? practiceScopeKey;
+
+        const isBlockedId = (id: string) =>
+          id === passedQuestionId ||
+          sessionHiddenIdsRef.current.has(id) ||
+          correctQuestionIdsRef.current.has(id) ||
+          masteredQuestionIdsRef.current.has(id) ||
+          sessionPassRemovedIdsRef.current.has(id) ||
+          dedupeIdsPreserveOrder(currentPageIdsRef.current).includes(id);
+
+        let replacement: PublicQuestion | undefined = loadedQuestionsRef.current.find(
+          (question) => !isBlockedId(question.id),
+        );
+
+        if (!replacement && hasMoreRef.current && nextCursorRef.current) {
+          const cursor = nextCursorRef.current;
+          const controller = new AbortController();
+          batchAbortRef.current = controller;
+          try {
+            const page = await loadQuestionBatchPage(cursor, controller.signal, generation, scopeKey);
+            if (page && !isStaleGeneration(generation, scopeKey)) {
+              fetchedCursorsRef.current.add(cursor);
+              nextCursorRef.current = page.nextCursor;
+              hasMoreRef.current = page.hasMore;
+              setNextCursor(page.nextCursor);
+              setHasMore(page.hasMore);
+              setLoadedQuestions((prev) => {
+                const merged = mergeQuestionsById(prev, page.questions);
+                loadedQuestionsRef.current = merged;
+                return merged;
+              });
+              const latestPageIds = dedupeIdsPreserveOrder(currentPageIdsRef.current);
+              replacement = page.questions.find(
+                (question) =>
+                  question.id !== passedQuestionId &&
+                  !sessionHiddenIdsRef.current.has(question.id) &&
+                  !correctQuestionIdsRef.current.has(question.id) &&
+                  !masteredQuestionIdsRef.current.has(question.id) &&
+                  !sessionPassRemovedIdsRef.current.has(question.id) &&
+                  !latestPageIds.includes(question.id),
+              );
+            }
+          } catch (error) {
+            if (!isAbortError(error)) {
+              setBatchLoadError(c.loadMoreFailed);
+            }
+          }
+        }
+
+        if (replacement) {
+          releaseAbortRef(personalizeAbortRef);
+          const controller = new AbortController();
+          personalizeAbortRef.current = controller;
+          await verifyBatchQuestions([replacement], controller.signal, generation, scopeKey);
+        }
+
+        setCurrentPageIds((prev) => {
+          const normalized = dedupeIdsPreserveOrder(prev);
+          if (!normalized.includes(passedQuestionId)) return normalized;
+
+          const removeIdx = normalized.indexOf(passedQuestionId);
+          const withoutPassed = normalized.filter((id) => id !== passedQuestionId);
+          if (!replacement) {
+            return withoutPassed.slice(0, QUESTION_BATCH_PAGE_SIZE);
+          }
+          if (withoutPassed.includes(replacement.id)) {
+            return withoutPassed.slice(0, QUESTION_BATCH_PAGE_SIZE);
+          }
+
+          const next = [...withoutPassed];
+          const insertAt = removeIdx >= 0 ? Math.min(removeIdx, next.length) : next.length;
+          next.splice(insertAt, 0, replacement.id);
+          return dedupeIdsPreserveOrder(next).slice(0, QUESTION_BATCH_PAGE_SIZE);
+        });
+      };
+
+      backfillChainRef.current = backfillChainRef.current.then(runBackfill, runBackfill);
+      await backfillChainRef.current;
+    },
+    [
+      isSubtopicBatchMode,
+      user,
+      practiceScopeKey,
+      isStaleGeneration,
+      loadQuestionBatchPage,
+      verifyBatchQuestions,
+      c.loadMoreFailed,
+    ],
+  );
+
+  const passFirstAttemptCorrectQuestion = useCallback(
+    async (questionId: string) => {
+      if (!isSubtopicBatchMode || !user) return;
+      if (backfillScheduledRef.current.has(questionId)) return;
+
+      backfillScheduledRef.current.add(questionId);
+
+      setSessionHiddenIds((prev) => new Set(prev).add(questionId));
+      setCorrectQuestionIds((prev) => {
+        const next = new Set(prev);
+        next.add(questionId);
+        correctQuestionIdsRef.current = next;
+        return next;
+      });
+      checkedCorrectIdsRef.current.add(questionId);
+
+      if (isSubtopicMasteryMode) {
+        setSessionPassRemovedIds((prev) => new Set(prev).add(questionId));
+        setEligibleQuestionIds((prev) => {
+          const next = new Set(prev);
+          next.delete(questionId);
+          return next;
+        });
+        setMasteredQuestionIds((prev) => new Set(prev).add(questionId));
+      }
+
+      await backfillBatchAfterPass(questionId);
+    },
+    [isSubtopicBatchMode, user, isSubtopicMasteryMode, backfillBatchAfterPass],
+  );
+
   const loadNextBatch = useCallback(
     async (options?: { manual?: boolean; cursor?: string | null }): Promise<boolean> => {
       const cursorToFetch = options?.cursor ?? nextCursorRef.current;
@@ -1247,7 +1470,7 @@ export default function QuestionPractice({
       const generation = requestGenerationRef.current;
       const scopeKey = activeScopeKeyRef.current ?? practiceScopeKey;
 
-      safeAbortRef(batchAbortRef);
+      releaseAbortRef(batchAbortRef);
       const controller = new AbortController();
       batchAbortRef.current = controller;
 
@@ -1276,7 +1499,7 @@ export default function QuestionPractice({
         await processNewBatchQuestions(page.questions, controller.signal, generation, scopeKey);
         return page.questions.length > 0;
       } catch (error) {
-        if ((error as Error).name === 'AbortError') return false;
+        if (isAbortError(error)) return false;
         if (isStaleGeneration(generation, scopeKey)) return false;
         setBatchLoadError(c.loadMoreFailed);
         return false;
@@ -1392,6 +1615,13 @@ export default function QuestionPractice({
     if (activeQuestions.length > 0) return;
     if (catalogQuestionCount === 0 || practicePhase === 'completed') return;
 
+    if (currentPageIds.length > 0) {
+      const pageStillPending = currentPageIds.some(
+        (id) => !attemptedIds.has(id) && !resultsByQuestion[id],
+      );
+      if (pageStillPending) return;
+    }
+
     const generation = requestGenerationRef.current;
     const scopeKey = activeScopeKeyRef.current ?? practiceScopeKey;
     const cursor = nextCursorRef.current;
@@ -1403,15 +1633,17 @@ export default function QuestionPractice({
         return;
       }
       consecutiveEmptyBatchesRef.current += 1;
-      void loadNextBatch().then((loadedNew) => {
-        if (!loadedNew) return;
-        consecutiveEmptyBatchesRef.current = Math.max(0, consecutiveEmptyBatchesRef.current - 1);
-      });
+      ignoreAbort(
+        loadNextBatch().then((loadedNew) => {
+          if (!loadedNew) return;
+          consecutiveEmptyBatchesRef.current = Math.max(0, consecutiveEmptyBatchesRef.current - 1);
+        }),
+      );
       return;
     }
 
     if (!hasMoreRef.current || !cursor) {
-      void advancePracticeCycle(generation, scopeKey);
+      ignoreAbort(advancePracticeCycle(generation, scopeKey));
     }
   }, [
     isSubtopicMasteryMode,
@@ -1429,9 +1661,13 @@ export default function QuestionPractice({
     loadNextBatch,
     advancePracticeCycle,
     practiceScopeKey,
+    currentPageIds,
+    attemptedIds,
+    resultsByQuestion,
   ]);
 
   const handleRetryQuestionState = useCallback(() => {
+    invalidateInflightWork(requestGenerationRef);
     const generation = requestGenerationRef.current;
     const scopeKey = activeScopeKeyRef.current ?? practiceScopeKey;
     const unchecked = loadedQuestions
@@ -1439,16 +1675,18 @@ export default function QuestionPractice({
       .filter((id) => !checkedQuestionStateRef.current.has(id));
     if (unchecked.length === 0) return;
 
-      safeAbortRef(personalizeAbortRef);
+    releaseAbortRef(personalizeAbortRef);
     const controller = new AbortController();
     personalizeAbortRef.current = controller;
 
-    void fetchQuestionStateForBatch(
-      unchecked,
-      controller.signal,
-      generation,
-      scopeKey,
-      { isInitial: activeQuestions.length === 0 },
+    ignoreAbort(
+      fetchQuestionStateForBatch(
+        unchecked,
+        controller.signal,
+        generation,
+        scopeKey,
+        { isInitial: activeQuestions.length === 0 },
+      ),
     );
   }, [
     loadedQuestions,
@@ -1462,6 +1700,7 @@ export default function QuestionPractice({
       handleRetryQuestionState();
       return;
     }
+    invalidateInflightWork(requestGenerationRef);
     const generation = requestGenerationRef.current;
     const scopeKey = activeScopeKeyRef.current ?? practiceScopeKey;
     const unchecked = loadedQuestions
@@ -1469,68 +1708,100 @@ export default function QuestionPractice({
       .filter((id) => !checkedCorrectIdsRef.current.has(id));
     if (unchecked.length === 0) return;
 
-      safeAbortRef(personalizeAbortRef);
+    releaseAbortRef(personalizeAbortRef);
     const controller = new AbortController();
     personalizeAbortRef.current = controller;
 
-    void verifyBatchQuestions(
-      loadedQuestions.filter((question) => unchecked.includes(question.id)),
-      controller.signal,
-      generation,
-      scopeKey,
-      { isInitial: activeQuestions.length === 0 },
+    ignoreAbort(
+      verifyBatchQuestions(
+        loadedQuestions.filter((question) => unchecked.includes(question.id)),
+        controller.signal,
+        generation,
+        scopeKey,
+        { isInitial: activeQuestions.length === 0 },
+      ),
     );
   }, [loadedQuestions, activeQuestions.length, verifyBatchQuestions, practiceScopeKey, isSubtopicMasteryMode, handleRetryQuestionState]);
 
   const handleRetryAttempts = useCallback(() => {
+    invalidateInflightWork(requestGenerationRef);
     const generation = requestGenerationRef.current;
     const scopeKey = activeScopeKeyRef.current ?? practiceScopeKey;
     const verifiedIds = loadedQuestions
       .map((question) => question.id)
       .filter((id) => verifiedQuestionIds.has(id));
 
-      safeAbortRef(personalizeAbortRef);
+    releaseAbortRef(personalizeAbortRef);
     const controller = new AbortController();
     personalizeAbortRef.current = controller;
 
-    void (async () => {
+    ignoreAbort((async () => {
       try {
         await fetchAttemptsRestore(verifiedIds, controller.signal, generation, scopeKey);
       } catch (error) {
-        if ((error as Error).name === 'AbortError') return;
+        if (isAbortError(error)) return;
         if (isStaleGeneration(generation, scopeKey)) return;
         setAttemptsError(c.loadError);
       }
-    })();
+    })());
   }, [loadedQuestions, verifiedQuestionIds, fetchAttemptsRestore, isStaleGeneration, c.loadError, practiceScopeKey]);
 
   const handleRetryBatchLoad = useCallback(() => {
     setBatchLoadError(null);
-    void loadNextBatch({ manual: true });
+    ignoreAbort(loadNextBatch({ manual: true }));
   }, [loadNextBatch]);
 
   const handleManualLoadMore = useCallback(() => {
     setBatchSafetyLimitReached(false);
     consecutiveEmptyBatchesRef.current = 0;
-    void loadNextBatch({ manual: true });
+    ignoreAbort(loadNextBatch({ manual: true }));
   }, [loadNextBatch]);
 
-  const isFirstAttemptCorrect = useCallback(
+  const isQuestionCorrectlyAnswered = useCallback(
     (questionId: string) => {
+      if (correctQuestionIds.has(questionId) || masteredQuestionIds.has(questionId)) return true;
       const result = resultsByQuestion[questionId];
-      return Boolean(result?.is_new_attempt && result?.is_correct);
+      return Boolean(result?.is_correct);
     },
-    [resultsByQuestion],
+    [correctQuestionIds, masteredQuestionIds, resultsByQuestion],
   );
 
   useEffect(() => {
+    if (!isSubtopicBatchMode || !user) return;
+    if (checkingCorrectIds || checkingQuestionState) return;
+
+    const toBackfill = currentPageIds.filter(
+      (id) => hiddenQuestionIds.has(id) && !backfillScheduledRef.current.has(id),
+    );
+    if (toBackfill.length === 0) return;
+
+    for (const id of toBackfill) backfillScheduledRef.current.add(id);
+
+    void (async () => {
+      for (const id of toBackfill) {
+        await backfillBatchAfterPass(id);
+      }
+    })();
+  }, [
+    isSubtopicBatchMode,
+    user,
+    currentPageIds,
+    hiddenQuestionIds,
+    checkingCorrectIds,
+    checkingQuestionState,
+    backfillBatchAfterPass,
+  ]);
+
+  useEffect(() => {
+    if (reviewQuestion) return;
+
     resetQuestionState();
-    if (current && resultsByQuestion[current.id]) {
-      const saved = resultsByQuestion[current.id];
+    if (navigableCurrent && resultsByQuestion[navigableCurrent.id]) {
+      const saved = resultsByQuestion[navigableCurrent.id];
       setSelectedOption(saved.selected_option as OptionKey);
       setSubmitted(true);
     }
-  }, [index, current, resultsByQuestion, resetQuestionState]);
+  }, [index, navigableCurrent, reviewQuestion, resultsByQuestion, resetQuestionState]);
 
   // Keep a unique SEO URL for the currently shown question.
   // Refresh stays on the same practice UI via the /question/[...] catalog renderer.
@@ -1572,10 +1843,10 @@ export default function QuestionPractice({
     if (activeScopeKeyRef.current === practiceScopeKey) return;
 
     const isScopeChange = activeScopeKeyRef.current !== null;
-    safeAbortRef(batchAbortRef, 'scope-change');
-    safeAbortRef(personalizeAbortRef, 'scope-change');
     activeScopeKeyRef.current = practiceScopeKey;
     requestGenerationRef.current += 1;
+    releaseAbortRef(batchAbortRef);
+    releaseAbortRef(personalizeAbortRef);
 
     if (isScopeChange) {
       resetBatchPracticeState(resolvedInitialQuestions, initialNextCursor, initialHasMore);
@@ -1591,32 +1862,43 @@ export default function QuestionPractice({
   ]);
 
   useEffect(() => {
-    if (!isSubtopicBatchMode || !user) {
-      setCheckingCorrectIds(false);
-      setCheckingQuestionState(false);
-      setVerifyingBatchIds(new Set());
+    if (!isSubtopicBatchMode || authLoading || !user || !onboardingReady) {
+      if (!user) personalizedForUserRef.current = null;
+      if (!user || authLoading) {
+        setCheckingCorrectIds(false);
+        setCheckingQuestionState(false);
+        setVerifyingBatchIds(new Set());
+      }
       return;
     }
 
+    if (personalizedForUserRef.current === user.id) return;
+    personalizedForUserRef.current = user.id;
+
     const generation = requestGenerationRef.current;
     const scopeKey = activeScopeKeyRef.current ?? practiceScopeKey;
-    const initialIds = resolvedInitialQuestions.map((question) => question.id);
+    const batchSource =
+      loadedQuestionsRef.current.length > 0 ? loadedQuestionsRef.current : resolvedInitialQuestions;
+    const initialIds = batchSource.map((question) => question.id);
 
-    safeAbortRef(personalizeAbortRef, 'initial-batch');
+    releaseAbortRef(personalizeAbortRef);
     const controller = new AbortController();
     personalizeAbortRef.current = controller;
 
     if (initialIds.length === 0 && isSubtopicMasteryMode) {
-      void fetchQuestionStateForBatch(
-        [],
-        controller.signal,
-        generation,
-        scopeKey,
-        { isInitial: true, probeCatalog: true },
-      ).catch((error) => {
-        if (isAbortError(error)) return;
-      });
-      return () => safeAbortController(controller, 'effect-cleanup');
+      setCheckingQuestionState(true);
+      ignoreAbort(
+        fetchQuestionStateForBatch(
+          [],
+          controller.signal,
+          generation,
+          scopeKey,
+          { isInitial: true, probeCatalog: true },
+        ),
+      );
+      return () => {
+        releaseAbortRef(personalizeAbortRef);
+      };
     }
 
     if (initialIds.length === 0) {
@@ -1625,22 +1907,23 @@ export default function QuestionPractice({
       return;
     }
 
-    void verifyBatchQuestions(
-      resolvedInitialQuestions,
-      controller.signal,
-      generation,
-      scopeKey,
-      { isInitial: true },
-    ).catch((error) => {
-      if (isAbortError(error)) return;
-    });
+    if (isSubtopicMasteryMode) setCheckingQuestionState(true);
+    else setCheckingCorrectIds(true);
 
-    return () => safeAbortController(controller, 'effect-cleanup');
+    ignoreAbort(
+      verifyBatchQuestions(batchSource, controller.signal, generation, scopeKey, { isInitial: true }),
+    );
+
+    return () => {
+      releaseAbortRef(personalizeAbortRef);
+    };
   }, [
     isSubtopicBatchMode,
     isSubtopicMasteryMode,
     user,
     user?.id,
+    authLoading,
+    onboardingReady,
     practiceScopeKey,
     resolvedInitialQuestions,
     verifyBatchQuestions,
@@ -1663,7 +1946,16 @@ export default function QuestionPractice({
     }
     if (batchLoadError || batchSafetyLimitReached) return;
     if (isSubtopicMasteryMode ? questionStateError : correctIdsError) return;
-    if (activeQuestions.length > 0) {
+
+    if (currentPageIds.length > 0) {
+      const pageStillPending = currentPageIds.some(
+        (id) => !attemptedIds.has(id) && !resultsByQuestion[id],
+      );
+      if (pageStillPending || activeQuestions.length > 0) {
+        consecutiveEmptyBatchesRef.current = 0;
+        return;
+      }
+    } else if (activeQuestions.length > 0) {
       consecutiveEmptyBatchesRef.current = 0;
       return;
     }
@@ -1683,7 +1975,7 @@ export default function QuestionPractice({
     }
 
     consecutiveEmptyBatchesRef.current += 1;
-    void loadNextBatch();
+    ignoreAbort(loadNextBatch());
   }, [
     isSubtopicBatchMode,
     isSubtopicMasteryMode,
@@ -1698,6 +1990,9 @@ export default function QuestionPractice({
     correctIdsError,
     questionStateError,
     activeQuestions.length,
+    currentPageIds,
+    attemptedIds,
+    resultsByQuestion,
     loadNextBatch,
     maybeAdvanceMasteryBatch,
     practiceScopeKey,
@@ -1951,13 +2246,18 @@ export default function QuestionPractice({
         if (result.is_mastered) {
           setMasteredQuestionIds((prev) => new Set(prev).add(current.id));
         }
-      } else if (user && result.is_new_attempt && result.is_correct) {
+      } else if (user && result.is_correct && !isSubtopicBatchMode) {
         setCorrectQuestionIds((prev) => {
           const next = new Set(prev);
           next.add(current.id);
           return next;
         });
         checkedCorrectIdsRef.current.add(current.id);
+      }
+
+      if (isSubtopicBatchMode && user && result.is_correct) {
+        setReviewQuestion(current);
+        void passFirstAttemptCorrectQuestion(current.id);
       }
 
       if (isSubtopicBatchMode) {
@@ -1971,7 +2271,7 @@ export default function QuestionPractice({
           );
 
         if (pageComplete) {
-          void advanceToNextQuestionPage(pageIds);
+          ignoreAbort(advanceToNextQuestionPage(pageIds));
         } else if (index === total - 1 && pageIds.length > 0) {
           setIndex(0);
           resetQuestionState();
@@ -2035,6 +2335,7 @@ export default function QuestionPractice({
     practiceScopeKey,
     restartPublicScan,
     questions,
+    passFirstAttemptCorrectQuestion,
   ]);
 
   const handleSubmit = () => {
@@ -2090,6 +2391,12 @@ export default function QuestionPractice({
   const handleNextQuestion = () => {
     if (!current) return;
 
+    if (reviewQuestion) {
+      setReviewQuestion(null);
+      resetQuestionState();
+      return;
+    }
+
     if (isSubtopicMasteryMode) {
       if (index < total - 1) {
         setIndex((prev) => prev + 1);
@@ -2102,13 +2409,7 @@ export default function QuestionPractice({
       }
 
       const pageIds = currentPageIds.length > 0 ? currentPageIds : activeQuestions.map((q) => q.id);
-      void advanceToNextQuestionPage(pageIds);
-      return;
-    }
-
-    if (subtopicId && user && isFirstAttemptCorrect(current.id)) {
-      setSessionHiddenIds((prev) => new Set(prev).add(current.id));
-      resetQuestionState();
+      ignoreAbort(advanceToNextQuestionPage(pageIds));
       return;
     }
 
@@ -2123,7 +2424,7 @@ export default function QuestionPractice({
         return;
       }
       const pageIds = currentPageIds.length > 0 ? currentPageIds : activeQuestions.map((q) => q.id);
-      void advanceToNextQuestionPage(pageIds);
+      ignoreAbort(advanceToNextQuestionPage(pageIds));
     }
   };
 
@@ -2132,18 +2433,28 @@ export default function QuestionPractice({
   };
 
   const handleSelectQuestion = (qIndex: number) => {
-    if (qIndex === index) return;
+    if (qIndex === index) {
+      if (reviewQuestion) {
+        setReviewQuestion(null);
+        resetQuestionState();
+      }
+      return;
+    }
+
+    if (reviewQuestion) {
+      setReviewQuestion(null);
+    }
 
     if (
-      subtopicId &&
+      isSubtopicBatchMode &&
       user &&
       current &&
-      qIndex !== index &&
-      isFirstAttemptCorrect(current.id)
+      isQuestionCorrectlyAnswered(current.id)
     ) {
-      setSessionHiddenIds((prev) => new Set(prev).add(current.id));
+      void passFirstAttemptCorrectQuestion(current.id);
     }
     setIndex(qIndex);
+    resetQuestionState();
   };
 
   const handleCloseBatchGate = () => {
@@ -2235,6 +2546,19 @@ export default function QuestionPractice({
     </button>
   );
 
+  if ((authLoading && isSubtopicBatchMode) || (user && !onboardingReady)) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+        <div className="rounded-3xl border border-slate-100 bg-white px-6 py-12 shadow-sm">
+          <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {c.checkingCompleted}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const isBatchRequestActive = isSubtopicMasteryMode
     ? checkingQuestionState || loadingMoreBatches || isVerifyingNewBatch || advancingCycle
     : checkingCorrectIds || loadingMoreBatches || isVerifyingNewBatch;
@@ -2282,11 +2606,17 @@ export default function QuestionPractice({
 
   if (total === 0) {
     if (
+      authLoading ||
       (isSubtopicMasteryMode ? checkingQuestionState : checkingCorrectIds) ||
       isVerifyingNewBatch ||
       advancingCycle
     ) {
-      if (loadedQuestions.length > 0 || verifyingBatchIds.size > 0) {
+      if (
+        authLoading ||
+        loadedQuestions.length > 0 ||
+        resolvedInitialQuestions.length > 0 ||
+        verifyingBatchIds.size > 0
+      ) {
       return (
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
           <div className="rounded-3xl border border-slate-100 bg-white px-6 py-12 shadow-sm">
@@ -2544,7 +2874,7 @@ export default function QuestionPractice({
             const numberLabel = pageNumberOffset + qIndex + 1;
             return (
               <button
-                key={question.id}
+                key={`${question.id}-${qIndex}`}
                 type="button"
                 onClick={() => handleSelectQuestion(qIndex)}
                 className={`h-8 min-w-8 rounded-lg px-2 text-xs font-bold transition ${
@@ -2617,7 +2947,7 @@ export default function QuestionPractice({
           </div>
         )}
 
-        {isSubtopicBatchMode && loadingMoreBatches && (
+        {isSubtopicBatchMode && loadingMoreBatches && total === 0 && (
           <div className="mt-4 flex items-center gap-2 text-sm text-slate-500">
             <Loader2 className="h-4 w-4 animate-spin" />
             {c.loadingMore}
@@ -2785,7 +3115,7 @@ export default function QuestionPractice({
                     {c.nextQuestion}
                     <ArrowRight className="h-4 w-4" />
                   </button>
-                ) : subtopicId && user && isFirstAttemptCorrect(current.id) ? (
+                ) : isSubtopicBatchMode && user && (reviewQuestion || isQuestionCorrectlyAnswered(current.id)) ? (
                   <button
                     type="button"
                     onClick={handleNextQuestion}

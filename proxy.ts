@@ -36,6 +36,7 @@ function isReservedTopLevelSegment(segment: string): boolean {
     'signup',
     'dashboard',
     'profile',
+    'onboarding',
     'auth',
     'api',
     'question',

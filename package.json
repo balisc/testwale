@@ -18,6 +18,11 @@
     "test:safe-redirect": "node --experimental-strip-types lib/safeRedirect.test.ts",
     "test:auth-security": "node --experimental-strip-types lib/authSecurity.test.ts",
     "test:public-origin": "node --experimental-strip-types lib/publicOrigin.test.ts",
+    "test:profile-overview": "node --experimental-strip-types lib/profileOverview.test.ts",
+    "test:profile-insights": "node --experimental-strip-types lib/profileInsightsCore.test.ts",
+    "test:profile-activity": "node --import ./scripts/test-register.mjs --experimental-strip-types lib/profileActivityCore.test.ts",
+    "test:profile-saved": "node --import ./scripts/test-register.mjs --experimental-strip-types lib/profileSavedCore.test.ts",
+    "test:profile-goals": "node --import ./scripts/test-register.mjs --experimental-strip-types lib/profileGoalsCore.test.ts",
     "test:verify-auth": "node scripts/verify-auth-security.mjs"
   },
   "dependencies": {

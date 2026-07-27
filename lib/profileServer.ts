@@ -8,6 +8,12 @@ import {
   type ProfilePageData,
   type ProfileUser,
 } from '@/lib/profileAnalytics';
+import {
+  buildOverviewMetricsFromAttempts,
+  buildReadinessBreakdown,
+  buildWeeklyActivity,
+  type UserAttemptSnapshot,
+} from '@/lib/profileOverviewCore';
 
 type AttemptRow = {
   question_id: string;
@@ -35,6 +41,7 @@ type DbProfileRow = {
   state: string | null;
   city: string | null;
   target_exam: string | null;
+  exam_date: string | null;
   is_premium: boolean | null;
   daily_goal: number | null;
   weekly_goal: number | null;
@@ -59,24 +66,55 @@ export async function getUserRecordFromDb(userId: string): Promise<DbUserRow | n
   return data as DbUserRow;
 }
 
-async function getUserProfileRow(userId: string): Promise<DbProfileRow | null> {
+const PROFILE_ROW_SELECT_WITH_EXAM_DATE =
+  'bio, country, state, city, target_exam, exam_date, is_premium, daily_goal, weekly_goal, monthly_goal';
+const PROFILE_ROW_SELECT_LEGACY =
+  'bio, country, state, city, target_exam, is_premium, daily_goal, weekly_goal, monthly_goal';
+
+function isMissingExamDateColumn(error: { message?: string } | null): boolean {
+  return Boolean(error?.message?.includes('exam_date'));
+}
+
+async function fetchUserProfileRow(
+  client: ReturnType<typeof getSupabaseAdmin> | typeof supabase,
+  userId: string,
+): Promise<DbProfileRow | null> {
+  const withDate = await client
+    .from('user_profiles')
+    .select(PROFILE_ROW_SELECT_WITH_EXAM_DATE)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (!withDate.error) {
+    return (withDate.data as DbProfileRow | null) ?? null;
+  }
+
+  if (!isMissingExamDateColumn(withDate.error)) {
+    console.error('[profile/fetchUserProfileRow]', withDate.error);
+    return null;
+  }
+
+  const legacy = await client
+    .from('user_profiles')
+    .select(PROFILE_ROW_SELECT_LEGACY)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (legacy.error) {
+    console.error('[profile/fetchUserProfileRow]', legacy.error);
+    return null;
+  }
+
+  return { ...(legacy.data as DbProfileRow), exam_date: null };
+}
+
+export async function getUserProfileRow(userId: string): Promise<DbProfileRow | null> {
   const admin = getSupabaseAdmin();
   const client = admin ?? supabase;
 
   await client.from('user_profiles').upsert({ user_id: userId }, { onConflict: 'user_id' });
 
-  const { data, error } = await client
-    .from('user_profiles')
-    .select('bio, country, state, city, target_exam, is_premium, daily_goal, weekly_goal, monthly_goal')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (error) {
-    console.error('[profile/getUserProfileRow]', error);
-    return null;
-  }
-
-  return (data as DbProfileRow | null) ?? null;
+  return fetchUserProfileRow(client, userId);
 }
 
 export function profileUserFromSession(session: SessionUser, dbUser?: DbUserRow | null): ProfileUser {
@@ -91,29 +129,82 @@ export function profileUserFromSession(session: SessionUser, dbUser?: DbUserRow 
 }
 
 export async function buildProfilePageForSession(session: SessionUser): Promise<ProfilePageData> {
-  const fallback = await getUserProfilePageFallback(session.id);
-  if (fallback) {
-    return mergeSessionUser(fallback, session);
+  const page = await getUserProfilePage(session.id);
+  if (page) {
+    return mergeSessionUser(page, session);
   }
 
   const dbUser = await getUserRecordFromDb(session.id);
   const dbProfile = await getUserProfileRow(session.id);
   const profileUser = profileUserFromSession(session, dbUser);
-  return createEmptyProfilePage(profileUser, {
+  const empty = createEmptyProfilePage(profileUser, {
     bio: dbProfile?.bio ?? undefined,
     country: dbProfile?.country ?? undefined,
     state: dbProfile?.state ?? undefined,
     city: dbProfile?.city ?? undefined,
     target_exam: dbProfile?.target_exam ?? undefined,
+    exam_date: dbProfile?.exam_date ?? undefined,
     is_premium: dbProfile?.is_premium ?? undefined,
     daily_goal: dbProfile?.daily_goal ?? undefined,
     weekly_goal: dbProfile?.weekly_goal ?? undefined,
     monthly_goal: dbProfile?.monthly_goal ?? undefined,
   });
+  const enriched = await enrichProfilePageData(empty, session.id);
+  return mergeSessionUser(enriched, session);
 }
 
 function istDateKey(value: string) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date(value));
+}
+
+async function fetchUserAttemptSnapshots(userId: string): Promise<UserAttemptSnapshot[]> {
+  const admin = getSupabaseAdmin();
+  const client = admin ?? supabase;
+
+  const { data, error } = await client
+    .from('user_attempts')
+    .select('question_id, is_correct, attempted_at, time_taken_seconds, subject_id, topic_id, subtopic_id')
+    .eq('user_id', userId)
+    .order('attempted_at', { ascending: false });
+
+  if (error) {
+    console.error('[profile/fetchUserAttemptSnapshots]', error);
+    return [];
+  }
+
+  return (data ?? []) as UserAttemptSnapshot[];
+}
+
+export function enrichProfilePageWithOverviewMetrics(profile: ProfilePageData, attempts: UserAttemptSnapshot[]): ProfilePageData {
+  const overviewMetrics = buildOverviewMetricsFromAttempts(attempts);
+  const weeklyActivity = buildWeeklyActivity(attempts);
+  const studyDays = new Set(attempts.map((row) => istDateKey(row.attempted_at))).size;
+  const readinessBreakdown = buildReadinessBreakdown(
+    overviewMetrics.questions,
+    overviewMetrics.accuracy_percent,
+    studyDays,
+  );
+  const todayKey = istDateKey(new Date().toISOString());
+  const todayCount = attempts.filter((row) => istDateKey(row.attempted_at) === todayKey).length;
+
+  return {
+    ...profile,
+    overview_metrics: overviewMetrics,
+    weekly_activity: weeklyActivity,
+    readiness_breakdown: readinessBreakdown,
+    readiness: readinessBreakdown.locked
+      ? { score: 0, label: readinessLabel(0) }
+      : { score: readinessBreakdown.overall, label: readinessBreakdown.label },
+    goals_progress: {
+      ...profile.goals_progress,
+      today: todayCount,
+    },
+  };
+}
+
+async function enrichProfilePageData(profile: ProfilePageData, userId: string): Promise<ProfilePageData> {
+  const attempts = await fetchUserAttemptSnapshots(userId);
+  return enrichProfilePageWithOverviewMetrics(profile, attempts);
 }
 
 async function getUserProfilePageFallback(userId: string): Promise<ProfilePageData | null> {
@@ -186,6 +277,7 @@ async function getUserProfilePageFallback(userId: string): Promise<ProfilePageDa
       state: null,
       city: null,
       target_exam: null,
+      exam_date: null,
       is_premium: false,
       daily_goal: 50,
       weekly_goal: 300,
@@ -219,12 +311,13 @@ async function getUserProfilePageFallback(userId: string): Promise<ProfilePageDa
 export async function getUserProfilePage(userId: string): Promise<ProfilePageData | null> {
   const admin = getSupabaseAdmin();
 
+  let profile: ProfilePageData | null = null;
+
   if (admin) {
     const { data, error } = await admin.rpc('get_user_profile_page', { p_user_id: userId });
     if (!error && data) {
-      return normalizeProfilePage(data as Record<string, unknown>);
-    }
-    if (error) {
+      profile = normalizeProfilePage(data as Record<string, unknown>);
+    } else if (error) {
       console.error('[profile/getUserProfilePage] RPC failed:', error);
     }
   } else {
@@ -233,7 +326,22 @@ export async function getUserProfilePage(userId: string): Promise<ProfilePageDat
     );
   }
 
-  return getUserProfilePageFallback(userId);
+  if (!profile) {
+    profile = await getUserProfilePageFallback(userId);
+  }
+
+  if (!profile) return null;
+
+  const dbFields = await getUserProfileRow(userId);
+  if (dbFields) {
+    profile.profile.exam_date =
+      dbFields.exam_date != null ? String(dbFields.exam_date).slice(0, 10) : profile.profile.exam_date;
+    if (dbFields.target_exam?.trim()) {
+      profile.profile.target_exam = dbFields.target_exam;
+    }
+  }
+
+  return enrichProfilePageData(profile, userId);
 }
 
 export function mergeSessionUser(profile: ProfilePageData, session: SessionUser): ProfilePageData {
@@ -256,6 +364,7 @@ export async function updateUserProfile(
     bio: string;
     country: string;
     target_exam: string;
+    exam_date: string;
     daily_goal: number;
     weekly_goal: number;
     monthly_goal: number;
@@ -274,7 +383,13 @@ export async function updateUserProfile(
   );
 
   if (error) {
-    console.error('[profile/updateUserProfile]', error);
+    if (patch.exam_date && isMissingExamDateColumn(error)) {
+      console.error(
+        '[profile/updateUserProfile] exam_date column missing — run scripts/migrate_user_profile_exam_date.sql',
+      );
+    } else {
+      console.error('[profile/updateUserProfile]', error);
+    }
     return false;
   }
 

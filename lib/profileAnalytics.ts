@@ -15,6 +15,7 @@ export type UserProfileSettings = {
   state: string | null;
   city: string | null;
   target_exam: string | null;
+  exam_date: string | null;
   is_premium: boolean;
   daily_goal: number;
   weekly_goal: number;
@@ -54,6 +55,38 @@ export type ProfileActivityItem = {
   is_correct?: boolean;
 };
 
+export type ProfileRecentAttempt = {
+  id: string;
+  is_correct: boolean;
+  attempted_at: string;
+  subject_title: LocalizedText | null;
+  topic_title: LocalizedText | null;
+  topic_slug: string | null;
+  subject_slug: string | null;
+};
+
+export type ProfileOverviewMetrics = {
+  questions: number;
+  accuracy_percent: number;
+  streak_days: number;
+  study_time_seconds: number;
+};
+
+export type ProfileWeeklyDay = {
+  key: string;
+  label: string;
+  count: number;
+};
+
+export type ProfileReadinessBreakdown = {
+  overall: number;
+  label: string;
+  locked: boolean;
+  coverage: number;
+  accuracy: number;
+  consistency: number;
+};
+
 export type ProfilePageData = {
   user: ProfileUser;
   profile: UserProfileSettings;
@@ -82,6 +115,11 @@ export type ProfilePageData = {
     week: number;
     month: number;
   };
+  /** Canonical first-attempt metrics from user_attempts (server enriched). */
+  overview_metrics?: ProfileOverviewMetrics;
+  weekly_activity?: ProfileWeeklyDay[];
+  readiness_breakdown?: ProfileReadinessBreakdown;
+  recent_attempts?: ProfileRecentAttempt[];
 };
 
 function toNumber(value: unknown, fallback = 0): number {
@@ -120,6 +158,16 @@ export function normalizeProfilePage(raw: Record<string, unknown>): ProfilePageD
     is_correct: row.is_correct != null ? Boolean(row.is_correct) : undefined,
   });
 
+  const mapRecentAttempt = (row: Record<string, unknown>): ProfileRecentAttempt => ({
+    id: String(row.id ?? ''),
+    is_correct: Boolean(row.is_correct),
+    attempted_at: String(row.attempted_at ?? ''),
+    subject_title: (row.subject_title ?? null) as LocalizedText | null,
+    topic_title: (row.topic_title ?? null) as LocalizedText | null,
+    topic_slug: row.topic_slug != null ? String(row.topic_slug) : null,
+    subject_slug: row.subject_slug != null ? String(row.subject_slug) : null,
+  });
+
   return {
     user: {
       id: String(user.id ?? ''),
@@ -135,6 +183,7 @@ export function normalizeProfilePage(raw: Record<string, unknown>): ProfilePageD
       state: profile.state != null ? String(profile.state) : null,
       city: profile.city != null ? String(profile.city) : null,
       target_exam: profile.target_exam != null ? String(profile.target_exam) : null,
+      exam_date: profile.exam_date != null ? String(profile.exam_date).slice(0, 10) : null,
       is_premium: Boolean(profile.is_premium),
       daily_goal: toNumber(profile.daily_goal, 50),
       weekly_goal: toNumber(profile.weekly_goal, 300),
@@ -170,6 +219,9 @@ export function normalizeProfilePage(raw: Record<string, unknown>): ProfilePageD
     recent_activity: Array.isArray(raw.recent_activity)
       ? (raw.recent_activity as Record<string, unknown>[]).map(mapActivity)
       : [],
+    recent_attempts: Array.isArray(raw.recent_attempts)
+      ? (raw.recent_attempts as Record<string, unknown>[]).map(mapRecentAttempt)
+      : [],
     counts: {
       bookmarks: toNumber(counts.bookmarks),
       notes: toNumber(counts.notes),
@@ -202,6 +254,7 @@ export function createEmptyProfilePage(
       state: profile?.state ?? null,
       city: profile?.city ?? null,
       target_exam: profile?.target_exam ?? null,
+      exam_date: profile?.exam_date ?? null,
       is_premium: profile?.is_premium ?? false,
       daily_goal: profile?.daily_goal ?? 50,
       weekly_goal: profile?.weekly_goal ?? 300,
