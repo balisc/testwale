@@ -383,29 +383,33 @@ export default function ContactClient() {
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div>
-                <label className="mb-1.5 block text-[13px] font-semibold text-[#374151]">{c.fullName}</label>
+                <label htmlFor="contact-name" className="mb-1.5 block text-[13px] font-semibold text-[#374151]">{c.fullName}</label>
                 <div className="relative">
                   <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
                   <input
+                    id="contact-name"
                     name="name"
                     type="text"
                     value={formValues.name}
                     onChange={handleChange}
                     placeholder={c.fullNamePh}
                     required
+                    aria-invalid={Boolean(fieldErrors.name)}
+                    aria-describedby={fieldErrors.name ? 'contact-name-error' : undefined}
                     className={`w-full rounded-xl border border-slate-200 bg-[#FAFAFA] py-3 pl-10 pr-4 text-[14px] text-[#111827] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#7C3AED] focus:bg-white focus:ring-2 focus:ring-[#7C3AED]/15 ${fieldErrorClass('name')}`}
                   />
                 </div>
                 {fieldErrors.name && (
-                  <p className="mt-1.5 text-[12px] font-medium text-[#DC2626]">{fieldErrors.name}</p>
+                  <p id="contact-name-error" className="mt-1.5 text-[12px] font-medium text-[#DC2626]" role="alert">{fieldErrors.name}</p>
                 )}
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[13px] font-semibold text-[#374151]">{c.email}</label>
+                <label htmlFor="contact-email" className="mb-1.5 block text-[13px] font-semibold text-[#374151]">{c.email}</label>
                 <div className="relative">
                   <AtSign className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
                   <input
+                    id="contact-email"
                     name="email"
                     type="email"
                     value={formValues.email}
@@ -413,54 +417,63 @@ export default function ContactClient() {
                     placeholder={c.emailPh}
                     required
                     autoComplete="email"
+                    aria-invalid={Boolean(fieldErrors.email)}
+                    aria-describedby={fieldErrors.email ? 'contact-email-error' : undefined}
                     className={`w-full rounded-xl border border-slate-200 bg-[#FAFAFA] py-3 pl-10 pr-4 text-[14px] text-[#111827] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#7C3AED] focus:bg-white focus:ring-2 focus:ring-[#7C3AED]/15 ${fieldErrorClass('email')}`}
                   />
                 </div>
                 {fieldErrors.email && (
-                  <p className="mt-1.5 text-[12px] font-medium text-[#DC2626]">{fieldErrors.email}</p>
+                  <p id="contact-email-error" className="mt-1.5 text-[12px] font-medium text-[#DC2626]" role="alert">{fieldErrors.email}</p>
                 )}
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[13px] font-semibold text-[#374151]">{c.mobile}</label>
+                <label htmlFor="contact-mobile" className="mb-1.5 block text-[13px] font-semibold text-[#374151]">{c.mobile}</label>
                 <div className="relative">
                   <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
                   <input
+                    id="contact-mobile"
                     name="mobile"
                     type="tel"
                     value={formValues.mobile}
                     onChange={handleChange}
                     placeholder={c.mobilePh}
                     required
+                    autoComplete="tel"
+                    aria-invalid={Boolean(fieldErrors.mobile)}
+                    aria-describedby={fieldErrors.mobile ? 'contact-mobile-error' : undefined}
                     className={`w-full rounded-xl border border-slate-200 bg-[#FAFAFA] py-3 pl-10 pr-4 text-[14px] text-[#111827] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#7C3AED] focus:bg-white focus:ring-2 focus:ring-[#7C3AED]/15 ${fieldErrorClass('mobile')}`}
                   />
                 </div>
                 {fieldErrors.mobile && (
-                  <p className="mt-1.5 text-[12px] font-medium text-[#DC2626]">{fieldErrors.mobile}</p>
+                  <p id="contact-mobile-error" className="mt-1.5 text-[12px] font-medium text-[#DC2626]" role="alert">{fieldErrors.mobile}</p>
                 )}
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[13px] font-semibold text-[#374151]">{c.subject}</label>
+                <label htmlFor="contact-subject" className="mb-1.5 block text-[13px] font-semibold text-[#374151]">{c.subject}</label>
                 <div className="relative">
                   <FileText className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
                   <input
+                    id="contact-subject"
                     name="subject"
                     type="text"
                     value={formValues.subject}
                     onChange={handleChange}
                     placeholder={c.subjectPh}
                     required
+                    aria-invalid={Boolean(fieldErrors.subject)}
+                    aria-describedby={fieldErrors.subject ? 'contact-subject-error' : undefined}
                     className={`w-full rounded-xl border border-slate-200 bg-[#FAFAFA] py-3 pl-10 pr-4 text-[14px] text-[#111827] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#7C3AED] focus:bg-white focus:ring-2 focus:ring-[#7C3AED]/15 ${fieldErrorClass('subject')}`}
                   />
                 </div>
                 {fieldErrors.subject && (
-                  <p className="mt-1.5 text-[12px] font-medium text-[#DC2626]">{fieldErrors.subject}</p>
+                  <p id="contact-subject-error" className="mt-1.5 text-[12px] font-medium text-[#DC2626]" role="alert">{fieldErrors.subject}</p>
                 )}
               </div>
 
-              <div>
-                <label className="mb-2 block text-[13px] font-semibold text-[#374151]">{c.categoryLabel}</label>
+              <div role="group" aria-labelledby="contact-category-label">
+                <p id="contact-category-label" className="mb-2 block text-[13px] font-semibold text-[#374151]">{c.categoryLabel}</p>
                 <div className="flex flex-wrap gap-2">
                   {CATEGORIES.map((cat, index) => {
                     const label = lang === 'hi' ? cat.hi : cat.en;
@@ -491,23 +504,26 @@ export default function ContactClient() {
                   })}
                 </div>
                 {fieldErrors.category && (
-                  <p className="mt-1.5 text-[12px] font-medium text-[#DC2626]">{fieldErrors.category}</p>
+                  <p id="contact-category-error" className="mt-1.5 text-[12px] font-medium text-[#DC2626]" role="alert">{fieldErrors.category}</p>
                 )}
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[13px] font-semibold text-[#374151]">{c.messageLabel}</label>
+                <label htmlFor="contact-message" className="mb-1.5 block text-[13px] font-semibold text-[#374151]">{c.messageLabel}</label>
                 <textarea
+                  id="contact-message"
                   name="message"
                   value={formValues.message}
                   onChange={handleChange}
                   rows={4}
                   placeholder={c.messagePh}
                   required
+                  aria-invalid={Boolean(fieldErrors.message)}
+                  aria-describedby={fieldErrors.message ? 'contact-message-error' : undefined}
                   className={`w-full resize-none rounded-xl border border-slate-200 bg-[#FAFAFA] px-4 py-3 text-[14px] text-[#111827] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#7C3AED] focus:bg-white focus:ring-2 focus:ring-[#7C3AED]/15 ${fieldErrorClass('message')}`}
                 />
                 {fieldErrors.message && (
-                  <p className="mt-1.5 text-[12px] font-medium text-[#DC2626]">{fieldErrors.message}</p>
+                  <p id="contact-message-error" className="mt-1.5 text-[12px] font-medium text-[#DC2626]" role="alert">{fieldErrors.message}</p>
                 )}
               </div>
 

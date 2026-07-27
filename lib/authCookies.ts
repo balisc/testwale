@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import type { NextResponse } from 'next/server';
 import {
   AUTH_COOKIE_NAME,
   createSessionToken,
@@ -10,6 +11,12 @@ import {
 export async function setAuthCookie(user: SessionUser) {
   const cookieStore = await cookies();
   cookieStore.set(AUTH_COOKIE_NAME, createSessionToken(user), getSessionCookieOptions());
+}
+
+/** Prefer this on redirect responses — cookies() alone may not attach to NextResponse.redirect. */
+export function attachAuthCookie(response: NextResponse, user: SessionUser): NextResponse {
+  response.cookies.set(AUTH_COOKIE_NAME, createSessionToken(user), getSessionCookieOptions());
+  return response;
 }
 
 export async function clearAuthCookie() {

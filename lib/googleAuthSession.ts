@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { verifyGoogleCredential } from '@/lib/googleAuth';
 import { upsertGoogleUser } from '@/lib/userRepository';
-import { setAuthCookie, toSessionUser } from '@/lib/authCookies';
+import { setAuthCookie, attachAuthCookie, toSessionUser } from '@/lib/authCookies';
+import { attachAuthFlashCookie, type AuthFlashKind } from '@/lib/authFlash';
+import { authRedirectResponse } from '@/lib/authRedirectResponse';
+import { getPublicOrigin } from '@/lib/publicOrigin';
 import { getSafeRedirectPath } from '@/lib/safeRedirect';
 import { SUPABASE_AVAILABLE } from '@/lib/supabase';
 
@@ -72,16 +75,35 @@ export async function authenticateGoogleCredential(credential: string) {
   };
 }
 
+function mapFailureToFlash(code: string): AuthFlashKind {
+  if (code === 'googleConfig' || code === 'saveError') return 'oauth_config';
+  if (code === 'usePassword') return 'oauth_save';
+  return 'oauth_failed';
+}
+
 export async function redirectAfterGoogleAuth(request: Request, credential: string, redirectTo?: string | null) {
-  const origin = new URL(request.url).origin;
-  const destination = getSafeRedirectPath(redirectTo, '/subjects');
+  const origin = getPublicOrigin(request);
+  const destination = getSafeRedirectPath(redirectTo, '/profile');
   const result = await authenticateGoogleCredential(credential);
 
   if (!result.ok) {
-    const params = new URLSearchParams({ error: result.code });
-    if (result.message) params.set('message', result.message);
-    return NextResponse.redirect(`${origin}/login?${params.toString()}`);
+    const response = authRedirectResponse(`${origin}/login`);
+    attachAuthFlashCookie(response, mapFailureToFlash(result.code));
+    return response;
   }
 
-  return NextResponse.redirect(`${origin}${destination}`);
+  const response = authRedirectResponse(`${origin}${destination}`);
+  attachAuthCookie(response, toSessionUser({
+    id: result.user.id,
+    full_name: result.user.fullName,
+    email: result.user.email,
+    provider: result.user.provider,
+    avatar_url: result.user.avatarUrl,
+  }));
+  return response;
+}
+
+export async function redirectToLogin(request: Request) {
+  const origin = getPublicOrigin(request);
+  return authRedirectResponse(`${origin}/login`);
 }

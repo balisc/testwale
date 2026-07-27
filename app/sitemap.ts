@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 import { BASE_URL } from '@/lib/seo';
 import { fetchCatalogSitemapPaths } from '@/lib/sitemapCatalog';
 import { SUBJECTS } from '@/lib/subjects';
+import { isLegacySitemapExcludedSubjectKey } from '@/lib/sitemapPolicy';
 
-export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
 
 function absolutePath(path: string) {
@@ -23,16 +23,18 @@ const STATIC_PAGES: Array<{ path: string; priority: number }> = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
   const urls = new Map<string, MetadataRoute.Sitemap[number]>();
 
   const addUrl = (path: string, priority = 0.7, lastModified?: string | Date) => {
-    urls.set(path, {
+    const entry: MetadataRoute.Sitemap[number] = {
       url: absolutePath(path),
-      lastModified: lastModified ? new Date(lastModified) : now,
       changeFrequency: 'weekly',
       priority,
-    });
+    };
+    if (lastModified) {
+      entry.lastModified = new Date(lastModified);
+    }
+    urls.set(path, entry);
   };
 
   for (const page of STATIC_PAGES) {
@@ -49,6 +51,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   for (const subject of SUBJECTS) {
+    if (isLegacySitemapExcludedSubjectKey(subject.key)) continue;
     addUrl(`/${subject.key}`, 0.75);
     addUrl(`/${subject.key}/topics`, 0.75);
   }

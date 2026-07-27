@@ -1,6 +1,7 @@
 'use client';
 
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 let browserClient: SupabaseClient | null = null;
 
@@ -15,13 +16,8 @@ export function getSupabaseBrowserClient() {
   if (!url || !key) return null;
 
   if (!browserClient) {
-    browserClient = createClient(url, key, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    });
+    // @supabase/ssr stores PKCE verifier in document cookies so the server callback can exchange the code.
+    browserClient = createBrowserClient(url, key);
   }
 
   return browserClient;

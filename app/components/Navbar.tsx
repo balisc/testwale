@@ -69,6 +69,16 @@ const DESKTOP_NAV_LINKS = [
 const focusRing =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2';
 
+function userDisplayName(fullName: string, email: string) {
+  const trimmed = fullName.trim();
+  if (trimmed) return trimmed;
+  return email.split('@')[0] || 'User';
+}
+
+function userFirstName(fullName: string, email: string) {
+  return userDisplayName(fullName, email).split(' ')[0];
+}
+
 const desktopNavLinkClass = (active: boolean) =>
   `relative inline-flex items-center whitespace-nowrap px-1 py-2 text-sm font-medium leading-none transition-colors ${focusRing} ${
     active ? 'text-brand' : 'text-[#0F172A] hover:text-brand'
@@ -218,29 +228,30 @@ export default function Navbar() {
                 <Link
                   href="/profile"
                   className={`inline-flex items-center gap-2 rounded-full bg-slate-50 py-1 pl-1 pr-3 text-sm font-semibold leading-none text-slate-700 transition hover:bg-[#FAF5FF] hover:text-brand ${focusRing}`}
-                  aria-label={`${user.fullName} profile`}
+                  aria-label={`${userDisplayName(user.fullName, user.email)} profile`}
                 >
                   <UserAvatar
                     name={user.fullName}
                     id={user.id}
                     email={user.email}
+                    imageUrl={user.avatarUrl}
                     className="pointer-events-none h-8 w-8 rounded-full"
                     textClassName="text-xs"
                   />
-                  <span className="max-w-[7rem] truncate">{user.fullName.split(' ')[0]}</span>
+                  <span className="max-w-[7rem] truncate">{userFirstName(user.fullName, user.email)}</span>
                 </Link>
                 <button type="button" onClick={() => void logout()} className={desktopAuthButtonClass}>
                   {t.logout}
                 </button>
               </div>
-            ) : (
+            ) : !loading ? (
               <Link
                 href="/login"
                 className={`hidden min-h-[44px] items-center justify-center whitespace-nowrap rounded-full border-2 border-brand px-4 py-2 text-sm font-semibold text-brand transition hover:bg-[#FAF5FF] min-[360px]:px-5 min-[900px]:inline-flex ${focusRing}`}
               >
                 {t.signIn}
               </Link>
-            )}
+            ) : null}
 
             <button
               type="button"
@@ -314,17 +325,20 @@ export default function Navbar() {
                       href="/profile"
                       onClick={closeMenu}
                       className={`flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 transition hover:bg-[#FAF5FF] ${focusRing}`}
-                      aria-label={`${user.fullName} profile`}
+                      aria-label={`${userDisplayName(user.fullName, user.email)} profile`}
                     >
                       <UserAvatar
                         name={user.fullName}
                         id={user.id}
                         email={user.email}
+                        imageUrl={user.avatarUrl}
                         className="pointer-events-none h-10 w-10 shrink-0 rounded-full"
                         textClassName="text-sm"
                       />
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-800">{user.fullName}</p>
+                        <p className="truncate text-sm font-semibold text-slate-800">
+                          {userDisplayName(user.fullName, user.email)}
+                        </p>
                         <p className="truncate text-xs text-slate-500">{user.email}</p>
                       </div>
                     </Link>
@@ -346,11 +360,11 @@ export default function Navbar() {
                       {t.logout}
                     </button>
                   </>
-                ) : (
+                ) : !loading ? (
                   <Link href="/login" onClick={closeMenu} className={mobileLinkClass(isActive('/login'))}>
                     {t.signIn}
                   </Link>
-                )}
+                ) : null}
 
                 <div className="mt-3 px-1">
                   <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">Language</p>

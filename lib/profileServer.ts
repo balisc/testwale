@@ -1,7 +1,13 @@
 import supabase from '@/lib/supabase';
 import type { SessionUser } from '@/lib/appSession';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
-import { normalizeProfilePage, readinessLabel, type ProfilePageData } from '@/lib/profileAnalytics';
+import {
+  createEmptyProfilePage,
+  normalizeProfilePage,
+  readinessLabel,
+  type ProfilePageData,
+  type ProfileUser,
+} from '@/lib/profileAnalytics';
 
 type AttemptRow = {
   question_id: string;
@@ -12,6 +18,98 @@ type AttemptRow = {
 function calcAccuracy(correct: number, total: number) {
   if (total <= 0) return 0;
   return Math.round((correct * 1000) / total) / 10;
+}
+
+type DbUserRow = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  provider: string | null;
+  created_at: string | null;
+};
+
+type DbProfileRow = {
+  bio: string | null;
+  country: string | null;
+  state: string | null;
+  city: string | null;
+  target_exam: string | null;
+  is_premium: boolean | null;
+  daily_goal: number | null;
+  weekly_goal: number | null;
+  monthly_goal: number | null;
+};
+
+export async function getUserRecordFromDb(userId: string): Promise<DbUserRow | null> {
+  const admin = getSupabaseAdmin();
+  const client = admin ?? supabase;
+
+  const { data, error } = await client
+    .from('users')
+    .select('id, full_name, email, avatar_url, provider, created_at')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error) console.error('[profile/getUserRecordFromDb]', error);
+    return null;
+  }
+
+  return data as DbUserRow;
+}
+
+async function getUserProfileRow(userId: string): Promise<DbProfileRow | null> {
+  const admin = getSupabaseAdmin();
+  const client = admin ?? supabase;
+
+  await client.from('user_profiles').upsert({ user_id: userId }, { onConflict: 'user_id' });
+
+  const { data, error } = await client
+    .from('user_profiles')
+    .select('bio, country, state, city, target_exam, is_premium, daily_goal, weekly_goal, monthly_goal')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('[profile/getUserProfileRow]', error);
+    return null;
+  }
+
+  return (data as DbProfileRow | null) ?? null;
+}
+
+export function profileUserFromSession(session: SessionUser, dbUser?: DbUserRow | null): ProfileUser {
+  return {
+    id: session.id,
+    full_name: dbUser?.full_name?.trim() || session.fullName?.trim() || session.email.split('@')[0] || 'User',
+    email: dbUser?.email?.trim() || session.email,
+    avatar_url: dbUser?.avatar_url ?? session.avatarUrl ?? null,
+    provider: dbUser?.provider?.trim() || session.provider,
+    created_at: dbUser?.created_at ?? '',
+  };
+}
+
+export async function buildProfilePageForSession(session: SessionUser): Promise<ProfilePageData> {
+  const fallback = await getUserProfilePageFallback(session.id);
+  if (fallback) {
+    return mergeSessionUser(fallback, session);
+  }
+
+  const dbUser = await getUserRecordFromDb(session.id);
+  const dbProfile = await getUserProfileRow(session.id);
+  const profileUser = profileUserFromSession(session, dbUser);
+  return createEmptyProfilePage(profileUser, {
+    bio: dbProfile?.bio ?? undefined,
+    country: dbProfile?.country ?? undefined,
+    state: dbProfile?.state ?? undefined,
+    city: dbProfile?.city ?? undefined,
+    target_exam: dbProfile?.target_exam ?? undefined,
+    is_premium: dbProfile?.is_premium ?? undefined,
+    daily_goal: dbProfile?.daily_goal ?? undefined,
+    weekly_goal: dbProfile?.weekly_goal ?? undefined,
+    monthly_goal: dbProfile?.monthly_goal ?? undefined,
+  });
 }
 
 function istDateKey(value: string) {

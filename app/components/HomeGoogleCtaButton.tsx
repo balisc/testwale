@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { getSupabaseBrowserClient } from '@/lib/supabaseBrowser';
 import { getSafeRedirectPath } from '@/lib/safeRedirect';
 
 type HomeGoogleCtaButtonProps = {
-  /** Kept for call-site compatibility; OAuth uses Supabase Google provider. */
+  /** Kept for call-site compatibility; OAuth uses server route /api/auth/google/start. */
   clientId?: string;
   disabled?: boolean;
   redirectTo?: string;
@@ -43,43 +42,20 @@ function GoogleGLogo({ className }: { className?: string }) {
 
 export default function HomeGoogleCtaButton({
   disabled = false,
-  redirectTo = '/subjects',
+  redirectTo = '/profile',
   onError,
 }: HomeGoogleCtaButtonProps) {
   const [loading, setLoading] = useState(false);
 
-  const handleClick = async () => {
+  const handleClick = () => {
     if (disabled || loading) return;
-
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase) {
-      onError(
-        'Google sign-in is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY (or NEXT_PUBLIC_ equivalents).',
-      );
-      return;
-    }
 
     setLoading(true);
     try {
-      const next = getSafeRedirectPath(redirectTo, '/subjects');
-      const redirectUrl = new URL('/auth/callback', window.location.origin);
-      redirectUrl.searchParams.set('next', next);
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl.toString(),
-          queryParams: {
-            prompt: 'select_account',
-          },
-        },
-      });
-
-      if (error) {
-        onError(error.message || 'Google sign-in failed. Please try again.');
-        setLoading(false);
-      }
-      // On success the browser navigates away to Google.
+      const next = getSafeRedirectPath(redirectTo, '/dashboard');
+      const startUrl = new URL('/api/auth/google/start', window.location.origin);
+      startUrl.searchParams.set('next', next);
+      window.location.assign(startUrl.toString());
     } catch {
       onError('Google sign-in failed. Please try again.');
       setLoading(false);
@@ -89,7 +65,7 @@ export default function HomeGoogleCtaButton({
   return (
     <button
       type="button"
-      onClick={() => void handleClick()}
+      onClick={handleClick}
       disabled={disabled || loading}
       aria-label="Continue with Google"
       className={`relative flex h-10 w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-[#DADCE0] bg-white px-2.5 shadow-[0_1px_2px_rgba(60,64,67,0.15)] transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 min-[360px]:h-11 min-[360px]:gap-2.5 min-[360px]:px-3`}

@@ -5,11 +5,12 @@ import HomeHero from '@/app/home/components/HomeHero';
 import HomeExamStrip from '@/app/home/components/HomeExamStrip';
 import HomeSubjects from '@/app/home/components/HomeSubjects';
 import { getHomeData } from '@/lib/homeData';
-import { canonical } from '@/lib/seo';
+import { absoluteUrl, canonical, DEFAULT_OG_IMAGE } from '@/lib/seo';
 
 const title = 'Government Exam MCQ Practice in Hindi & English';
 const description =
   'Practice source-verified bilingual MCQs for SSC, Railway, UPSC and State Exams with clear explanations, topic-wise quizzes and progress tracking.';
+const ogImage = absoluteUrl(DEFAULT_OG_IMAGE);
 
 export const metadata: Metadata = {
   title,
@@ -18,14 +19,16 @@ export const metadata: Metadata = {
   openGraph: {
     title,
     description,
-    url: '/',
+    url: absoluteUrl('/'),
     type: 'website',
     siteName: 'QuestionWale',
+    images: [{ url: ogImage, width: 1200, height: 630, alt: 'QuestionWale — Government exam MCQ practice' }],
   },
   twitter: {
     card: 'summary_large_image',
     title,
     description,
+    images: [ogImage],
   },
 };
 

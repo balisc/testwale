@@ -5,7 +5,7 @@ export const SITE_NAME = 'QuestionWale';
 export const DEFAULT_DESCRIPTION =
   'QuestionWale exam prep and practice engine. Solve MCQs, topic quizzes, and previous-year questions to boost your competitive exam readiness.';
 export const BASE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://questionwale.com').replace(/\/$/, '');
-export const DEFAULT_OG_IMAGE = '/logo/questionwale_logo.webp';
+export const DEFAULT_OG_IMAGE = '/og/questionwale-share.webp';
 
 const forceNoIndex = isNonProductionDeployment();
 
@@ -35,7 +35,7 @@ function baseSocialMetadata(
       type,
       url: absoluteUrl(path),
       siteName: SITE_NAME,
-      images: [{ url: absoluteUrl(DEFAULT_OG_IMAGE), alt: `${SITE_NAME} exam practice` }],
+      images: [{ url: absoluteUrl(DEFAULT_OG_IMAGE), width: 1200, height: 630, alt: `${SITE_NAME} exam practice` }],
     },
     twitter: {
       card: 'summary_large_image',

@@ -1,0 +1,93 @@
+﻿{
+  "@supabase/ssr": {
+    "current": "0.6.1",
+    "wanted": "0.6.1",
+    "latest": "0.12.3",
+    "dependent": "testwale",
+    "location": "C:\\Users\\balis\\Downloads\\questionwale_beta\\testwale\\node_modules\\@supabase\\ssr"
+  },
+  "@supabase/supabase-js": {
+    "current": "2.105.4",
+    "wanted": "2.110.8",
+    "latest": "2.110.8",
+    "dependent": "testwale",
+    "location": "C:\\Users\\balis\\Downloads\\questionwale_beta\\testwale\\node_modules\\@supabase\\supabase-js"
+  },
+  "@types/node": {
+    "current": "20.14.7",
+    "wanted": "20.14.7",
+    "latest": "26.1.1",
+    "dependent": "testwale",
+    "location": "C:\\Users\\balis\\Downloads\\questionwale_beta\\testwale\\node_modules\\@types\\node"
+  },
+  "autoprefixer": {
+    "current": "10.4.19",
+    "wanted": "10.4.19",
+    "latest": "10.5.4",
+    "dependent": "testwale",
+    "location": "C:\\Users\\balis\\Downloads\\questionwale_beta\\testwale\\node_modules\\autoprefixer"
+  },
+  "eslint": {
+    "current": "9.39.4",
+    "wanted": "9.39.5",
+    "latest": "10.8.0",
+    "dependent": "testwale",
+    "location": "C:\\Users\\balis\\Downloads\\questionwale_beta\\testwale\\node_modules\\eslint"
+  },
+  "eslint-config-next": {
+    "current": "16.2.9",
+    "wanted": "16.2.12",
+    "latest": "16.2.12",
+    "dependent": "testwale",
+    "location": "C:\\Users\\balis\\Downloads\\questionwale_beta\\testwale\\node_modules\\eslint-config-next"
+  },
+  "framer-motion": {
+    "current": "12.40.0",
+    "wanted": "12.42.2",
+    "latest": "12.42.2",
+    "dependent": "testwale",
+    "location": "C:\\Users\\balis\\Downloads\\questionwale_beta\\testwale\\node_modules\\framer-motion"
+  },
+  "lucide-react": {
+    "current": "1.14.0",
+    "wanted": "1.27.0",
+    "latest": "1.27.0",
+    "dependent": "testwale",
+    "location": "C:\\Users\\balis\\Downloads\\questionwale_beta\\testwale\\node_modules\\lucide-react"
+  },
+  "next": {
+    "current": "16.2.9",
+    "wanted": "16.2.12",
+    "latest": "16.2.12",
+    "dependent": "testwale",
+    "location": "C:\\Users\\balis\\Downloads\\questionwale_beta\\testwale\\node_modules\\next"
+  },
+  "react": {
+    "current": "19.2.7",
+    "wanted": "19.2.8",
+    "latest": "19.2.8",
+    "dependent": "testwale",
+    "location": "C:\\Users\\balis\\Downloads\\questionwale_beta\\testwale\\node_modules\\react"
+  },
+  "react-dom": {
+    "current": "19.2.7",
+    "wanted": "19.2.8",
+    "latest": "19.2.8",
+    "dependent": "testwale",
+    "location": "C:\\Users\\balis\\Downloads\\questionwale_beta\\testwale\\node_modules\\react-dom"
+  },
+  "tailwindcss": {
+    "current": "3.4.4",
+    "wanted": "3.4.4",
+    "latest": "4.3.3",
+    "dependent": "testwale",
+    "location": "C:\\Users\\balis\\Downloads\\questionwale_beta\\testwale\\node_modules\\tailwindcss"
+  },
+  "typescript": {
+    "current": "5.5.4",
+    "wanted": "5.5.4",
+    "latest": "7.0.2",
+    "dependent": "testwale",
+    "location": "C:\\Users\\balis\\Downloads\\questionwale_beta\\testwale\\node_modules\\typescript"
+  }
+}

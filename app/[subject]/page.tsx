@@ -10,6 +10,7 @@ import { fetchTopicsForLegacySubject, type TopicItem } from '@/lib/catalogTopics
 import { LEGACY_SUBJECT_SLUG_MAP } from '@/lib/subjectRoutes';
 import { NOT_FOUND_METADATA } from '@/lib/catalogRouteGuards';
 import SubjectPageClient from './SubjectPageClient';
+import { LEGACY_NOINDEX_SUBJECT_KEYS } from '@/lib/sitemapPolicy';
 
 const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
   history: { table: 'history_questions', label: 'History' },
@@ -38,7 +39,11 @@ export async function generateMetadata({ params }: { params: Promise<{ subject: 
     return NOT_FOUND_METADATA;
   }
 
-  return buildSubjectMetadata(subjectConfig.label, `/${subjectKey}`);
+  const metadata = buildSubjectMetadata(subjectConfig.label, `/${subjectKey}`);
+  if (LEGACY_NOINDEX_SUBJECT_KEYS.has(subjectKey)) {
+    return { ...metadata, robots: { index: false, follow: true } };
+  }
+  return metadata;
 }
 
 export default async function SubjectPage({ params }: { params: Promise<{ subject: string }> }) {

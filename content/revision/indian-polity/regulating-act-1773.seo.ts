@@ -10,7 +10,7 @@ export const regulatingAct1773Revision: RevisionDocument = {
   topicSlug: 'constitutional-history-making',
   subtopicSlug: 'regulating-act-1773',
   version: 'indian-polity/constitutional-history-making/regulating-act-1773.seo.v1',
-  status: 'published',
+  status: 'draft',
   estimatedMinutes: 14,
   lastReviewed: '2026-07-18',
   seo: {

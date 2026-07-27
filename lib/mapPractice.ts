@@ -26,6 +26,8 @@ export type MapLocation = {
 export type MapQuestion = {
   id: string;
   question_text: string;
+  question_text_en?: string;
+  question_text_hi?: string;
   question_type: MapQuestionType;
   main_topic: string;
   subtopic: string;

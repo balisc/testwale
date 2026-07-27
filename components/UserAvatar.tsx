@@ -2,6 +2,7 @@ type UserAvatarProps = {
   name: string;
   id?: string | null;
   email?: string | null;
+  imageUrl?: string | null;
   className?: string;
   textClassName?: string;
 };
@@ -40,10 +41,21 @@ function getAvatarStyle(seed: string) {
   return avatarStyles[hash % avatarStyles.length];
 }
 
+function isSafeAvatarUrl(value: string | null | undefined) {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
 export default function UserAvatar({
   name,
   id,
   email,
+  imageUrl,
   className = 'h-10 w-10 rounded-2xl',
   textClassName = 'text-sm',
 }: UserAvatarProps) {
@@ -51,6 +63,7 @@ export default function UserAvatar({
   const seed = `${id ?? ''}:${email ?? ''}:${label}`;
   const initials = getInitials(label, email);
   const gradient = getAvatarStyle(seed);
+  const showImage = isSafeAvatarUrl(imageUrl);
 
   return (
     <div
@@ -58,9 +71,16 @@ export default function UserAvatar({
       aria-label={`${label} avatar`}
       title={label}
     >
-      <span className="absolute -right-2 -top-2 h-1/2 w-1/2 rounded-full bg-white/20" />
-      <span className="absolute -bottom-3 -left-2 h-2/3 w-2/3 rounded-full bg-slate-950/10" />
-      <span className={`relative z-10 tracking-wide ${textClassName}`}>{initials}</span>
+      {showImage ? (
+        // eslint-disable-next-line @next/next/no-img-element -- external Google avatar URLs
+        <img src={imageUrl!} alt="" className="absolute inset-0 h-full w-full object-cover" referrerPolicy="no-referrer" />
+      ) : (
+        <>
+          <span className="absolute -right-2 -top-2 h-1/2 w-1/2 rounded-full bg-white/20" />
+          <span className="absolute -bottom-3 -left-2 h-2/3 w-2/3 rounded-full bg-slate-950/10" />
+          <span className={`relative z-10 tracking-wide ${textClassName}`}>{initials}</span>
+        </>
+      )}
     </div>
   );
 }

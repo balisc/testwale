@@ -3,7 +3,7 @@
  * Usage: BASE_URL=http://127.0.0.1:3011 node scripts/verify-soft-404.mjs
  */
 
-const base = (process.env.BASE_URL ?? 'http://127.0.0.1:3011').replace(/\/$/, '');
+const base = (process.argv[2] ?? process.env.BASE_URL ?? 'http://127.0.0.1:3011').replace(/\/$/, '');
 
 const INVALID_PATHS = [
   { path: '/subjects/not-a-real-subject-xyz', label: 'invalid-subject' },

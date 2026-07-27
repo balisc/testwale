@@ -1,34 +1,43 @@
 import { NextResponse } from 'next/server';
 import { getAuthUserFromCookies } from '@/lib/authCookies';
-import { getUserProfilePage, mergeSessionUser, updateUserProfile } from '@/lib/profileServer';
+import {
+  buildProfilePageForSession,
+  getUserProfilePage,
+  mergeSessionUser,
+  updateUserProfile,
+} from '@/lib/profileServer';
 
 export const dynamic = 'force-dynamic';
+
+const PRIVATE_NO_STORE = {
+  'Cache-Control': 'private, no-store',
+} as const;
 
 export async function GET() {
   const session = await getAuthUserFromCookies();
   if (!session) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401, headers: PRIVATE_NO_STORE });
   }
 
   const profile = await getUserProfilePage(session.id);
-  if (!profile) {
-    return NextResponse.json({ error: 'profile_failed' }, { status: 500 });
-  }
+  const payload = profile
+    ? mergeSessionUser(profile, session)
+    : await buildProfilePageForSession(session);
 
-  return NextResponse.json(mergeSessionUser(profile, session));
+  return NextResponse.json(payload, { headers: PRIVATE_NO_STORE });
 }
 
 export async function PATCH(request: Request) {
   const session = await getAuthUserFromCookies();
   if (!session) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401, headers: PRIVATE_NO_STORE });
   }
 
   let body: Record<string, unknown>;
   try {
     body = (await request.json()) as Record<string, unknown>;
   } catch {
-    return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
+    return NextResponse.json({ error: 'invalid_body' }, { status: 400, headers: PRIVATE_NO_STORE });
   }
 
   const ok = await updateUserProfile(session.id, {
@@ -41,13 +50,13 @@ export async function PATCH(request: Request) {
   });
 
   if (!ok) {
-    return NextResponse.json({ error: 'update_failed' }, { status: 500 });
+    return NextResponse.json({ error: 'update_failed' }, { status: 500, headers: PRIVATE_NO_STORE });
   }
 
   const profile = await getUserProfilePage(session.id);
-  if (!profile) {
-    return NextResponse.json({ error: 'profile_failed' }, { status: 500 });
-  }
+  const payload = profile
+    ? mergeSessionUser(profile, session)
+    : await buildProfilePageForSession(session);
 
-  return NextResponse.json(mergeSessionUser(profile, session));
+  return NextResponse.json(payload, { headers: PRIVATE_NO_STORE });
 }

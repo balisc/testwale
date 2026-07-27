@@ -2,7 +2,7 @@
  * Validates post-login redirect paths to prevent open redirects (e.g. //evil.com).
  * Only same-origin relative paths are allowed.
  */
-export function getSafeRedirectPath(raw: string | null | undefined, fallback = '/subjects'): string {
+export function getSafeRedirectPath(raw: string | null | undefined, fallback = '/dashboard'): string {
   if (!raw || typeof raw !== 'string') return fallback;
 
   const trimmed = raw.trim();

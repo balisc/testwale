@@ -1,7 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MutableRefObject,
+} from 'react';
 import { usePathname } from 'next/navigation';
 import {
   AlertCircle,
@@ -75,6 +82,28 @@ type QuestionPracticeProps = {
 const SKIP_LOGIN_KEY = 'qw_practice_skip_login';
 const OPTION_KEYS: OptionKey[] = ['A', 'B', 'C', 'D'];
 const MAX_AUTO_BATCH_FETCHES = 10;
+
+function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === 'AbortError') ||
+    (error instanceof Error && error.name === 'AbortError')
+  );
+}
+
+/** Cancel in-flight fetches without surfacing dev overlay AbortError noise. */
+function safeAbortController(controller: AbortController | null | undefined, reason = 'cancelled') {
+  if (!controller || controller.signal.aborted) return;
+  try {
+    controller.abort(reason);
+  } catch {
+    /* expected during navigation/unmount */
+  }
+}
+
+function safeAbortRef(ref: MutableRefObject<AbortController | null>, reason = 'cancelled') {
+  safeAbortController(ref.current, reason);
+  ref.current = null;
+}
 
 type QuestionResult = SubmitAnswerResponse;
 
@@ -493,8 +522,8 @@ export default function QuestionPractice({
 
   useEffect(() => {
     return () => {
-      batchAbortRef.current?.abort();
-      personalizeAbortRef.current?.abort();
+      safeAbortRef(batchAbortRef, 'unmount');
+      safeAbortRef(personalizeAbortRef, 'unmount');
     };
   }, []);
 
@@ -529,6 +558,9 @@ export default function QuestionPractice({
         setResultsByQuestion((prev) => ({ ...prev, ...nextResults }));
         setAttemptedIds((prev) => new Set([...prev, ...nextAttempted]));
         setAttemptsError(null);
+      } catch (error) {
+        if (isAbortError(error)) return;
+        throw error;
       } finally {
         attemptsInFlightRef.current = false;
       }
@@ -749,6 +781,9 @@ export default function QuestionPractice({
 
         setCorrectIdsError(null);
         return masteredIds;
+      } catch (error) {
+        if (isAbortError(error)) return [];
+        throw error;
       } finally {
         correctIdsInFlightRef.current = false;
       }
@@ -1212,7 +1247,7 @@ export default function QuestionPractice({
       const generation = requestGenerationRef.current;
       const scopeKey = activeScopeKeyRef.current ?? practiceScopeKey;
 
-      batchAbortRef.current?.abort();
+      safeAbortRef(batchAbortRef);
       const controller = new AbortController();
       batchAbortRef.current = controller;
 
@@ -1404,7 +1439,7 @@ export default function QuestionPractice({
       .filter((id) => !checkedQuestionStateRef.current.has(id));
     if (unchecked.length === 0) return;
 
-    personalizeAbortRef.current?.abort();
+      safeAbortRef(personalizeAbortRef);
     const controller = new AbortController();
     personalizeAbortRef.current = controller;
 
@@ -1434,7 +1469,7 @@ export default function QuestionPractice({
       .filter((id) => !checkedCorrectIdsRef.current.has(id));
     if (unchecked.length === 0) return;
 
-    personalizeAbortRef.current?.abort();
+      safeAbortRef(personalizeAbortRef);
     const controller = new AbortController();
     personalizeAbortRef.current = controller;
 
@@ -1454,7 +1489,7 @@ export default function QuestionPractice({
       .map((question) => question.id)
       .filter((id) => verifiedQuestionIds.has(id));
 
-    personalizeAbortRef.current?.abort();
+      safeAbortRef(personalizeAbortRef);
     const controller = new AbortController();
     personalizeAbortRef.current = controller;
 
@@ -1537,8 +1572,8 @@ export default function QuestionPractice({
     if (activeScopeKeyRef.current === practiceScopeKey) return;
 
     const isScopeChange = activeScopeKeyRef.current !== null;
-    batchAbortRef.current?.abort();
-    personalizeAbortRef.current?.abort();
+    safeAbortRef(batchAbortRef, 'scope-change');
+    safeAbortRef(personalizeAbortRef, 'scope-change');
     activeScopeKeyRef.current = practiceScopeKey;
     requestGenerationRef.current += 1;
 
@@ -1567,7 +1602,7 @@ export default function QuestionPractice({
     const scopeKey = activeScopeKeyRef.current ?? practiceScopeKey;
     const initialIds = resolvedInitialQuestions.map((question) => question.id);
 
-    personalizeAbortRef.current?.abort();
+    safeAbortRef(personalizeAbortRef, 'initial-batch');
     const controller = new AbortController();
     personalizeAbortRef.current = controller;
 
@@ -1578,8 +1613,10 @@ export default function QuestionPractice({
         generation,
         scopeKey,
         { isInitial: true, probeCatalog: true },
-      );
-      return () => controller.abort();
+      ).catch((error) => {
+        if (isAbortError(error)) return;
+      });
+      return () => safeAbortController(controller, 'effect-cleanup');
     }
 
     if (initialIds.length === 0) {
@@ -1594,9 +1631,11 @@ export default function QuestionPractice({
       generation,
       scopeKey,
       { isInitial: true },
-    );
+    ).catch((error) => {
+      if (isAbortError(error)) return;
+    });
 
-    return () => controller.abort();
+    return () => safeAbortController(controller, 'effect-cleanup');
   }, [
     isSubtopicBatchMode,
     isSubtopicMasteryMode,

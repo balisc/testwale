@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Award,
@@ -47,7 +47,7 @@ function formatRelativeTime(value: string) {
 }
 
 export default function ProfileClient() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const { language } = useLanguage();
   const router = useRouter();
   const [data, setData] = useState<ProfilePageData | null>(null);
@@ -56,12 +56,14 @@ export default function ProfileClient() {
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState({ bio: '', country: '', target_exam: '' });
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const loadedForUserRef = useRef<string | null>(null);
 
   const loadProfile = useCallback(async () => {
     setFetching(true);
     setError(false);
     try {
-      const res = await fetch('/api/profile', { cache: 'no-store' });
+      const res = await fetch('/api/profile', { cache: 'no-store', credentials: 'include' });
       if (res.status === 401) {
         router.replace('/login?redirect=/profile');
         return;
@@ -76,7 +78,6 @@ export default function ProfileClient() {
       });
     } catch {
       setError(true);
-      setData(null);
     } finally {
       setFetching(false);
     }
@@ -84,19 +85,73 @@ export default function ProfileClient() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) {
-      router.replace('/login?redirect=/profile');
+
+    if (user) {
+      setSessionChecked(true);
+      if (loadedForUserRef.current === user.id) return;
+      loadedForUserRef.current = user.id;
+      void loadProfile();
       return;
     }
-    void loadProfile();
-  }, [user, authLoading, router, loadProfile]);
+
+    loadedForUserRef.current = null;
+
+    if (sessionChecked) return;
+
+    void refreshUser().finally(() => setSessionChecked(true));
+  }, [user, authLoading, sessionChecked, refreshUser, loadProfile]);
+
+  useEffect(() => {
+    if (authLoading || !sessionChecked || user) return;
+    router.replace('/login?redirect=/profile');
+  }, [authLoading, sessionChecked, user, router]);
+
+  const displayUser = useMemo(() => {
+    const name =
+      data?.user.full_name?.trim() ||
+      user?.fullName?.trim() ||
+      user?.email?.split('@')[0] ||
+      'User';
+    return {
+      id: data?.user.id ?? user?.id ?? '',
+      full_name: name,
+      email: data?.user.email || user?.email || '',
+      avatar_url: data?.user.avatar_url ?? user?.avatarUrl ?? null,
+      provider: data?.user.provider || user?.provider || 'google',
+      created_at: data?.user.created_at ?? '',
+    };
+  }, [data, user]);
+
+  const profileSettings = data?.profile ?? {
+    bio: null,
+    country: null,
+    state: null,
+    city: null,
+    target_exam: null,
+    is_premium: false,
+    daily_goal: 50,
+    weekly_goal: 300,
+    monthly_goal: 1500,
+  };
+
+  const overview = useMemo(
+    () =>
+      data?.overview ?? {
+        total_attempts: 0,
+        unique_questions_attempted: 0,
+        correct_count: 0,
+        wrong_count: 0,
+        accuracy_percent: 0,
+      },
+    [data?.overview],
+  );
 
   const wrongPct = useMemo(() => {
-    if (!data?.overview.total_attempts) return 0;
-    return Math.round((data.overview.wrong_count * 1000) / data.overview.total_attempts) / 10;
-  }, [data]);
+    if (!overview.total_attempts) return 0;
+    return Math.round((overview.wrong_count * 1000) / overview.total_attempts) / 10;
+  }, [overview]);
 
-  const hasAttempts = (data?.overview.total_attempts ?? 0) > 0;
+  const hasAttempts = overview.total_attempts > 0;
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -117,7 +172,7 @@ export default function ProfileClient() {
     }
   };
 
-  if (authLoading || fetching) {
+  if (authLoading || (!user && !sessionChecked)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-brand" />
@@ -125,11 +180,15 @@ export default function ProfileClient() {
     );
   }
 
-  if (error || !data) {
+  if (!user) {
+    return null;
+  }
+
+  if (error && !data) {
     return (
       <div className="mx-auto w-full min-w-0 max-w-lg px-2 py-12 text-center min-[360px]:px-4 min-[360px]:py-20">
         <p className="break-words text-sm text-red-600 min-[360px]:text-base">
-          Could not load profile. Run scripts/migrate_user_profile.sql in Supabase.
+          Could not load profile data. Please try again.
         </p>
         <button
           type="button"
@@ -142,7 +201,17 @@ export default function ProfileClient() {
     );
   }
 
-  const { user: u, profile, overview, rank, readiness } = data;
+  const u = displayUser;
+  const profile = profileSettings;
+  const rank = data?.rank ?? { overall: 0, total_users: 0, change_7d: 0 };
+  const readiness = data?.readiness ?? { score: 0, label: 'Average' };
+  const strengths = data?.strengths ?? [];
+  const weaknesses = data?.weaknesses ?? [];
+  const bySubject = data?.by_subject ?? [];
+  const recentActivity = data?.recent_activity ?? [];
+  const studyDays = data?.study_days ?? 0;
+  const avgDailyAttempts = data?.avg_daily_attempts ?? 0;
+  const goalsProgress = data?.goals_progress ?? { today: 0, week: 0, month: 0 };
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-[1280px] overflow-x-hidden px-2 py-4 min-[240px]:px-3 min-[360px]:px-4 min-[360px]:py-6 lg:px-6 lg:py-8">
@@ -155,6 +224,7 @@ export default function ProfileClient() {
                 name={u.full_name}
                 id={u.id}
                 email={u.email}
+                imageUrl={u.avatar_url}
                 className="h-14 w-14 shrink-0 rounded-xl ring-2 ring-[#EDE9FE] min-[240px]:h-16 min-[240px]:w-16 min-[360px]:h-20 min-[360px]:w-20 min-[360px]:rounded-2xl"
                 textClassName="text-lg min-[240px]:text-xl min-[360px]:text-2xl"
               />
@@ -244,6 +314,19 @@ export default function ProfileClient() {
         </div>
 
         {/* Stats */}
+        {fetching && !data ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-brand" aria-label="Loading profile stats" />
+          </div>
+        ) : (
+        <>
+        {!hasAttempts && (
+          <div className="rounded-xl border border-[#EDE9FE] bg-[#FAF5FF] px-4 py-3 text-center text-sm text-slate-600 min-[360px]:rounded-2xl">
+            {language === 'hi'
+              ? 'अभी तक कोई अभ्यास डेटा नहीं है। विषय चुनकर प्रैक्टिस शुरू करें — आपकी प्रगति यहाँ दिखेगी।'
+              : 'No practice data yet. Start practicing from Subjects — your progress will appear here.'}
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-2 min-[280px]:grid-cols-2 min-[360px]:gap-3 md:grid-cols-3 xl:grid-cols-6">
           <StatCard label="Total Attempts" value={overview.total_attempts.toLocaleString()} />
           <StatCard label="Unique Questions" value={overview.unique_questions_attempted.toLocaleString()} />
@@ -259,23 +342,23 @@ export default function ProfileClient() {
             sub={hasAttempts ? `${wrongPct}% Incorrect` : undefined}
             accent="red"
           />
-          <StatCard label="Study Days" value={String(data.study_days)} sub="Total Days" />
-          <StatCard label="Avg. Daily Attempts" value={String(data.avg_daily_attempts)} sub="Per Day" />
+          <StatCard label="Study Days" value={String(studyDays)} sub="Total Days" />
+          <StatCard label="Avg. Daily Attempts" value={String(avgDailyAttempts)} sub="Per Day" />
         </div>
 
-        {(data.counts.bookmarks > 0 || data.counts.notes > 0 || data.counts.mistakes > 0) && (
+        {(data?.counts.bookmarks ?? 0) > 0 || (data?.counts.notes ?? 0) > 0 || (data?.counts.mistakes ?? 0) > 0 ? (
           <div className="grid grid-cols-1 gap-2 min-[280px]:grid-cols-3 min-[360px]:gap-3">
-            {data.counts.mistakes > 0 && (
-              <StatCard label="Mistake Questions" value={String(data.counts.mistakes)} />
+            {(data?.counts.mistakes ?? 0) > 0 && (
+              <StatCard label="Mistake Questions" value={String(data!.counts.mistakes)} />
             )}
-            {data.counts.bookmarks > 0 && (
-              <StatCard label="Bookmarks" value={String(data.counts.bookmarks)} />
+            {(data?.counts.bookmarks ?? 0) > 0 && (
+              <StatCard label="Bookmarks" value={String(data!.counts.bookmarks)} />
             )}
-            {data.counts.notes > 0 && (
-              <StatCard label="Saved Notes" value={String(data.counts.notes)} />
+            {(data?.counts.notes ?? 0) > 0 && (
+              <StatCard label="Saved Notes" value={String(data!.counts.notes)} />
             )}
           </div>
-        )}
+        ) : null}
 
         <div className="grid gap-3 min-[360px]:gap-4 lg:grid-cols-3">
           <div className="min-w-0 rounded-xl border border-[#EDE9FE] bg-white p-3 shadow-sm min-[360px]:rounded-2xl min-[360px]:p-5">
@@ -283,10 +366,10 @@ export default function ProfileClient() {
             <div className="mt-3 min-[360px]:mt-4">
               <p className="text-[10px] font-semibold uppercase text-emerald-600 min-[360px]:text-xs">Strong Areas</p>
               <div className="mt-2 flex flex-wrap gap-1.5 min-[360px]:gap-2">
-                {data.strengths.length === 0 ? (
+                {strengths.length === 0 ? (
                   <p className="text-xs text-slate-400 min-[360px]:text-sm">No strong topics yet</p>
                 ) : (
-                  data.strengths.map((s, i) => (
+                  strengths.map((s, i) => (
                     <span
                       key={i}
                       className="max-w-full break-words rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 min-[360px]:px-3 min-[360px]:py-1 min-[360px]:text-xs"
@@ -301,10 +384,10 @@ export default function ProfileClient() {
             <div className="mt-4 min-[360px]:mt-5">
               <p className="text-[10px] font-semibold uppercase text-red-500 min-[360px]:text-xs">Focus Topics</p>
               <div className="mt-2 flex flex-wrap gap-1.5 min-[360px]:gap-2">
-                {data.weaknesses.length === 0 ? (
+                {weaknesses.length === 0 ? (
                   <p className="text-xs text-slate-400 min-[360px]:text-sm">No weak topics yet</p>
                 ) : (
-                  data.weaknesses.map((w, i) => (
+                  weaknesses.map((w, i) => (
                     <span
                       key={i}
                       className="max-w-full break-words rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700 min-[360px]:px-3 min-[360px]:py-1 min-[360px]:text-xs"
@@ -320,7 +403,7 @@ export default function ProfileClient() {
 
           <div className="min-w-0 rounded-xl border border-[#EDE9FE] bg-white p-3 shadow-sm min-[360px]:rounded-2xl min-[360px]:p-5">
             <h2 className="text-sm font-bold text-slate-900 min-[360px]:text-base">Exam Readiness Breakdown</h2>
-            {data.by_subject.length === 0 ? (
+            {bySubject.length === 0 ? (
               <p className="mt-3 text-xs text-slate-400 min-[360px]:mt-4 min-[360px]:text-sm">No subject data yet</p>
             ) : (
               <div className="mt-3 flex flex-col items-center gap-3 min-[360px]:mt-4 min-[360px]:gap-4 sm:flex-row">
@@ -330,7 +413,7 @@ export default function ProfileClient() {
                   </div>
                 )}
                 <div className="w-full min-w-0 flex-1 space-y-2.5 min-[360px]:space-y-3">
-                  {data.by_subject.map((s, i) => (
+                  {bySubject.map((s, i) => (
                     <div key={i} className="min-w-0">
                       <div className="mb-1 flex items-start justify-between gap-2 text-[10px] min-[360px]:text-xs">
                         <span className="min-w-0 break-words font-medium text-slate-700">
@@ -354,10 +437,10 @@ export default function ProfileClient() {
           <div className="min-w-0 rounded-xl border border-[#EDE9FE] bg-white p-3 shadow-sm min-[360px]:rounded-2xl min-[360px]:p-5">
             <h2 className="text-sm font-bold text-slate-900 min-[360px]:text-base">Recent Activity</h2>
             <ul className="mt-3 space-y-2.5 min-[360px]:mt-4 min-[360px]:space-y-3">
-              {data.recent_activity.length === 0 ? (
+              {recentActivity.length === 0 ? (
                 <li className="text-xs text-slate-400 min-[360px]:text-sm">No activity yet</li>
               ) : (
-                data.recent_activity.map((a, i) => (
+                recentActivity.map((a, i) => (
                   <li
                     key={i}
                     className="flex min-w-0 gap-2 border-b border-slate-50 pb-2.5 last:border-0 last:pb-0 min-[360px]:gap-3 min-[360px]:pb-3"
@@ -393,12 +476,14 @@ export default function ProfileClient() {
           <div className="grid gap-2 min-[360px]:gap-4 sm:grid-cols-3">
             <GoalBar
               label="Today's Progress"
-              current={data.goals_progress.today}
+              current={goalsProgress.today}
               target={profile.daily_goal}
             />
-            <GoalBar label="Weekly Goal" current={data.goals_progress.week} target={profile.weekly_goal} />
-            <GoalBar label="Monthly Goal" current={data.goals_progress.month} target={profile.monthly_goal} />
+            <GoalBar label="Weekly Goal" current={goalsProgress.week} target={profile.weekly_goal} />
+            <GoalBar label="Monthly Goal" current={goalsProgress.month} target={profile.monthly_goal} />
           </div>
+        )}
+        </>
         )}
       </div>
 

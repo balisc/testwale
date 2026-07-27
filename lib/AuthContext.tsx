@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      const response = await fetch('/api/auth/me', { cache: 'no-store' });
+      const response = await fetch('/api/auth/me', { cache: 'no-store', credentials: 'include' });
       const data = (await response.json()) as { user?: AuthUser | null };
       setUser(data.user ?? null);
     } catch {
@@ -38,16 +38,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const run = () => {
+    void refreshUser();
+  }, [refreshUser]);
+
+  useEffect(() => {
+    const onAuthRefresh = () => {
       void refreshUser();
     };
 
-    const timerId = globalThis.setTimeout(run, 1500);
-    return () => globalThis.clearTimeout(timerId);
+    window.addEventListener('focus', onAuthRefresh);
+    window.addEventListener('pageshow', onAuthRefresh);
+    return () => {
+      window.removeEventListener('focus', onAuthRefresh);
+      window.removeEventListener('pageshow', onAuthRefresh);
+    };
   }, [refreshUser]);
 
   const logout = useCallback(async () => {
-    await fetch('/api/auth/me', { method: 'DELETE' });
+    await fetch('/api/auth/me', { method: 'DELETE', credentials: 'include' });
     setUser(null);
   }, []);
 

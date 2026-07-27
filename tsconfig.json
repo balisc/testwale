@@ -43,6 +43,7 @@
   "exclude": [
     "node_modules",
     "scripts/validate-parse-question-sources.ts",
-    "scripts/validate-merge-official-sources.ts"
+    "scripts/validate-merge-official-sources.ts",
+    "**/*.test.ts"
   ]
 }

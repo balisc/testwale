@@ -67,6 +67,34 @@ const nextConfig = {
         destination: '/subjects/:subject/:topic/company-rule-acts-1773-1853/:path*',
         permanent: true,
       },
+      {
+        source: '/polity',
+        destination: '/subjects/indian-polity',
+        permanent: true,
+      },
+      {
+        source: '/polity/topics',
+        destination: '/subjects/indian-polity',
+        permanent: true,
+      },
+      {
+        source: '/subjects/indian-polity/constitution-basics-salient-features/sources-of-indian-constitution/revision',
+        destination:
+          '/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/revision',
+        permanent: true,
+      },
+      {
+        source: '/subjects/indian-polity/preamble-union-citizenship/preamble-meaning-importance/revision',
+        destination:
+          '/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/revision',
+        permanent: true,
+      },
+      {
+        source: '/subjects/indian-polity/constitutional-history-making/regulating-act-1773/revision',
+        destination:
+          '/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision',
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
@@ -113,6 +141,55 @@ const nextConfig = {
       {
         source: '/dashboard',
         headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/login',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/signup',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/auth/callback',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store, must-revalidate' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
+      {
+        source: '/api/auth/google/start',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store, must-revalidate' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
+      {
+        source: '/subjects/:subject/:topic/:subtopic/revision',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        source: '/subjects/:subject/:topic',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        source: '/subjects/:subject',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
+          },
+        ],
       },
       {
         source: '/llms.txt',

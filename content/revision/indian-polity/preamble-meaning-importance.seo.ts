@@ -6,8 +6,8 @@ import type { RevisionDocument } from '@/lib/revision/types';
  */
 export const preambleMeaningImportanceRevision: RevisionDocument = {
   subjectSlug: 'indian-polity',
-  topicSlug: 'preamble-union-citizenship',
-  subtopicSlug: 'preamble-meaning-importance',
+  topicSlug: 'constitution-basics-preamble-schedules',
+  subtopicSlug: 'preamble-words-ideals-legal-status',
   version: 'indian-polity/preamble-union-citizenship/preamble-meaning-importance.seo.v1',
   status: 'published',
   estimatedMinutes: 10,

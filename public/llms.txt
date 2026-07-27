@@ -12,9 +12,8 @@ QuestionWale is a bilingual learning and MCQ-practice platform for Indian compet
 ## Subjects and learning resources
 
 - [Indian Polity — Topics & MCQ Practice](https://questionwale.com/subjects/indian-polity)
-- [Sources of Indian Constitution — Revision Notes](https://questionwale.com/subjects/indian-polity/constitution-basics-salient-features/sources-of-indian-constitution/revision)
-- [Preamble Meaning & Importance — Revision Notes](https://questionwale.com/subjects/indian-polity/preamble-union-citizenship/preamble-meaning-importance/revision)
-- [Regulating Act, 1773 — Revision Notes](https://questionwale.com/subjects/indian-polity/constitutional-history-making/regulating-act-1773/revision)
+- [Sources of the Indian Constitution — Revision Notes](https://questionwale.com/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/revision)
+- [Preamble Meaning and Importance — Revision Notes](https://questionwale.com/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/revision)
 - [Company Rule Acts 1773–1853 — Revision Notes](https://questionwale.com/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision)
 
 ## Policies and discovery

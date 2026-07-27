@@ -3,5 +3,5 @@
 import AuthPageClient from '@/app/components/AuthPageClient';
 
 export default function SignUpClient({ googleClientId = '' }: { googleClientId?: string }) {
-  return <AuthPageClient googleClientId={googleClientId} />;
+  return <AuthPageClient googleClientId={googleClientId} redirectTo="/profile" />;
 }

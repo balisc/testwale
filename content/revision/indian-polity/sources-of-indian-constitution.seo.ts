@@ -6,8 +6,8 @@ import type { RevisionDocument } from '@/lib/revision/types';
  */
 export const sourcesOfIndianConstitutionRevision: RevisionDocument = {
   subjectSlug: 'indian-polity',
-  topicSlug: 'constitution-basics-salient-features',
-  subtopicSlug: 'sources-of-indian-constitution',
+  topicSlug: 'constitution-basics-preamble-schedules',
+  subtopicSlug: 'constitution-features-sources-comparison',
   version: 'indian-polity/constitution-basics/sources-of-indian-constitution.seo.v1',
   status: 'published',
   estimatedMinutes: 12,

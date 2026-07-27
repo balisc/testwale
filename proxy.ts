@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { renderBrandedNotFoundHtml } from '@/lib/brandedNotFoundHtml';
 import { checkRateLimit, getApiRateLimitKey, getClientIp } from '@/lib/rateLimit';
 import { SUBJECT_KEYS } from '@/lib/subjects';
 
@@ -8,6 +9,19 @@ const API_RATE_WINDOW_MS = 60_000;
 const LEGACY_TOP_LEVEL = new Set(SUBJECT_KEYS.map((key) => key.toLowerCase()));
 /** Active catalog subject slugs served under /subjects/:slug (extend when new subjects launch). */
 const CATALOG_SUBJECT_SLUGS = new Set(['indian-polity']);
+
+const PATH_CHECK_TTL_MS = 5 * 60_000;
+const pathCheckCache = new Map<string, { ok: boolean; expiresAt: number }>();
+
+function notFoundResponse(): NextResponse {
+  return new NextResponse(renderBrandedNotFoundHtml(), {
+    status: 404,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
+  });
+}
 
 function isReservedTopLevelSegment(segment: string): boolean {
   const reserved = new Set([
@@ -46,13 +60,7 @@ function maybeRejectUnknownCatalogSubject(pathname: string): NextResponse | null
   if (!match) return null;
   const slug = match[1]!.toLowerCase();
   if (CATALOG_SUBJECT_SLUGS.has(slug)) return null;
-  return new NextResponse('Not Found', {
-    status: 404,
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'no-store',
-    },
-  });
+  return notFoundResponse();
 }
 
 async function maybeRejectUnknownCatalogPath(
@@ -63,24 +71,23 @@ async function maybeRejectUnknownCatalogPath(
   const segments = pathname.split('/').filter(Boolean);
   if (segments.length < 3) return null;
 
+  const cached = pathCheckCache.get(pathname);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.ok ? null : notFoundResponse();
+  }
+
   const checkUrl = new URL('/api/catalog/path-exists', request.nextUrl.origin);
   checkUrl.searchParams.set('path', pathname);
 
   try {
     const res = await fetch(checkUrl.toString(), {
       method: 'GET',
-      cache: 'no-store',
+      next: { revalidate: 300 },
       headers: { 'x-catalog-path-check': '1' },
     });
-    if (res.status === 404) {
-      return new NextResponse('Not Found', {
-        status: 404,
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Cache-Control': 'no-store',
-        },
-      });
-    }
+    const ok = res.status !== 404;
+    pathCheckCache.set(pathname, { ok, expiresAt: Date.now() + PATH_CHECK_TTL_MS });
+    if (!ok) return notFoundResponse();
   } catch {
     return null;
   }
@@ -95,13 +102,7 @@ function maybeRejectUnknownTopLevel(pathname: string): NextResponse | null {
   if (LEGACY_TOP_LEVEL.has(segment) || isReservedTopLevelSegment(segment)) {
     return null;
   }
-  return new NextResponse('Not Found', {
-    status: 404,
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'no-store',
-    },
-  });
+  return notFoundResponse();
 }
 
 /**

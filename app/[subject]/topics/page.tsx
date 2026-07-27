@@ -28,6 +28,8 @@ import { CHEMISTRY_PAGE_TITLE } from '@/lib/science/chemistryData';
 import { BIOLOGY_PAGE_TITLE } from '@/lib/science/biologyData';
 import { GENERAL_SCIENCE_PAGE_TITLE } from '@/lib/science/generalScienceData';
 import { canonical } from '@/lib/seo';
+import { LEGACY_SUBJECT_SLUG_MAP } from '@/lib/subjectRoutes';
+import { LEGACY_NOINDEX_SUBJECT_KEYS } from '@/lib/sitemapPolicy';
 
 const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
   history: { table: 'history_questions', label: 'History' },
@@ -136,6 +138,15 @@ export async function generateMetadata({
     };
   }
 
+  if (LEGACY_NOINDEX_SUBJECT_KEYS.has(subjectKey)) {
+    return {
+      title: `${subjectConfig.label} Topics`,
+      description: `${subjectConfig.label} topics are coming soon on QuestionWale.`,
+      robots: { index: false, follow: true },
+      ...canonical(`/${subjectKey}/topics`),
+    };
+  }
+
   const rawSubCategory = Array.isArray(resolvedSearchParams.sub_category)
     ? resolvedSearchParams.sub_category[0]
     : resolvedSearchParams.sub_category;
@@ -234,6 +245,10 @@ export default async function TopicPage({
 
   if (!subjectConfig) {
     return redirect('/subjects');
+  }
+
+  if (subjectKey === 'polity') {
+    permanentRedirect(`/subjects/${LEGACY_SUBJECT_SLUG_MAP.polity}`);
   }
 
   const rawSubCategory = Array.isArray(resolvedSearchParams.sub_category)

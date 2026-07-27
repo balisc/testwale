@@ -5,9 +5,15 @@ import {
   loadTopicByRouteSlugs,
 } from '@/lib/catalogRouteGuards';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
-const NO_STORE = { 'Cache-Control': 'private, no-store' } as const;
+const PUBLIC_CACHE = {
+  'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+} as const;
+
+const NOT_FOUND_CACHE = {
+  'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+} as const;
 
 function parseCatalogPath(pathname: string): {
   routeSubject: string;
@@ -41,33 +47,33 @@ function parseCatalogPath(pathname: string): {
 export async function GET(request: Request) {
   const pathname = new URL(request.url).searchParams.get('path')?.trim() ?? '';
   if (!pathname.startsWith('/subjects/')) {
-    return NextResponse.json({ error: 'unsupported_path' }, { status: 400, headers: NO_STORE });
+    return NextResponse.json({ error: 'unsupported_path' }, { status: 400, headers: PUBLIC_CACHE });
   }
 
   const parsed = parseCatalogPath(pathname);
   if (!parsed) {
-    return NextResponse.json({ error: 'invalid_path' }, { status: 400, headers: NO_STORE });
+    return NextResponse.json({ error: 'invalid_path' }, { status: 400, headers: PUBLIC_CACHE });
   }
 
   const { routeSubject, topicSlug, subtopicSlug } = parsed;
   const subjectRow = await loadSubjectByRouteSlug(routeSubject);
   if (!subjectRow) {
-    return NextResponse.json({ exists: false }, { status: 404, headers: NO_STORE });
+    return NextResponse.json({ exists: false }, { status: 404, headers: NOT_FOUND_CACHE });
   }
 
   if (!topicSlug) {
-    return new NextResponse(null, { status: 204, headers: NO_STORE });
+    return new NextResponse(null, { status: 204, headers: PUBLIC_CACHE });
   }
 
   if (!subtopicSlug) {
     const topicRow = await loadTopicByRouteSlugs(routeSubject, topicSlug);
     return topicRow
-      ? new NextResponse(null, { status: 204, headers: NO_STORE })
-      : NextResponse.json({ exists: false }, { status: 404, headers: NO_STORE });
+      ? new NextResponse(null, { status: 204, headers: PUBLIC_CACHE })
+      : NextResponse.json({ exists: false }, { status: 404, headers: NOT_FOUND_CACHE });
   }
 
   const subtopicRow = await loadSubtopicByRouteSlugs(routeSubject, topicSlug, subtopicSlug);
   return subtopicRow
-    ? new NextResponse(null, { status: 204, headers: NO_STORE })
-    : NextResponse.json({ exists: false }, { status: 404, headers: NO_STORE });
+    ? new NextResponse(null, { status: 204, headers: PUBLIC_CACHE })
+    : NextResponse.json({ exists: false }, { status: 404, headers: NOT_FOUND_CACHE });
 }

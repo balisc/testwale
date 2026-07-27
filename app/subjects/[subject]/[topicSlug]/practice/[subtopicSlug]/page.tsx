@@ -79,6 +79,9 @@ export default async function SubtopicPracticePage({ params, searchParams }: Pag
           subtopicTitle={subtopic.title}
           currentLabel={{ en: 'Practice', hi: 'अभ्यास' }}
         />
+        <h1 className="sr-only">
+          {getLocalizedText(subtopic.title, 'en')} — MCQ Practice
+        </h1>
       </div>
 
       <QuestionPractice

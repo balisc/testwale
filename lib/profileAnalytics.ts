@@ -189,3 +189,40 @@ export function readinessLabel(score: number): string {
   if (score >= 45) return 'Average';
   return 'Needs Work';
 }
+
+export function createEmptyProfilePage(
+  user: ProfileUser,
+  profile?: Partial<UserProfileSettings>,
+): ProfilePageData {
+  return {
+    user,
+    profile: {
+      bio: profile?.bio ?? null,
+      country: profile?.country ?? null,
+      state: profile?.state ?? null,
+      city: profile?.city ?? null,
+      target_exam: profile?.target_exam ?? null,
+      is_premium: profile?.is_premium ?? false,
+      daily_goal: profile?.daily_goal ?? 50,
+      weekly_goal: profile?.weekly_goal ?? 300,
+      monthly_goal: profile?.monthly_goal ?? 1500,
+    },
+    overview: {
+      total_attempts: 0,
+      unique_questions_attempted: 0,
+      correct_count: 0,
+      wrong_count: 0,
+      accuracy_percent: 0,
+    },
+    study_days: 0,
+    avg_daily_attempts: 0,
+    rank: { overall: 0, total_users: 0, change_7d: 0 },
+    readiness: { score: 0, label: readinessLabel(0) },
+    by_subject: [],
+    strengths: [],
+    weaknesses: [],
+    recent_activity: [],
+    counts: { bookmarks: 0, notes: 0, mistakes: 0 },
+    goals_progress: { today: 0, week: 0, month: 0 },
+  };
+}

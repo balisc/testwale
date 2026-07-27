@@ -24,8 +24,7 @@ export async function POST(request: Request) {
       success: true,
       user: result.user,
     });
-  } catch (error) {
-    console.error('Google auth API error:', error);
+  } catch {
     return NextResponse.json({ success: false, code: 'submitError' }, { status: 500 });
   }
 }

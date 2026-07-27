@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -16,6 +16,9 @@ import {
 } from 'lucide-react';
 import AuthHeroIllustration from '@/app/components/AuthHeroIllustration';
 import HomeGoogleCtaButton from '@/app/components/HomeGoogleCtaButton';
+import AuthHashGuard from '@/components/AuthHashGuard';
+import AuthFlashLoader from '@/components/AuthFlashLoader';
+import AuthErrorModal from '@/components/AuthErrorModal';
 import { useLanguage } from '@/lib/LanguageContext';
 
 type Lang = 'en' | 'hi';
@@ -106,21 +109,37 @@ const BOTTOM_ICONS = [Target, Languages, BarChart3, FileText] as const;
 
 export default function AuthPageClient({
   googleClientId = '',
-  redirectTo = '/subjects',
-  initialError = '',
+  redirectTo = '/profile',
 }: {
   googleClientId?: string;
   redirectTo?: string;
-  initialError?: string;
 }) {
   const { language } = useLanguage();
   const lang = language as Lang;
   const c = CONTENT[lang];
 
-  const [formError, setFormError] = useState(initialError);
+  const [errorModal, setErrorModal] = useState<{ open: boolean; message: string }>({
+    open: false,
+    message: '',
+  });
+
+  const showAuthError = useCallback((message: string) => {
+    if (!message.trim()) return;
+    setErrorModal({ open: true, message });
+  }, []);
+
+  const closeAuthError = useCallback(() => {
+    setErrorModal({ open: false, message: '' });
+  }, []);
+
+  const handleFlashMessage = useCallback((message: string) => showAuthError(message), [showAuthError]);
+  const handleHashScrubbed = useCallback((message: string) => showAuthError(message), [showAuthError]);
 
   return (
     <div className="relative flex min-h-screen min-w-0 flex-col overflow-x-hidden bg-[#F8FAFC] text-slate-900">
+      <AuthHashGuard onScrubbed={handleHashScrubbed} />
+      <AuthFlashLoader onMessage={handleFlashMessage} />
+      <AuthErrorModal open={errorModal.open} message={errorModal.message} onClose={closeAuthError} />
       <div className="pointer-events-none absolute -left-20 top-24 hidden h-72 w-72 rounded-full bg-[#EDE9FE]/70 blur-3xl min-[360px]:block" />
       <div className="pointer-events-none absolute -right-16 top-10 hidden h-80 w-80 rounded-full bg-[#F3E8FF]/80 blur-3xl min-[360px]:block" />
       <div className="pointer-events-none absolute bottom-32 left-1/4 hidden h-64 w-64 rounded-full bg-[#EDE9FE]/50 blur-3xl min-[480px]:block" />
@@ -188,7 +207,7 @@ export default function AuthPageClient({
                   <HomeGoogleCtaButton
                     clientId={googleClientId}
                     redirectTo={redirectTo}
-                    onError={(message) => setFormError(message)}
+                    onError={showAuthError}
                   />
 
                   <div className="flex w-full min-w-0 gap-2 rounded-lg bg-[#F5F3FF] px-2.5 py-3 text-left min-[360px]:gap-3 min-[360px]:rounded-xl min-[360px]:px-4 min-[360px]:py-3.5">
@@ -215,12 +234,6 @@ export default function AuthPageClient({
                   );
                 })}
               </ul>
-
-              {formError && (
-                <p className="mt-3 break-words rounded-lg bg-[#FEF2F2] px-2.5 py-2.5 text-[11px] font-medium text-[#DC2626] min-[360px]:mt-4 min-[360px]:rounded-xl min-[360px]:px-4 min-[360px]:py-3 min-[360px]:text-[13px]">
-                  {formError}
-                </p>
-              )}
 
               <p className="mt-4 break-words text-left text-[10px] leading-5 text-[#9CA3AF] min-[360px]:mt-5 min-[360px]:text-[12px] min-[360px]:leading-6 sm:mt-6 sm:text-[13px]">
                 {c.termsPrefix}{' '}

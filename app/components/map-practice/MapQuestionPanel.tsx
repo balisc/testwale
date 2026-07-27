@@ -1,6 +1,8 @@
 'use client';
 
 import type { MapQuestion } from '@/lib/mapPractice';
+import { useLanguage } from '@/lib/LanguageContext';
+import { localizeMapQuestionText } from '@/lib/mapPracticeI18n';
 
 type Feedback = {
   isCorrect: boolean;
@@ -46,6 +48,16 @@ export default function MapQuestionPanel({
   loading,
   error,
 }: Props) {
+  const { language } = useLanguage();
+  const questionLabel =
+    question == null
+      ? ''
+      : question.question_text_en && question.question_text_hi
+        ? language === 'hi'
+          ? question.question_text_hi
+          : question.question_text_en
+        : localizeMapQuestionText(question.question_text, language);
+
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-4">
       <div className="flex items-start justify-between gap-3">
@@ -65,7 +77,9 @@ export default function MapQuestionPanel({
 
       {question && (
         <>
-          <p className="mt-3 text-base font-semibold leading-6 text-slate-900">{question.question_text}</p>
+          <p className="mt-3 text-base font-semibold leading-6 text-slate-900" lang={language}>
+            {questionLabel}
+          </p>
           <p className="mt-2 text-xs text-slate-500">
             Topic: {question.main_topic} / {question.subtopic}
           </p>

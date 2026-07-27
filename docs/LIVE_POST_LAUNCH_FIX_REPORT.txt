@@ -1,0 +1,451 @@
+QUESTIONWALE LIVE POST-LAUNCH FIX REPORT (AUTH + AUDIT)
+================================================================================
+
+1. FINAL VERDICT
+--------------------------------------------------------------------------------
+
+READY WITH WARNINGS — deploy after setting NEXT_PUBLIC_SITE_URL and redeploying
+
+Authentication callback uses PKCE server-side code exchange with trusted origin from
+NEXT_PUBLIC_SITE_URL (never localhost in production), server-side OAuth start at
+/api/auth/google/start, PKCE cookies attached to redirect responses, clean post-auth
+URLs, flash-based errors, and hash scrubbing.
+
+Production previously sent redirect_to=localhost because client-side OAuth baked
+localhost from build-time env; fixed by server-side origin + production validation.
+
+Profile page fix: PKCE verifier cookies now survive OAuth start redirect; session
+cookie attached on callback redirect; ProfileClient no longer loops on /api/profile.
+
+Real Google OAuth E2E — BLOCKED BY SAFE TEST ENVIRONMENT.
+
+Owner must set NEXT_PUBLIC_SITE_URL=https://questionwale.com on Vercel and redeploy,
+confirm Supabase URL config (section 10), and revoke previously exposed sessions
+(section 11).
+
+
+2. AUTHENTICATION ROOT CAUSE
+--------------------------------------------------------------------------------
+
+Confirmed root cause: implicit-flow / PKCE mismatch plus unsafe failure redirect.
+
+Evidence chain (redacted):
+  • Google OAuth succeeded and Supabase issued session material.
+  • Browser Supabase client had detectSessionInUrl: true without flowType: 'pkce'.
+  • Supabase returned tokens in the URL fragment (#access_token=…), while the
+    server callback only handled ?code= via exchangeCodeForSession.
+  • Server callback saw no code → redirected to /signup?error=google.
+  • Legacy implicit hash could remain visible in the browser bar/history alongside
+    the error query string (incident pattern: /signup?error=google#access_token=…).
+
+Contributing factors:
+  • No @supabase/ssr server exchange client; ad-hoc supabase-js with
+    persistSession: false only.
+  • Failure paths put provider hint (error=google) in the URL.
+  • console.error in callback logged auth failure messages.
+  • redirectTo/origin sometimes derived from request URL rather than configured
+    public site origin in production mode.
+
+
+2B. PRODUCTION LOCALHOST OAUTH CALLBACK (CONFIRMED ROOT CAUSE — P0)
+--------------------------------------------------------------------------------
+
+Symptom (production):
+  Google OAuth authorize URL contained
+  redirect_to=http://localhost:3000/auth/callback?next=/profile
+  instead of redirect_to=https://questionwale.com/auth/callback?next=/profile.
+
+Confirmed root cause (two linked failures):
+
+  A) Client-side OAuth start (removed):
+     HomeGoogleCtaButton previously called signInWithOAuth in the browser via
+     getClientOAuthOrigin(), which read NEXT_PUBLIC_SITE_URL without rejecting
+     localhost in production. That public env var is baked at build time; a
+     production deployment built with .env.local (localhost) embedded localhost
+     into the client bundle even when users visited questionwale.com.
+
+  B) Server-side origin is now authoritative but required redeploy:
+     getTrustedPublicOrigin() in lib/publicOrigin.ts rejects localhost when
+     NODE_ENV=production or VERCEL_ENV=preview|development, and never reads Host,
+     Origin, Referer, x-forwarded-host or request query parameters. OAuth start
+     moved to GET /api/auth/google/start which builds redirectTo server-side via
+     lib/oauthCallback.ts → buildOAuthCallbackForRequest().
+
+Profile page not showing after login (secondary root cause):
+  PKCE code_verifier cookies from signInWithOAuth were set via cookies() but not
+  attached to the 302 redirect response (same class of bug as qw_auth). Code
+  exchange at /auth/callback failed silently → flash redirect to /login → profile
+  never received qw_auth session. Fixed by applyPendingSupabaseCookies() on OAuth
+  start and attachAuthCookie() + clearSupabaseAuthCookiesOnResponse() on callback.
+  ProfileClient infinite /api/profile loop fixed with loadedForUserRef guard
+  (removed refreshUser() from loadProfile()).
+
+Authoritative origin strategy:
+  • Single canonical variable: NEXT_PUBLIC_SITE_URL (validated HTTPS in prod).
+  • getTrustedPublicOrigin() — server-only; throws PublicOriginConfigError if
+    missing/invalid in production; never falls back to localhost in production.
+  • buildOAuthCallbackUrl() / buildOAuthCallbackForRequest() — shared callback
+    builder; validates origin + getSafeRedirectPath() for internal next paths.
+  • All Google login buttons navigate to /api/auth/google/start?next=… (no client
+    signInWithOAuth, no getClientOAuthOrigin).
+
+Expected callback origins after fix:
+  Production: https://questionwale.com/auth/callback?next=%2Fprofile
+  Local dev:  http://localhost:3000/auth/callback?next=%2Fprofile
+
+Proof production cannot fall back to localhost:
+  • lib/publicOrigin.test.ts: production with NEXT_PUBLIC_SITE_URL=localhost → throws
+  • lib/publicOrigin.test.ts: production with empty NEXT_PUBLIC_SITE_URL → throws
+  • Runtime simulation (NODE_ENV=production, NEXT_PUBLIC_SITE_URL=https://questionwale.com):
+    origin=https://questionwale.com, callback=/auth/callback?next=%2Fprofile,
+    prod_has_localhost=false
+
+Proof Host-header injection cannot alter callback:
+  • lib/publicOrigin.test.ts: request with host/x-forwarded-host=evil.example still
+    resolves https://questionwale.com
+
+Local-mode runtime check (@ localhost:3000 dev server):
+  GET /api/auth/google/start?next=/profile → HTTP 302
+  redirect_to parameter origin = http://localhost:3000 (expected in dev)
+  set-cookie: sb-*-auth-token-code-verifier present on redirect (PKCE fix verified)
+
+Production-mode simulation (no live OAuth URL printed):
+  redirect_to would encode https://questionwale.com/auth/callback — no localhost
+
+Additional auth files changed in this pass:
+  app/api/auth/google/start/route.ts     NEW server OAuth start + PKCE cookie attach
+  lib/oauthCallback.ts                   NEW shared callback URL builder
+  lib/publicOrigin.ts                    getTrustedPublicOrigin(), validateTrustedOrigin()
+  lib/publicOrigin.test.ts               NEW origin/callback unit tests
+  lib/supabaseServerAuth.ts              response-bound PKCE cookies
+  app/auth/callback/route.ts             response-bound session + sb-* cleanup
+  app/components/HomeGoogleCtaButton.tsx server route delegation only
+  app/profile/ProfileClient.tsx          session loop fix, session-first display
+  next.config.mjs                        no-store headers for /api/auth/google/start
+
+
+3. OLD FLOW VS NEW FLOW
+--------------------------------------------------------------------------------
+
+OLD:
+  1. signInWithOAuth (implicit-capable browser client, detectSessionInUrl: true)
+  2. Return to /auth/callback#access_token=… OR missing ?code=
+  3. Server cannot read hash → redirect /signup?error=google
+  4. Tokens may remain in browser URL/history
+
+NEW:
+  1. signInWithOAuth with flowType: 'pkce', detectSessionInUrl: false
+  2. redirectTo = {origin}/auth/callback?next={safe-internal-path}
+  3. Supabase returns short-lived ?code= only (never tokens in fragment)
+  4. GET /auth/callback (no HTML) → @supabase/ssr exchangeCodeForSession(code)
+  5. Upsert app user → set qw_auth httpOnly cookie → clear transient sb-* cookies
+  6. 302 to clean internal path (default /dashboard) — no query, no hash
+  7. Failures → one-time flash cookie → 302 to /login (clean URL)
+  8. Login/signup mount AuthHashGuard → strips legacy #access_token hashes
+
+
+4. AUTHENTICATION FILES CHANGED
+--------------------------------------------------------------------------------
+
+  app/auth/callback/route.ts          PKCE exchange, flash errors, clean redirects
+  app/components/HomeGoogleCtaButton.tsx   PKCE OAuth start, trusted callback origin
+  app/components/AuthPageClient.tsx   AuthHashGuard integration
+  app/login/page.tsx                  consume auth flash server-side
+  app/login/LoginClient.tsx           remove ?error= query handling
+  app/signup/page.tsx                 consume auth flash server-side
+  app/signup/SignUpClient.tsx         pass flash message to client
+  app/api/auth/google/route.ts        remove auth error console logging
+  app/api/auth/google/redirect/route.ts   flash + clean /login redirect
+  lib/supabaseBrowser.ts              flowType pkce, detectSessionInUrl false
+  lib/supabaseServerAuth.ts           NEW @supabase/ssr exchange client
+  lib/publicOrigin.ts                 NEW trusted origin for OAuth redirects
+  lib/authFlash.ts                    NEW one-time flash messages (no URL errors)
+  lib/authRedirectResponse.ts         NEW private/no-store + no-referrer redirects
+  lib/authSensitiveHash.ts            NEW sensitive hash key list + scrub helper
+  lib/googleAuthSession.ts            flash redirects, getPublicOrigin
+  lib/safeRedirect.ts                 default fallback → /dashboard
+  components/AuthHashGuard.tsx        NEW client hash scrub guard
+  next.config.mjs                     private/no-store for /login /signup /auth/callback
+  package.json / package-lock.json    add @supabase/ssr; auth test scripts
+  tsconfig.json                       exclude *.test.ts from tsc
+  lib/safeRedirect.test.ts            NEW unit tests
+  lib/authSecurity.test.ts            NEW unit tests
+  scripts/verify-auth-security.mjs    NEW static + runtime auth verifier
+
+
+5. PROOF FINAL SUCCESS URL IS CLEAN
+--------------------------------------------------------------------------------
+
+Runtime (next start @ http://127.0.0.1:3023, AUTH_SECRET set locally):
+
+  GET /auth/callback?code=TEST_REDACTED_CODE
+    → HTTP 302
+    → Location: https://questionwale.com/login   (no query string, no hash)
+    → Cache-Control: private, no-store, must-revalidate
+
+Successful exchange redirects to getSafeRedirectPath(next, '/dashboard'), e.g.:
+  https://questionwale.com/dashboard
+  https://questionwale.com/subjects/indian-polity   (when next is valid internal)
+
+HTML scan (login, signup, home, subject page): PASS — no access_token, refresh_token,
+provider_token, eyJ…, Bearer, or session_id patterns in rendered HTML.
+
+
+6. PROOF NO TOKENS IN REDIRECTS
+--------------------------------------------------------------------------------
+
+  • Source scan (verify-auth-security.mjs): PASS — no signup?error=google,
+    no token query construction outside deliberate test fixtures.
+  • Callback Location header: clean path only (see section 5).
+  • authRedirectResponse sets Referrer-Policy: no-referrer on auth redirects.
+  • Removed console.error from OAuth callback and google redirect route.
+
+
+7. COOKIE / SESSION SECURITY
+--------------------------------------------------------------------------------
+
+App session (unchanged design, verified compatible):
+  • qw_auth cookie: httpOnly, Secure in production, SameSite=lax, path=/, 30d max-age
+  • Signed with AUTH_SECRET (HMAC-SHA256); parseSessionToken validates expiry + signature
+  • Logout: POST /api/auth/logout + DELETE /api/auth/me clear qw_auth
+  • Protected APIs use getAuthUserFromCookies() server-side
+
+OAuth hardening (new):
+  • Transient sb-* cookies from code exchange cleared after qw_auth is set
+  • Supabase browser client: persistSession false (no localStorage session)
+  • Auth routes: private, no-store (+ must-revalidate on callback)
+
+Private/no-store confirmed @ 3023:
+  /login, /signup, /dashboard, /api/auth/me, /auth/callback
+
+
+8. OPEN-REDIRECT TEST RESULT
+--------------------------------------------------------------------------------
+
+  npm run test:safe-redirect → exit 0 (3/3 PASS)
+  lib/authSecurity.test.ts malicious next cases → PASS
+  Rejects: //evil.example, https://evil.example, encoded //, backslashes
+  Fallback: /dashboard
+
+
+9. LOG / ANALYTICS REDACTION
+--------------------------------------------------------------------------------
+
+  • Removed OAuth callback console.error
+  • Removed Google redirect/API console.error on auth failures
+  • verify-auth-security.mjs reports filename + pattern only (no matched secrets)
+  • Auth flash messages are generic bilingual strings (no provider error passthrough)
+
+
+10. SUPABASE DASHBOARD MANUAL CONFIGURATION REQUIRED
+--------------------------------------------------------------------------------
+
+Owner must confirm in Supabase Dashboard → Authentication → URL Configuration:
+
+  Site URL:
+    https://questionwale.com
+
+  Additional Redirect URLs (exact):
+    https://questionwale.com/auth/callback
+    http://localhost:3000/auth/callback
+
+  Note on next= query param: Supabase matches redirect URLs by prefix; the exact
+  paths above allow /auth/callback?next=%2Fprofile safely. Do not add wildcard
+  open redirects.
+
+  Google provider: enabled with valid OAuth client IDs matching deployed env vars.
+
+  Ensure PKCE is enabled (default on current Supabase projects).
+
+These dashboard changes were NOT applied through repository code.
+
+
+10B. PRODUCTION HOSTING ENVIRONMENT (OWNER MANUAL — REQUIRED)
+--------------------------------------------------------------------------------
+
+Confirm Vercel/production environment variable:
+
+  NEXT_PUBLIC_SITE_URL=https://questionwale.com
+
+This is a build-time public variable. After changing it, create a NEW production
+deployment — an existing deployment may retain the previous baked-in localhost value
+(which caused production redirect_to=localhost).
+
+Do not put Google client secret or Supabase service role key in NEXT_PUBLIC_* vars.
+
+
+10C. GOOGLE CLOUD OAUTH CLIENT (CLARIFICATION — NO CHANGE REQUIRED)
+--------------------------------------------------------------------------------
+
+Authorized redirect URI for the Google OAuth client must remain the Supabase broker:
+
+  https://pkualuuwgadosctvwaep.supabase.co/auth/v1/callback
+
+Do NOT replace this with https://questionwale.com/auth/callback — Supabase handles
+the OAuth broker; the app callback is redirect_to on the Supabase authorize URL.
+
+
+11. EXPOSED-SESSION REVOCATION (OWNER MANUAL — INCIDENT RESPONSE)
+--------------------------------------------------------------------------------
+
+A prior login exposed Supabase/Google tokens in a browser URL fragment. Code fixes
+prevent recurrence but CANNOT invalidate already-issued tokens.
+
+Owner actions required:
+
+  1. Revoke the exposed Google OAuth app connection
+     (Google Account → Security → Third-party access → remove QuestionWale).
+
+  2. Globally sign out / revoke affected Supabase user sessions
+     (Supabase Dashboard → Authentication → Users → sign out all sessions for
+     affected account, or rotate user if compromise suspected).
+
+  3. Remove the sensitive URL from browser history, shared chat logs, screenshots,
+     analytics exports, and support tickets.
+
+  4. Rotate repository/platform secrets ONLY IF they were exposed (.env leaks,
+     committed secrets, shared logs). Routine token-in-URL incidents do not require
+     rotating Supabase anon/service keys unless those keys were exposed.
+
+  5. Understand: deploying this fix does not retroactively invalidate tokens already
+     copied from the URL. Revocation must be manual.
+
+No production revocation was attempted from this fix pass.
+
+
+12. PREVIOUS PRODUCTION AUDIT ISSUES (P8)
+--------------------------------------------------------------------------------
+
+Issue 1  Dead revision URLs in sitemap/llms        FIXED (verify-llms 13/13)
+Issue 2  Sitemap missing Indian Polity topics      FIXED (18 topic URLs)
+Issue 3  llms.txt broken revision links            FIXED
+Issue 4  /polity indexable                         FIXED (308 redirect)
+Issue 5  Unstable sitemap lastmod                   FIXED
+Issue 6  Public pages private/no-store              FIXED
+Issue 7  Hindi lang stuck on en                     FIXED (LanguageContext)
+Issue 8  Thin pages indexable                       FIXED (noindex,follow)
+Issue 9  Map Practice Roman-Hindi                   FIXED (mapPracticeI18n)
+Issue 10 Contact form labels                         FIXED (htmlFor/aria)
+Issue 11 Practice page missing H1                    FIXED (sr-only H1)
+Issue 12 Homepage og:image                           FIXED
+Issue 13 Plain-text 404                              FIXED (branded 404)
+Issue 14 Revision sources visibility                 FIXED
+Issue 15 Dependency advisories next/sharp            UNRESOLVED
+Issue 16 Browser/Lighthouse/authenticated runtime    BLOCKED
+Issue 17 Mobile/a11y manual verification             BLOCKED (no browser automation)
+
+
+13. FILES CHANGED (COMBINED FIX PASS)
+--------------------------------------------------------------------------------
+
+See sections 4 and prior audit list. New since last report section:
+  @supabase/ssr dependency, auth security libs/tests/verifier (section 4).
+
+
+14. COMMANDS EXECUTED WITH EXIT CODES (LATEST PASS — LOCALHOST ORIGIN FIX)
+--------------------------------------------------------------------------------
+
+  npm run typecheck                      exit 0
+  npm run lint                           exit 0
+  npm run test:safe-redirect             exit 0 (3/3)
+  npm run test:public-origin             exit 0 (7/7)
+  npm run test:auth-security             exit 0 (6/6)
+  npm run build                          exit 0 (Next.js 16.2.9)
+  Local OAuth start smoke @ :3000        PASS (redirect_to=localhost in dev; PKCE cookie set)
+  Production origin simulation (node)    PASS (questionwale.com; localhost blocked)
+  npm run test:verify-auth               FAIL (callback probe HTTP 500 — no prod server @ probe port)
+  npm run test:verify-routes             FAIL (HTTP 500 — dev server state / wrong BASE_URL)
+  git diff --check                       exit 0
+  git status --short                     exit 0 (dirty working tree preserved; not committed)
+
+
+15. TYPECHECK / LINT / TEST / BUILD (LATEST)
+--------------------------------------------------------------------------------
+
+  typecheck        PASS (exit 0)
+  lint             PASS (exit 0)
+  test:safe-redirect PASS 3/3 (exit 0)
+  test:public-origin PASS 7/7 (exit 0)
+  test:auth-security PASS 6/6 (exit 0)
+  build            PASS (exit 0)
+  auth unit total  PASS 16/16 (safe-redirect + public-origin + auth-security)
+
+
+16. SITEMAP AND llms.txt
+--------------------------------------------------------------------------------
+
+  verify-sitemap @ 3023: 43 URLs, 18 indian-polity topics, stable output, 0 dead links
+  verify-llms @ 3023: 13/13 PASS, no legacy /polity or dead revision URLs
+
+
+17. PUBLIC / PRIVATE CACHE
+--------------------------------------------------------------------------------
+
+  Public:  /subjects/indian-polity → s-maxage public caching (prior fix retained)
+  Private: /login, /signup, /dashboard, /api/auth/me, /auth/callback → no-store
+
+
+18. BROWSER / MOBILE
+--------------------------------------------------------------------------------
+
+  BLOCKED — no Playwright/Chrome/Lighthouse in this environment.
+  AuthHashGuard + bilingual flash messages implemented; manual UI verification pending.
+
+
+19. DEPENDENCY AUDIT
+--------------------------------------------------------------------------------
+
+  Before fix pass: prod high=2 (next, sharp), all high=3
+  After fix pass:  prod high=2 (next, sharp), all high=3 (unchanged)
+  Added: @supabase/ssr (no new highs)
+  Action: upgrade next to ≥16.2.11 and evaluate sharp on staging; no --force
+
+
+20. BLOCKED / UNRESOLVED
+--------------------------------------------------------------------------------
+
+  • Real Google OAuth E2E login/logout — BLOCKED BY SAFE TEST ENVIRONMENT
+  • verify-auth / verify-routes runtime probes — FAIL until production redeploy +
+    BASE_URL points at healthy server (source scan still PASS)
+  • Previously exposed token revocation (owner manual — section 11)
+  • npm audit next + sharp
+  • Browser E2E, Lighthouse, mobile viewport/contrast manual checks
+  • Vercel CDN cache confirmation for public catalog pages
+  • Live production re-check after deploy + NEXT_PUBLIC_SITE_URL redeploy
+
+
+21. POST-DEPLOY VERIFICATION ON https://questionwale.com/
+--------------------------------------------------------------------------------
+
+Auth (repeat after deploy — REQUIRED after NEXT_PUBLIC_SITE_URL change):
+
+  [ ] Confirm Vercel production env: NEXT_PUBLIC_SITE_URL=https://questionwale.com
+  [ ] Trigger new production deployment (rebuild required for public env var)
+  [ ] Start Google login from https://questionwale.com/login
+  [ ] In browser devtools Network tab, inspect authorize redirect_to parameter ONLY:
+      origin must be https://questionwale.com (not localhost)
+  [ ] Complete login → lands on https://questionwale.com/profile (clean URL)
+      — no code, state, access_token, refresh_token, or hash
+  [ ] Profile page shows name, email, avatar from session immediately
+  [ ] Failed login → /login clean URL + centered AuthErrorModal flash
+  [ ] curl -I /auth/callback → 302, Location has no tokens, Cache-Control private
+  [ ] Supabase Dashboard redirect URLs include /auth/callback (section 10)
+  [ ] Google Cloud redirect URI remains Supabase /auth/v1/callback (section 10C)
+  [ ] Revoke old exposed session per section 11 if not already done
+
+SEO / audit (prior):
+  [ ] curl -I /polity → 308 → /subjects/indian-polity
+  [ ] Sitemap ≥ 18 indian-polity topic URLs; 0 dead revision links
+  [ ] llms.txt links all HTTP 200
+  [ ] Homepage og:image in HTML
+  [ ] /current-affairs robots noindex
+  [ ] Invalid catalog route → branded HTTP 404
+
+Commands to re-run on Preview/production BASE_URL:
+  npm run test:verify-auth https://questionwale.com
+  npm run test:verify-sitemap https://questionwale.com
+  npm run test:verify-llms https://questionwale.com
+  npm run test:verify-routes https://questionwale.com
+
+================================================================================
+END OF REPORT

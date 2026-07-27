@@ -12,9 +12,16 @@
     "test:sources": "node --experimental-strip-types scripts/validate-parse-question-sources.ts",
     "test:launch-baseline": "node scripts/launch-readiness-baseline.mjs",
     "test:launch-load": "node scripts/launch-readiness-load.mjs",
-    "test:verify-routes": "node scripts/verify-soft-404.mjs"
+    "test:verify-routes": "node scripts/verify-soft-404.mjs",
+    "test:verify-sitemap": "node scripts/verify-sitemap.mjs",
+    "test:verify-llms": "node scripts/verify-llms-links.mjs",
+    "test:safe-redirect": "node --experimental-strip-types lib/safeRedirect.test.ts",
+    "test:auth-security": "node --experimental-strip-types lib/authSecurity.test.ts",
+    "test:public-origin": "node --experimental-strip-types lib/publicOrigin.test.ts",
+    "test:verify-auth": "node scripts/verify-auth-security.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.105.4",
     "@types/leaflet": "^1.9.21",
     "framer-motion": "^12.40.0",

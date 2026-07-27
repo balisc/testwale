@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import supabase, { SUPABASE_AVAILABLE } from '@/lib/supabase';
 import { normalizeDifficulty, normalizeMapScope, shuffleArray, type MapQuestion } from '@/lib/mapPractice';
+import { enrichMapQuestionCopy } from '@/lib/mapPracticeI18n';
 import { resolveQuestionListLimit } from '@/lib/publicQuestionApiGuards';
 import { MAX_QUESTION_LIMIT } from '@/lib/supabaseQueryLimits';
 type SupabaseQuestionRow = {
@@ -136,30 +137,32 @@ export async function GET(request: Request) {
     topicSet.add(row.main_topic);
     subtopicSet.add(row.subtopic);
 
-    validQuestions.push({
-      id: row.id,
-      question_text: row.question_text,
-      question_type: row.question_type as MapQuestion['question_type'],
-      main_topic: row.main_topic,
-      subtopic: row.subtopic,
-      map_scope: row.map_scope as MapQuestion['map_scope'],
-      tolerance_km: Number(row.tolerance_km ?? 30),
-      explanation: row.explanation,
-      difficulty: row.difficulty,
-      exam_tags: row.exam_tags,
-      is_current_affairs: Boolean(row.is_current_affairs),
-      current_affairs_month: row.current_affairs_month,
-      correct_location: {
-        id: row.correct_location.id,
-        name: row.correct_location.name,
-        category: row.correct_location.category,
-        map_scope: row.correct_location.map_scope as MapQuestion['map_scope'],
-        latitude: Number(row.correct_location.latitude),
-        longitude: Number(row.correct_location.longitude),
-        difficulty: row.correct_location.difficulty,
-        is_current_affairs: row.correct_location.is_current_affairs,
-      },
-    });
+    validQuestions.push(
+      enrichMapQuestionCopy({
+        id: row.id,
+        question_text: row.question_text,
+        question_type: row.question_type as MapQuestion['question_type'],
+        main_topic: row.main_topic,
+        subtopic: row.subtopic,
+        map_scope: row.map_scope as MapQuestion['map_scope'],
+        tolerance_km: Number(row.tolerance_km ?? 30),
+        explanation: null,
+        difficulty: row.difficulty,
+        exam_tags: row.exam_tags,
+        is_current_affairs: Boolean(row.is_current_affairs),
+        current_affairs_month: row.current_affairs_month,
+        correct_location: {
+          id: row.correct_location.id,
+          name: row.correct_location.name,
+          category: row.correct_location.category,
+          map_scope: row.correct_location.map_scope as MapQuestion['map_scope'],
+          latitude: Number(row.correct_location.latitude),
+          longitude: Number(row.correct_location.longitude),
+          difficulty: row.correct_location.difficulty,
+          is_current_affairs: row.correct_location.is_current_affairs,
+        },
+      }),
+    );
   }
 
   return NextResponse.json({

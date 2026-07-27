@@ -166,10 +166,15 @@ export default function RevisionPageView({
       </section>
 
       <section className="mt-10" aria-labelledby="sources-heading">
-        <h2 id="sources-heading" className="sr-only">
-          Verified official sources
+        <h2 id="sources-heading" className="text-xl font-bold text-slate-900">
+          {uiLabel(language, 'Sources and references', 'स्रोत और संदर्भ')}
         </h2>
-        <VerifiedOfficialSourcesDetails sources={sources} />
+        <div className="mt-4">
+          <VerifiedOfficialSourcesDetails
+            sources={sources}
+            heading={uiLabel(language, 'Verified official sources', 'सत्यापित आधिकारिक स्रोत')}
+          />
+        </div>
         <p className="mt-3 text-xs leading-relaxed text-slate-500">
           Sources support factual verification. QuestionWale notes are original study material and do
           not reproduce copyrighted textbook or judgment text.

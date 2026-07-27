@@ -99,6 +99,32 @@ h1, h2, h3, h4, h5, h6 {
   display: none;  /* Chrome, Safari and Opera */
 }
 
+/* Shared site chrome container (header/footer) — must be global, not homepage-only */
+.home-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 2rem;
+}
+
+@media (max-width: 767px) {
+  .home-container {
+    padding-inline: 1.25rem;
+  }
+}
+
+@media (max-width: 479px) {
+  .home-container {
+    padding-inline: 1rem;
+  }
+}
+
+@media (max-width: 359px) {
+  .home-container {
+    padding-inline: 0.5rem;
+  }
+}
+
 /* Regulating Act revision — print styles */
 @media print {
   header,

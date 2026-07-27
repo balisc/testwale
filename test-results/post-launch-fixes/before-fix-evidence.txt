@@ -1,0 +1,46 @@
+QUESTIONWALE LIVE POST-LAUNCH — BEFORE-FIX EVIDENCE
+Captured: 2026-07-27 (reproduction against https://questionwale.com/ unless noted)
+
+1. Dead revision URLs (HTTP status)
+   /subjects/indian-polity/constitution-basics-salient-features/sources-of-indian-constitution/revision → 404
+   /subjects/indian-polity/preamble-union-citizenship/preamble-meaning-importance/revision → 404
+   /subjects/indian-polity/constitutional-history-making/regulating-act-1773/revision → 404
+   /subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision → 200
+
+2. Canonical working revision URLs (catalog-aligned)
+   .../constitution-basics-preamble-schedules/constitution-features-sources-comparison/revision → 200
+   .../constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/revision → 200
+
+3. Legacy polity routes
+   /polity → HTTP 200 (no redirect on live)
+   /polity/topics → HTTP 200 (no redirect on live)
+
+4. Sitemap
+   indian-polity topic URLs in live sitemap: ~5 (audit); live page lists 18 topic hrefs
+
+5. Homepage social metadata (live HTML)
+   og:title present; og:image ABSENT; twitter:image ABSENT
+
+6. llms.txt dead links
+   Three revision URLs above listed in public/llms.txt (pre-fix)
+
+7. Public cache (live — reported in audit)
+   Catalog subject/topic/revision pages: private, no-cache, no-store
+
+8. Language
+   document lang="en" on all modes (client toggle does not update html lang)
+
+9. Thin pages indexable (live)
+   /current-affairs, /current-affairs/topics, /general-knowledge → 200 indexable
+
+10. Branded 404
+    Invalid routes return HTTP 404 with plain text "Not Found" from proxy
+
+11. Map practice
+    Seed questions use Roman-Hindi prompts in database (e.g. "Map par Kaziranga...")
+
+12. Dependencies (local npm audit before fix pass)
+    Production high: 2 (next, sharp)
+    All deps high: 3
+
+Evidence source: live curl/fetch during fix pass Phase 1.

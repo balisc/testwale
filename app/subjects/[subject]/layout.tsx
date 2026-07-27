@@ -2,8 +2,6 @@ import { loadSubjectByRouteSlug } from '@/lib/catalogRouteGuards';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-export const dynamic = 'force-dynamic';
-
 type LayoutProps = {
   children: ReactNode;
   params: Promise<{ subject: string }>;
