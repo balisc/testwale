@@ -16,9 +16,20 @@ import {
   isRevisionPublished,
   publishedRevisionPath,
 } from '@/lib/revision/registry';
-import { isRichRevision, loadRichRevisionFaqs, normalizeRichRevisionSlug } from '@/lib/revision/richRevision';
-import { loadRichRevisionClient } from '@/lib/revision/richRevisionClients';import type { RelatedRevisionLink } from '@/lib/revision/types';
+import { isRichRevision, normalizeRichRevisionSlug } from '@/lib/revision/richRevision';
+import { loadRichRevisionClient } from '@/lib/revision/richRevisionClients';
+import type { RelatedRevisionLink } from '@/lib/revision/types';
 import { absoluteUrl, buildCatalogRevisionMetadata, buildPageMetadata } from '@/lib/seo';
+import { getSelectedExamLearning } from '@/lib/examLearningServer';
+import ExamContentUnavailable from '@/components/ExamContentUnavailable';
+import { redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
+import {
+  findPublishedSyllabusSubject,
+  findPublishedSyllabusSubtopic,
+  findPublishedSyllabusTopic,
+} from '@/lib/examSyllabus';
+import { isSscCglExamCode } from '@/lib/sscCglSyllabus';
 
 export const revalidate = 3600;
 
@@ -30,18 +41,6 @@ type PageProps = {
 function resolveExamParam(raw: string | string[] | undefined): string | null {
   const value = Array.isArray(raw) ? raw[0] : raw;
   return value?.trim() || null;
-}
-
-function buildFaqSchema(faqs: { q: { en: string }; a: { en: string } }[]) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqs.map((faq) => ({
-      '@type': 'Question',
-      name: faq.q.en,
-      acceptedAnswer: { '@type': 'Answer', text: faq.a.en },
-    })),
-  };
 }
 
 function buildLearningResourceSchema(options: {
@@ -138,6 +137,35 @@ export default async function SubtopicRevisionPage({ params, searchParams }: Pag
   const resolvedSearchParams = await searchParams;
   const examParam = resolveExamParam(resolvedSearchParams.exam);
 
+  const selected = await getSelectedExamLearning();
+  if (selected.status === 'incomplete') redirect(`/onboarding?returnTo=${encodeURIComponent(`/subjects/${routeSubject}/${topicSlug}/${subtopicSlug}/revision`)}`);
+  if (selected.status === 'inactive') return <ExamContentUnavailable reason="inactive_exam" />;
+  if (selected.status === 'error') return <ExamContentUnavailable reason="error" />;
+  if (selected.status === 'ready') {
+    if (isSscCglExamCode(selected.snapshot.exam.code)) redirect('/ssc-cgl');
+    const scopedSubject = findPublishedSyllabusSubject(selected.snapshot.subjects, routeSubject);
+    if (!scopedSubject) notFound();
+    const scopedTopic = findPublishedSyllabusTopic(selected.snapshot.topics, scopedSubject.id, topicSlug);
+    if (!scopedTopic) notFound();
+    const scopedSubtopic = findPublishedSyllabusSubtopic(
+      selected.snapshot.subtopics,
+      scopedTopic.id,
+      subtopicSlug,
+    );
+    if (!scopedSubtopic) notFound();
+    const examSuffix = `?exam=${encodeURIComponent(selected.snapshot.exam.code)}`;
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
+        <UnpublishedRevisionNotice
+          subjectHref={`/subjects/${scopedSubject.slug}${examSuffix}`}
+          topicHref={`/subjects/${scopedSubject.slug}/${scopedTopic.slug}${examSuffix}`}
+          practiceHref={`/subjects/${scopedSubject.slug}/${scopedTopic.slug}/practice/${scopedSubtopic.slug}${examSuffix}`}
+          subtopicTitle={getLocalizedText(scopedSubtopic.title, 'en') || scopedSubtopic.slug}
+        />
+      </div>
+    );
+  }
+
   const { subject, subjectSlug, topic, subtopic } = await requireSubtopicByRouteSlugs(
     routeSubject,
     topicSlug,
@@ -150,9 +178,11 @@ export default async function SubtopicRevisionPage({ params, searchParams }: Pag
   const subjectTitleEn = getLocalizedText(subject.title, 'en');
   const topicTitleEn = getLocalizedText(topic.title, 'en');
   const subtopicTitleEn = getLocalizedText(subtopic.title, 'en');
-  const subjectHref = `/subjects/${subjectSlug}`;
-  const topicHref = `/subjects/${subjectSlug}/${topicSlug}`;
-  const practiceHref = `/subjects/${subjectSlug}/${topicSlug}/${subtopicSlug}/practice`;
+  const effectiveExam = examParam;
+  const examSuffix = effectiveExam ? `?exam=${encodeURIComponent(effectiveExam)}` : '';
+  const subjectHref = `/subjects/${subjectSlug}${examSuffix}`;
+  const topicHref = `/subjects/${subjectSlug}/${topicSlug}${examSuffix}`;
+  const practiceHref = `/subjects/${subjectSlug}/${topicSlug}/practice/${subtopicSlug}${examSuffix}`;
 
   const doc = getPublishedRevision(subjectSlug, topicSlug, subtopicSlug);
   if (!doc) {
@@ -188,7 +218,7 @@ export default async function SubtopicRevisionPage({ params, searchParams }: Pag
     if (sibling.slug === subtopicSlug) continue;
     if (!isRevisionPublished(subjectSlug, topicSlug, sibling.slug)) continue;
     related.push({
-      href: `/subjects/${subjectSlug}/${topicSlug}/${sibling.slug}/revision`,
+      href: `/subjects/${subjectSlug}/${topicSlug}/${sibling.slug}/revision${examSuffix}`,
       title: `Revise ${getLocalizedText(sibling.title, 'en')}`,
       kind: 'revision',
     });
@@ -223,11 +253,6 @@ export default async function SubtopicRevisionPage({ params, searchParams }: Pag
   const richSlug = normalizeRichRevisionSlug(subtopicSlug);
   const jsonLd: Record<string, unknown>[] = [breadcrumbSchema, learningSchema];
 
-  if (useRich && richSlug) {
-    const faqs = await loadRichRevisionFaqs(richSlug);
-    jsonLd.push(buildFaqSchema(faqs));
-  }
-
   const RichClient = useRich && richSlug ? await loadRichRevisionClient(richSlug) : null;
 
   const revisionSiblings = siblings.filter((s) => s.slug !== subtopicSlug);
@@ -237,13 +262,13 @@ export default async function SubtopicRevisionPage({ params, searchParams }: Pag
   const siblingNav = {
     prev: prevSibling && isRevisionPublished(subjectSlug, topicSlug, prevSibling.slug)
       ? {
-          href: `/subjects/${subjectSlug}/${topicSlug}/${prevSibling.slug}/revision`,
+          href: `/subjects/${subjectSlug}/${topicSlug}/${prevSibling.slug}/revision${examSuffix}`,
           title: getLocalizedText(prevSibling.title, 'en'),
         }
       : undefined,
     next: nextSibling && isRevisionPublished(subjectSlug, topicSlug, nextSibling.slug)
       ? {
-          href: `/subjects/${subjectSlug}/${topicSlug}/${nextSibling.slug}/revision`,
+          href: `/subjects/${subjectSlug}/${topicSlug}/${nextSibling.slug}/revision${examSuffix}`,
           title: getLocalizedText(nextSibling.title, 'en'),
         }
       : undefined,
@@ -256,7 +281,7 @@ export default async function SubtopicRevisionPage({ params, searchParams }: Pag
       {RichClient ? (
         <RichClient
           practiceHref={practiceHref}
-          examQuery={examParam}
+          examQuery={effectiveExam}
           breadcrumb={{
             subjectHref,
             subjectTitle,

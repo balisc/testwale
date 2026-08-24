@@ -33,7 +33,7 @@ export async function resolveSubtopicPracticeHref(
   if (!subject) return null;
 
   return {
-    href: `/subjects/${subject.slug}/${topic.slug}/${subtopic.slug}/practice`,
+    href: `/subjects/${subject.slug}/${topic.slug}/practice/${subtopic.slug}`,
     subjectSlug: subject.slug,
     topicSlug: topic.slug,
     subtopicSlug: subtopic.slug,

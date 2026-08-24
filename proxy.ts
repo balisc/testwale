@@ -8,15 +8,21 @@ import {
 } from '@/lib/oauthCodeRedirect';
 import { checkRateLimit, getApiRateLimitKey, getClientIp } from '@/lib/rateLimit';
 import { SUBJECT_KEYS } from '@/lib/subjects';
+import { AUTH_COOKIE_NAME, parseSessionToken } from '@/lib/appSession';
+import { needsExamOnboarding } from '@/lib/examOnboarding';
+import { getExamOnboardingDetails } from '@/lib/examOnboardingServer';
+import { getSafeRedirectPath } from '@/lib/safeRedirect';
 
 const API_RATE_LIMIT = 120;
 const API_RATE_WINDOW_MS = 60_000;
 const LEGACY_TOP_LEVEL = new Set(SUBJECT_KEYS.map((key) => key.toLowerCase()));
-/** Active catalog subject slugs served under /subjects/:slug (extend when new subjects launch). */
-const CATALOG_SUBJECT_SLUGS = new Set(['indian-polity']);
 
 const PATH_CHECK_TTL_MS = 5 * 60_000;
 const pathCheckCache = new Map<string, { ok: boolean; expiresAt: number }>();
+
+function internalPathCheckToken(): string | null {
+  return process.env.AUTH_SECRET?.trim() || null;
+}
 
 function notFoundResponse(): NextResponse {
   return new NextResponse(renderBrandedNotFoundHtml(), {
@@ -53,47 +59,55 @@ function isReservedTopLevelSegment(segment: string): boolean {
     'classic',
     'examples',
     'sitemaps',
+    'ssc-cgl',
     'robots.txt',
     'sitemap.xml',
+    'manifest.webmanifest',
+    'icon.webp',
     'llms.txt',
     '_next',
   ]);
   return reserved.has(segment);
 }
 
-function maybeRejectUnknownCatalogSubject(pathname: string): NextResponse | null {
-  const match = pathname.match(/^\/subjects\/([^/]+)(?:\/|$)/i);
-  if (!match) return null;
-  const slug = match[1]!.toLowerCase();
-  if (CATALOG_SUBJECT_SLUGS.has(slug)) return null;
-  return notFoundResponse();
-}
-
 async function maybeRejectUnknownCatalogPath(
   request: NextRequest,
 ): Promise<NextResponse | null> {
   const { pathname } = request.nextUrl;
-  if (!pathname.startsWith('/subjects/')) return null;
+  const isCheckedPath =
+    pathname.startsWith('/subjects/') ||
+    pathname.startsWith('/exams/') ||
+    pathname.startsWith('/question/');
+  if (!isCheckedPath) return null;
   const segments = pathname.split('/').filter(Boolean);
-  if (segments.length < 3) return null;
+  if (segments.length < 2) return null;
 
-  const cached = pathCheckCache.get(pathname);
+  const stageCode = request.nextUrl.searchParams.get('stage')?.trim() || null;
+  const cacheKey = stageCode ? `${pathname}?stage=${stageCode}` : pathname;
+  const cached = pathCheckCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
     return cached.ok ? null : notFoundResponse();
   }
 
   const checkUrl = new URL('/api/catalog/path-exists', request.nextUrl.origin);
   checkUrl.searchParams.set('path', pathname);
+  if (stageCode) checkUrl.searchParams.set('stage', stageCode);
+  const token = internalPathCheckToken();
 
   try {
     const res = await fetch(checkUrl.toString(), {
       method: 'GET',
       next: { revalidate: 300 },
-      headers: { 'x-catalog-path-check': '1' },
+      headers: token ? { 'x-questionwale-path-check': token } : undefined,
     });
-    const ok = res.status !== 404;
-    pathCheckCache.set(pathname, { ok, expiresAt: Date.now() + PATH_CHECK_TTL_MS });
-    if (!ok) return notFoundResponse();
+    if (res.ok) {
+      pathCheckCache.set(cacheKey, { ok: true, expiresAt: Date.now() + PATH_CHECK_TTL_MS });
+      return null;
+    }
+    if (res.status === 404) {
+      pathCheckCache.set(cacheKey, { ok: false, expiresAt: Date.now() + PATH_CHECK_TTL_MS });
+      return notFoundResponse();
+    }
   } catch {
     return null;
   }
@@ -122,6 +136,50 @@ function maybeForwardStrayOAuthCode(request: NextRequest): NextResponse | null {
   });
 }
 
+async function maybeEnforceExamOnboarding(request: NextRequest): Promise<NextResponse | null> {
+  const { pathname, search, searchParams, origin } = request.nextUrl;
+  const isOnboarding = pathname === '/onboarding';
+  const isProtected =
+    pathname === '/dashboard' ||
+    pathname === '/profile' ||
+    pathname.startsWith('/profile/') ||
+    pathname === '/subjects' ||
+    pathname.startsWith('/subjects/');
+  if (!isOnboarding && !isProtected) return null;
+
+  const session = parseSessionToken(request.cookies.get(AUTH_COOKIE_NAME)?.value);
+  if (!session) {
+    if (!isOnboarding) return null;
+    const loginReturn = `/onboarding${search}`;
+    return NextResponse.redirect(
+      `${origin}/login?redirect=${encodeURIComponent(loginReturn)}`,
+      { status: 307, headers: AUTH_PRIVATE_HEADERS },
+    );
+  }
+
+  const state = await getExamOnboardingDetails(session.id);
+  if (isProtected && needsExamOnboarding(state)) {
+    const returnTo = `${pathname}${search}`;
+    return NextResponse.redirect(
+      `${origin}/onboarding?returnTo=${encodeURIComponent(returnTo)}`,
+      { status: 307, headers: AUTH_PRIVATE_HEADERS },
+    );
+  }
+
+  if (isOnboarding && !needsExamOnboarding(state) && searchParams.get('edit') !== '1') {
+    const returnTo = getSafeRedirectPath(
+      searchParams.get('returnTo') ?? searchParams.get('redirect'),
+      '/dashboard',
+    );
+    return NextResponse.redirect(`${origin}${returnTo}`, {
+      status: 307,
+      headers: AUTH_PRIVATE_HEADERS,
+    });
+  }
+
+  return null;
+}
+
 /**
  * Next.js 16 request proxy. Keep this lightweight: API abuse protection only.
  * Route handlers also validate and rate-limit sensitive actions independently.
@@ -130,17 +188,39 @@ export async function proxy(request: NextRequest) {
   const strayOAuth = maybeForwardStrayOAuthCode(request);
   if (strayOAuth) return strayOAuth;
 
-  const pathname = request.nextUrl.pathname;
-  const unknownCatalogSubject = maybeRejectUnknownCatalogSubject(pathname);
-  if (unknownCatalogSubject) return unknownCatalogSubject;
+  const onboardingRedirect = await maybeEnforceExamOnboarding(request);
+  if (onboardingRedirect) return onboardingRedirect;
 
-  const unknownCatalogPath = await maybeRejectUnknownCatalogPath(request);
-  if (unknownCatalogPath) return unknownCatalogPath;
+  const pathname = request.nextUrl.pathname;
+  const hasAuthenticatedSession = Boolean(
+    parseSessionToken(request.cookies.get(AUTH_COOKIE_NAME)?.value),
+  );
+  // Published exact-exam node slugs are intentionally not part of the legacy
+  // global catalog. Authenticated pages validate them against the user's exact
+  // profile/version, so the public catalog cache must not reject or cache them.
+  const alwaysValidatePublicPath =
+    pathname.startsWith('/exams/') || pathname.startsWith('/question/');
+  if (!hasAuthenticatedSession) {
+    const unknownCatalogPath = await maybeRejectUnknownCatalogPath(request);
+    if (unknownCatalogPath) return unknownCatalogPath;
+  } else if (alwaysValidatePublicPath) {
+    const unknownCatalogPath = await maybeRejectUnknownCatalogPath(request);
+    if (unknownCatalogPath) return unknownCatalogPath;
+  }
 
   const unknownTopLevel = maybeRejectUnknownTopLevel(pathname);
   if (unknownTopLevel) return unknownTopLevel;
 
   if (!pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
+  const token = internalPathCheckToken();
+  if (
+    pathname === '/api/catalog/path-exists' &&
+    token &&
+    request.headers.get('x-questionwale-path-check') === token
+  ) {
     return NextResponse.next();
   }
 

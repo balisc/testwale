@@ -20,7 +20,9 @@ export default function HomeSubjects({
   const titleId = useId();
   const signedIn = Boolean(user);
   const polityQuestionCount = Math.max(0, Number(subjectCounts.polity ?? 0));
-  const polityQuestionLabel = `${new Intl.NumberFormat('en-IN').format(polityQuestionCount)} Questions`;
+  const polityQuestionLabel = polityQuestionCount > 0
+    ? `${new Intl.NumberFormat('en-IN').format(polityQuestionCount)} Questions`
+    : 'Verified Questions';
 
   return (
     <section id="subjects" className="bg-[#FAFAFC] py-16 sm:py-20 max-[479px]:py-10">

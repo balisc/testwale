@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getPracticeProgressForUser, practiceErrorResponse, requirePracticeUser } from '@/lib/practiceServer';
+import { practiceErrorResponse, requirePracticeUser } from '@/lib/practiceServer';
+import { getSelectedExamLearning } from '@/lib/examLearningServer';
+import { snapshotToPracticeProgress } from '@/lib/examLearning';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,15 +14,20 @@ export async function GET(request: Request) {
   const topicId = searchParams.get('topicId');
   const subtopicId = searchParams.get('subtopicId');
 
-  const progress = await getPracticeProgressForUser(user!.id, {
+  const selected = await getSelectedExamLearning();
+  if (selected.status === 'incomplete') return practiceErrorResponse('onboarding_incomplete', 409);
+  if (selected.status === 'inactive') return practiceErrorResponse('selected_exam_inactive', 409);
+  if (selected.status !== 'ready' || selected.userId !== user!.id) return practiceErrorResponse('progress_failed', 503);
+
+  const progress = snapshotToPracticeProgress(selected.snapshot, {
     subjectId,
     topicId,
     subtopicId,
   });
 
   if (!progress) {
-    return practiceErrorResponse('progress_failed', 500);
+    return practiceErrorResponse('not_in_selected_exam', 404);
   }
 
-  return NextResponse.json(progress);
+  return NextResponse.json(progress, { headers: { 'Cache-Control': 'private, no-store' } });
 }

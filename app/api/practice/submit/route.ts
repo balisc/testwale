@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { getAuthUserFromCookies } from '@/lib/authCookies';
 import { logPracticeDebug, serializeError, toJsonSafe } from '@/lib/practiceDebugLog';
 import {
@@ -9,6 +10,10 @@ import { STALE_QUESTION_CODE } from '@/lib/questionBatchCache';
 import { revalidateQuestionBatchCache } from '@/lib/revalidateQuestionBatchCache';
 import { getSupabaseHostname } from '@/lib/supabase';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import {
+  getExamLearningProgressCacheTag,
+  getSelectedExamContext,
+} from '@/lib/examLearningServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +54,10 @@ function bustQuestionBatchCache(subtopicId: string, topicId: string) {
   });
 }
 
-async function questionExistsPublic(questionId: string): Promise<boolean | null> {
+async function questionExistsPublic(
+  questionId: string,
+  examProfileId?: string,
+): Promise<boolean | null> {
   const admin = getSupabaseAdmin();
   const client = admin;
   if (!client) {
@@ -57,13 +65,15 @@ async function questionExistsPublic(questionId: string): Promise<boolean | null>
     return null;
   }
 
-  const { data, error } = await client
+  const query = client
     .from('questions')
-    .select('id')
+    .select('id, question_exam_profile_mappings!inner(exam_profile_id, is_active)')
     .eq('id', questionId)
     .eq('is_active', true)
     .eq('is_verified', true)
-    .maybeSingle();
+    .eq('question_exam_profile_mappings.exam_profile_id', examProfileId ?? '')
+    .eq('question_exam_profile_mappings.is_active', true);
+  const { data, error } = await query.maybeSingle();
 
   if (error) {
     logPracticeDebug('[practice/submit] existence check failed', {
@@ -84,6 +94,15 @@ function staleQuestionBody(extra?: Record<string, unknown>) {
     refreshSession: true,
     ...extra,
   };
+}
+
+function hasAnswerExplanation(value: unknown): boolean {
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const localized = value as Record<string, unknown>;
+  return ['en', 'hi'].some(
+    (key) => typeof localized[key] === 'string' && localized[key].trim().length > 0,
+  );
 }
 
 export async function POST(request: Request) {
@@ -123,7 +142,7 @@ export async function POST(request: Request) {
 
   const timeTakenSeconds =
     typeof body.timeTakenSeconds === 'number' && body.timeTakenSeconds >= 0
-      ? Math.round(body.timeTakenSeconds)
+      ? Math.min(86_400, Math.round(body.timeTakenSeconds))
       : null;
 
   const user = await getAuthUserFromCookies();
@@ -142,7 +161,11 @@ export async function POST(request: Request) {
   });
 
   if (user) {
-    const exists = await questionExistsPublic(questionId);
+    const selected = await getSelectedExamContext();
+    if (selected.status === 'incomplete') return jsonApi(409, { ok: false, code: 'ONBOARDING_INCOMPLETE', error: 'ONBOARDING_INCOMPLETE' });
+    if (selected.status === 'inactive') return jsonApi(409, { ok: false, code: 'SELECTED_EXAM_INACTIVE', error: 'SELECTED_EXAM_INACTIVE' });
+    if (selected.status !== 'ready' || selected.userId !== user.id) return jsonApi(503, { ok: false, code: 'INTERNAL_ERROR', error: 'INTERNAL_ERROR' });
+    const exists = await questionExistsPublic(questionId, selected.examProfileId);
     if (exists === false) {
       bustQuestionBatchCache(subtopicId, topicId);
       return jsonApi(409, staleQuestionBody({ questionId }));
@@ -158,7 +181,7 @@ export async function POST(request: Request) {
 
       if (!result) {
         // Distinguish hard-missing question from other RPC failures when possible.
-        const recheck = await questionExistsPublic(questionId);
+        const recheck = await questionExistsPublic(questionId, selected.examProfileId);
         if (recheck === false) {
           bustQuestionBatchCache(subtopicId, topicId);
           return jsonApi(409, staleQuestionBody({ questionId }));
@@ -178,7 +201,26 @@ export async function POST(request: Request) {
         });
       }
 
-      return NextResponse.json(toJsonSafe(result), { headers: NO_STORE });
+      let answerResult = result;
+      if (!result.correct_option?.trim() || !hasAnswerExplanation(result.explanation)) {
+        // Older submit RPC versions can save correctly but omit answer-detail
+        // fields. Fill them from the authoritative question row before replying.
+        const reveal = await lookupQuestionAnswerOnServer(questionId, selectedOption);
+        if (reveal.ok) {
+          answerResult = {
+            ...result,
+            correct_option: result.correct_option?.trim()
+              ? result.correct_option
+              : reveal.data.correct_option,
+            explanation: hasAnswerExplanation(result.explanation)
+              ? result.explanation
+              : reveal.data.explanation,
+          };
+        }
+      }
+
+      revalidateTag(getExamLearningProgressCacheTag(user.id), { expire: 0 });
+      return NextResponse.json(toJsonSafe(answerResult), { headers: NO_STORE });
     } catch (error) {
       logPracticeDebug('[practice/submit] authenticated submit threw', {
         supabaseError: serializeError(error),

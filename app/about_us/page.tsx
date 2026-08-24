@@ -1,25 +1,17 @@
 ﻿import type { Metadata } from 'next';
 import AboutClient from './AboutClient';
-import { canonical } from '@/lib/seo';
+import { buildPageMetadata } from '@/lib/seo';
 import { getHomeData } from '@/lib/homeData';
 
-const title = 'About QuestionWale - Exam MCQ Practice Platform';
+const title = 'About Our Exam MCQ Practice Platform';
 const description =
   'QuestionWale helps government exam aspirants practice topic-wise MCQs with detailed explanations in English and Hindi for UPSC, State PSC, SSC and more.';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title,
   description,
-  ...canonical('/about_us'),
-  openGraph: {
-    title,
-    description,
-    url: '/about_us',
-    type: 'website',
-    siteName: 'Questionwale',
-  },
-  twitter: { card: 'summary_large_image', title, description },
-};
+  path: '/about_us',
+});
 
 export const revalidate = 300;
 

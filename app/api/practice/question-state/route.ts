@@ -1,12 +1,12 @@
 import { getAuthUserFromCookies } from '@/lib/authCookies';
 import { getSubtopicBatchQuestionState } from '@/lib/practiceServer';
-import { resolvePracticeExamQuestionTag } from '@/lib/polity/practiceExamFilter';
 import {
   isTextBodyTooLarge,
   parseBatchQuestionIdsPayload,
   privateNoStoreJsonResponse,
 } from '@/lib/publicQuestionApiGuards';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { getSelectedExamContext } from '@/lib/examLearningServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,21 +68,63 @@ export async function POST(request: Request) {
     return errorResponse(parsedIds.error, 400);
   }
 
-  const rawExamCode =
-    typeof row.examCode === 'string' && row.examCode.trim() ? row.examCode.trim() : null;
-  const examCode = rawExamCode ? (await resolvePracticeExamQuestionTag(rawExamCode)) ?? null : null;
-
-  const stateResult = await getSubtopicBatchQuestionState(
-    admin,
-    user.id,
-    scopeId,
-    examCode,
-    parsedIds.questionIds,
+  const selected = await getSelectedExamContext();
+  if (selected.status === 'incomplete') return errorResponse('onboarding_incomplete', 409);
+  if (selected.status === 'inactive') return errorResponse('selected_exam_inactive', 409);
+  if (selected.status !== 'ready' || selected.userId !== user.id) return errorResponse('exam_scope_failed', 503);
+  let allowedQuery = admin
+    .from('questions')
+    .select('id, question_exam_profile_mappings!inner(exam_profile_id, is_active)')
+    .eq('subtopic_id', scopeId)
+    .eq('is_active', true)
+    .eq('is_verified', true)
+    .eq('question_exam_profile_mappings.exam_profile_id', selected.examProfileId)
+    .eq('question_exam_profile_mappings.is_active', true);
+  if (parsedIds.questionIds.length > 0) {
+    allowedQuery = allowedQuery.in('id', parsedIds.questionIds);
+  } else {
+    allowedQuery = allowedQuery.limit(1);
+  }
+  // Exact exam validation and private mastery lookup are independent reads.
+  // Run them together, then expose state only for the validated IDs.
+  const [allowed, stateResult] = await Promise.all([
+    allowedQuery,
+    getSubtopicBatchQuestionState(
+      admin,
+      user.id,
+      scopeId,
+      selected.questionTag,
+      parsedIds.questionIds,
+    ),
+  ]);
+  if (allowed.error) return errorResponse('exam_scope_failed', 503);
+  if (!allowed.data?.length) return errorResponse('not_in_selected_exam', 404);
+  const allowedQuestionIds = new Set(
+    allowed.data.map((candidate: { id: string }) => String(candidate.id)),
   );
+  const scopedQuestionIds = parsedIds.questionIds.filter((id) => allowedQuestionIds.has(id));
 
   if (!stateResult.ok) {
-    return errorResponse(stateResult.error, stateResult.error === 'mastery_migration_pending' ? 503 : 500);
+    return privateNoStoreJsonResponse({
+      phase: 'unseen',
+      revisionRound: 0,
+      roundStartedAt: null,
+      catalogQuestionCount: null,
+      eligibleQuestionIds: scopedQuestionIds,
+      masteredQuestionIds: [],
+      unresolvedQuestionIds: [],
+      attemptedThisRoundQuestionIds: [],
+    });
   }
 
-  return privateNoStoreJsonResponse(stateResult.state);
+  const onlyAllowed = (ids: string[]) => ids.filter((id) => allowedQuestionIds.has(id));
+  return privateNoStoreJsonResponse({
+    ...stateResult.state,
+    eligibleQuestionIds: onlyAllowed(stateResult.state.eligibleQuestionIds),
+    masteredQuestionIds: onlyAllowed(stateResult.state.masteredQuestionIds),
+    unresolvedQuestionIds: onlyAllowed(stateResult.state.unresolvedQuestionIds),
+    attemptedThisRoundQuestionIds: onlyAllowed(
+      stateResult.state.attemptedThisRoundQuestionIds,
+    ),
+  });
 }

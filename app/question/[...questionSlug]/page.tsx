@@ -1,4 +1,4 @@
-import { notFound, permanentRedirect } from 'next/navigation';
+import { notFound, permanentRedirect, redirect } from 'next/navigation';
 import supabase from '@/lib/supabase';
 import ClientQuiz from '@/app/subjects/[subject]/[topicSlug]/ClientQuiz';
 import QuestionDetailsClient from '@/app/question/QuestionDetailsClient';
@@ -30,6 +30,15 @@ import { legacyColumnsForTable } from '@/lib/questionColumns';
 import { MAX_QUIZ_CANDIDATE_ROWS, QUESTION_BATCH_PAGE_SIZE } from '@/lib/supabaseQueryLimits';
 import { subCategoryMatches, topicMatches } from '@/lib/topicMatching';
 import type { PublicQuestion } from '@/types/polity';
+import { getSelectedExamLearning } from '@/lib/examLearningServer';
+import ExamContentUnavailable from '@/components/ExamContentUnavailable';
+import { resolvePracticeExamQuestionTag } from '@/lib/polity/practiceExamFilter';
+import { entityIsIncluded } from '@/lib/examLearning';
+import { getSscCglStageByCode, getSscCglSubtopicsHref, isSscCglExamCode } from '@/lib/sscCglSyllabus';
+import {
+  getSscCglMappedLearningHierarchy,
+  getSscCglStageTaxonomy,
+} from '@/lib/sscCglSyllabusServer';
 
 export const revalidate = 3600;
 
@@ -38,6 +47,8 @@ type OptionKey = 'A' | 'B' | 'C' | 'D' | 'E';
 
 type SearchParams = {
   q?: string | string[];
+  stage_code?: string | string[];
+  stage_tag?: string | string[];
 };
 
 const SUBJECT_TABLE_MAP = SUBJECT_TABLES;
@@ -73,6 +84,11 @@ function getTextValue(value: LocalizedText | undefined, locale: 'en' | 'hi' = 'e
   if (!value) return '';
   if (typeof value === 'string') return value;
   return value[locale] || value.en || value.hi || '';
+}
+
+function firstSearchValue(value: string | string[] | undefined): string | null {
+  const resolved = Array.isArray(value) ? value[0] : value;
+  return resolved?.trim() || null;
 }
 
 function toPublicQuestion(row: QuestionRecord): PublicQuestion {
@@ -190,6 +206,8 @@ export default async function QuestionPage({
 }) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
+  const requestedStageCode = firstSearchValue(resolvedSearchParams.stage_code);
+  const requestedStageTag = firstSearchValue(resolvedSearchParams.stage_tag);
   const pathSegments = getQuestionPath(resolvedParams);
   if (pathSegments.length < 1 || pathSegments.length > 3) {
     notFound();
@@ -212,6 +230,26 @@ export default async function QuestionPage({
   });
   const question = await fetchQuestionById(questionId, lookupContext);
 
+  const selected = await getSelectedExamLearning();
+  if (selected.status === 'incomplete') {
+    redirect(`/onboarding?returnTo=${encodeURIComponent(`/question/${pathSegments.join('/')}`)}`);
+  }
+  if (selected.status === 'inactive') return <ExamContentUnavailable reason="inactive_exam" />;
+  if (selected.status === 'error') return <ExamContentUnavailable reason="error" />;
+  const selectedQuestionTag = selected.status === 'ready'
+    ? selected.snapshot.exam.question_tag
+      ?? await resolvePracticeExamQuestionTag(selected.snapshot.exam.code)
+    : undefined;
+  if (selected.status === 'ready' && !selectedQuestionTag) {
+    return <ExamContentUnavailable reason="error" />;
+  }
+  if (selected.status === 'ready' && question) {
+    const tags = Array.isArray(question.exam_tags) ? question.exam_tags.map(String) : [];
+    if (!tags.includes(selectedQuestionTag!)) {
+      return <ExamContentUnavailable reason="not_in_exam" />;
+    }
+  }
+
   // Catalog questions: keep the same practice UI on refresh / shared links.
   if (question && !isQuizMode && question.subtopic_id) {
     const questionTextField = getQuestionTextField(question);
@@ -228,17 +266,43 @@ export default async function QuestionPage({
       subtopic: canonicalSubtopicSlug || undefined,
     });
 
+    const requestedStage = (selected.status !== 'ready' || isSscCglExamCode(selected.snapshot.exam.code))
+      ? getSscCglStageByCode(requestedStageCode)
+      : null;
+    const stageContext = requestedStage?.tag === requestedStageTag
+      ? await (async () => {
+          const stageTaxonomy = await getSscCglStageTaxonomy(requestedStage);
+          const mappedStageSubtopic = (await getSscCglMappedLearningHierarchy(stageTaxonomy))
+            .subtopics.find((row) => row.content_id === String(question.subtopic_id));
+          const stageSubject = stageTaxonomy.subjects.find((row) => row.id === mappedStageSubtopic?.subject_id);
+          const stageTopic = stageSubject?.topics.find((row) => row.id === mappedStageSubtopic?.topic_id);
+          return mappedStageSubtopic && stageSubject && stageTopic
+            ? {
+                stage: requestedStage,
+                href: getSscCglSubtopicsHref(requestedStage, stageSubject.slug, stageTopic.slug),
+              }
+            : null;
+        })()
+      : null;
+    const canonicalStagePath = stageContext
+      ? `${canonicalPath}?${new URLSearchParams({ stage_code: stageContext.stage.code, stage_tag: stageContext.stage.tag }).toString()}`
+      : canonicalPath;
+
     if (
       currentSlug !== canonicalSlug ||
       (canonicalTopicSlug && topicSlug && topicSlug !== canonicalTopicSlug) ||
       (canonicalSubtopicSlug && subtopicSlug && subtopicSlug !== canonicalSubtopicSlug) ||
       (canonicalSubtopicSlug && !subtopicSlug)
     ) {
-      return permanentRedirect(canonicalPath);
+      return permanentRedirect(canonicalStagePath);
     }
 
     if (subject && topic && subtopic) {
-      const initialBatch = await getQuestionBatchBySubtopic(subtopic.id, undefined, {
+      if (selected.status === 'ready' && !entityIsIncluded(selected.snapshot, 'subtopic', subtopic.id)) {
+        return <ExamContentUnavailable reason="not_in_exam" />;
+      }
+      const selectedExamCode = selected.status === 'ready' ? selectedQuestionTag : undefined;
+      const initialBatch = await getQuestionBatchBySubtopic(subtopic.id, selectedExamCode, {
         batchSize: QUESTION_BATCH_PAGE_SIZE,
       });
       const linkedQuestion = toPublicQuestion(question);
@@ -246,7 +310,8 @@ export default async function QuestionPage({
         ? initialBatch.questions
         : [linkedQuestion, ...initialBatch.questions];
 
-      const backHref = `/subjects/${subject.slug}/${topic.slug}`;
+      const backHref = stageContext?.href
+        ?? `/subjects/${subject.slug}/${topic.slug}${selectedExamCode ? `?exam=${encodeURIComponent(selectedExamCode)}` : ''}`;
       const breadcrumbSchema = buildBreadcrumbListSchema([
         { name: 'Home', href: '/' },
         { name: getLocalizedText(subject.title, 'en'), href: `/subjects/${subject.slug}` },
@@ -275,6 +340,9 @@ export default async function QuestionPage({
             initialHasMore={initialBatch.hasMore}
             questionBatchScope="subtopic"
             questionBatchScopeId={subtopic.id}
+            examCode={selectedExamCode}
+            stageCode={stageContext?.stage.code}
+            stageTag={stageContext?.stage.tag}
             backHref={backHref}
             backLabel="Back to topic"
             titleLocalized={subtopic.title}
@@ -287,7 +355,9 @@ export default async function QuestionPage({
             subjectSlug={subject.slug}
             topicSlug={topic.slug}
             subtopicSlug={subtopic.slug}
-            totalQuestionCount={subtopic.question_count}
+            totalQuestionCount={selected.status === 'ready'
+              ? selected.snapshot.subtopics.find((row) => row.id === subtopic.id || row.content_id === subtopic.id)?.question_count ?? 0
+              : subtopic.question_count}
           />
         </div>
       );

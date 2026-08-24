@@ -27,7 +27,7 @@ async function HomePracticePathSection() {
   return <HomePracticePath tabs={tabs} />;
 }
 
-/** Deferred below-fold homepage sections (subjects stays on the main page). */
+/** Deferred supporting sections below the primary exam selector. */
 export default function HomeBelowFold() {
   return (
     <>

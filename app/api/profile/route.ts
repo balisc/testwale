@@ -3,8 +3,6 @@ import { getAuthUserFromCookies } from '@/lib/authCookies';
 import { validateGoalPatch } from '@/lib/profileGoalsCore';
 import {
   buildProfilePageForSession,
-  getUserProfilePage,
-  mergeSessionUser,
   updateUserProfile,
 } from '@/lib/profileServer';
 
@@ -20,10 +18,7 @@ export async function GET() {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401, headers: PRIVATE_NO_STORE });
   }
 
-  const profile = await getUserProfilePage(session.id);
-  const payload = profile
-    ? mergeSessionUser(profile, session)
-    : await buildProfilePageForSession(session);
+  const payload = await buildProfilePageForSession(session);
 
   return NextResponse.json(payload, { headers: PRIVATE_NO_STORE });
 }
@@ -50,13 +45,8 @@ export async function PATCH(request: Request) {
   const patch: Parameters<typeof updateUserProfile>[1] = {};
   if (typeof body.bio === 'string') patch.bio = body.bio.slice(0, 280);
   if (typeof body.country === 'string') patch.country = body.country.slice(0, 80);
-  if (typeof body.target_exam === 'string') patch.target_exam = body.target_exam.slice(0, 120);
-  if (typeof body.exam_date === 'string') {
-    const examDate = body.exam_date.trim().slice(0, 10);
-    if (/^\d{4}-\d{2}-\d{2}$/.test(examDate)) {
-      patch.exam_date = examDate;
-    }
-  }
+  // Target exam fields are intentionally only writable through
+  // /api/onboarding/exam, which validates an active exam and saves atomically.
 
   if (goalValidation.ok) {
     Object.assign(patch, goalValidation.patch);
@@ -78,10 +68,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'update_failed' }, { status: 500, headers: PRIVATE_NO_STORE });
   }
 
-  const profile = await getUserProfilePage(session.id);
-  const payload = profile
-    ? mergeSessionUser(profile, session)
-    : await buildProfilePageForSession(session);
+  const payload = await buildProfilePageForSession(session);
 
   return NextResponse.json(payload, { headers: PRIVATE_NO_STORE });
 }

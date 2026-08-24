@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { POLITY_EXAM_STORAGE_KEY } from '@/lib/polity/examRankingLabels';
-import { normalizeExamCode } from '@/lib/polity';
+import { normalizeExamCode } from '@/lib/examCode';
 import type { PolityRankedExamOption } from '@/types/polityExamRankingV2';
 
 type UsePolityExamSelectionOptions = {

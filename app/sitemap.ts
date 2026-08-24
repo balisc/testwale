@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { BASE_URL } from '@/lib/seo';
-import { fetchCatalogSitemapPaths } from '@/lib/sitemapCatalog';
+import { fetchCatalogSitemapPaths, fetchPublicExamSitemapPaths } from '@/lib/sitemapCatalog';
 import { SUBJECTS } from '@/lib/subjects';
 import { isLegacySitemapExcludedSubjectKey } from '@/lib/sitemapPolicy';
 
@@ -42,8 +42,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   try {
-    const catalogPaths = await fetchCatalogSitemapPaths();
-    for (const entry of catalogPaths) {
+    const dynamicPaths = await Promise.all([
+      fetchCatalogSitemapPaths(),
+      fetchPublicExamSitemapPaths(),
+    ]);
+    for (const entry of dynamicPaths.flat()) {
       addUrl(entry.path, entry.priority, entry.lastModified);
     }
   } catch {

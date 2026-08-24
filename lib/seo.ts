@@ -8,6 +8,33 @@ export const BASE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://questionwa
 export const DEFAULT_OG_IMAGE = '/og/questionwale-share.webp';
 
 const forceNoIndex = isNonProductionDeployment();
+const googleSiteVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
+
+function truncateAtWord(value: string, maxLength: number): string {
+  const normalized = value.trim().replace(/\s+/g, ' ');
+  if (normalized.length <= maxLength) return normalized;
+  const slice = normalized.slice(0, Math.max(1, maxLength - 1));
+  const lastSpace = slice.lastIndexOf(' ');
+  const boundary = lastSpace >= Math.floor(maxLength * 0.65) ? lastSpace : slice.length;
+  return `${slice.slice(0, boundary).replace(/[,:;\s-]+$/, '')}…`;
+}
+
+export function buildConciseTitle(primary: string, context?: string): string {
+  const cleanPrimary = primary.trim().replace(/\s+/g, ' ');
+  const cleanContext = context?.trim().replace(/\s+/g, ' ');
+  const combined = cleanContext ? `${cleanPrimary} — ${cleanContext}` : cleanPrimary;
+  if (combined.length <= 62) return combined;
+  if (cleanContext) {
+    const suffix = ` — ${cleanContext}`;
+    const primaryBudget = 62 - suffix.length;
+    if (primaryBudget >= 18) return `${truncateAtWord(cleanPrimary, primaryBudget)}${suffix}`;
+  }
+  return truncateAtWord(cleanPrimary, 62);
+}
+
+export function buildConciseDescription(description: string): string {
+  return truncateAtWord(description, 160);
+}
 
 export function absoluteUrl(path = '/') {
   if (/^https?:\/\//i.test(path)) return path;
@@ -53,7 +80,6 @@ export const siteMetadata: Metadata = {
   },
   description: DEFAULT_DESCRIPTION,
   metadataBase: new URL(BASE_URL),
-  ...canonical('/'),
   openGraph: {
     title: `${SITE_NAME} — Government Exam MCQ Practice in Hindi & English`,
     description: DEFAULT_DESCRIPTION,
@@ -68,6 +94,9 @@ export const siteMetadata: Metadata = {
     description: DEFAULT_DESCRIPTION,
     images: [absoluteUrl(DEFAULT_OG_IMAGE)],
   },
+  ...(googleSiteVerification
+    ? { verification: { google: googleSiteVerification } }
+    : {}),
   robots: forceNoIndex
     ? { index: false, follow: false }
     : {
@@ -91,7 +120,8 @@ export function buildPageMetadata(options: {
   type?: 'website' | 'article';
   noIndex?: boolean;
 }): Metadata {
-  const { title, description, path, type = 'website', noIndex = false } = options;
+  const { title, path, type = 'website', noIndex = false } = options;
+  const description = buildConciseDescription(options.description);
   const robotsNoIndex = noIndex || forceNoIndex;
 
   return {
@@ -134,7 +164,7 @@ export function buildQuizMetadata(examName: string, topicName: string, quizPath?
   const description = `Take a quick ${topicName} quiz for ${examName} on ${SITE_NAME} and validate your exam readiness with realistic practice.`;
   const path = quizPath ?? '/subjects';
 
-  return buildPageMetadata({ title, description, path, type: 'article' });
+  return buildPageMetadata({ title, description, path, type: 'article', noIndex: true });
 }
 
 export function buildCatalogSubjectMetadata(
@@ -143,7 +173,7 @@ export function buildCatalogSubjectMetadata(
   description?: string,
 ): Metadata {
   return buildPageMetadata({
-    title: `${subjectTitle} — Topics & MCQ Practice`,
+    title: buildConciseTitle(subjectTitle, 'MCQ Topics'),
     description:
       description ||
       `Practice ${subjectTitle} topics with exam-wise MCQs for UPSC, SSC, Railway and State exams.`,
@@ -158,9 +188,22 @@ export function buildCatalogTopicMetadata(
   topicSlug: string,
   description?: string,
 ): Metadata {
+  const subjectContextAliases: Record<string, string> = {
+    'general studies (finance and economics)': 'GS Finance',
+    'quantitative aptitude and mathematical abilities': 'Quantitative Aptitude',
+    'english language and comprehension': 'English',
+    'computer knowledge test': 'Computer Knowledge',
+  };
+  const subjectContext =
+    subjectContextAliases[subjectTitle.trim().toLowerCase()] ?? subjectTitle;
+  const normalizedDescription = description?.trim().replace(/[.\s]+$/, '');
+  const contextualDescription = normalizedDescription
+    ? `${topicTitle} in ${subjectTitle}: ${normalizedDescription}. Practice relevant MCQs on ${SITE_NAME}.`
+    : `Study ${topicTitle} under ${subjectTitle} and practice relevant MCQs on ${SITE_NAME}.`;
+
   return buildPageMetadata({
-    title: `${topicTitle} — ${subjectTitle}`,
-    description: description || `Practice ${topicTitle} subtopics with MCQs on ${SITE_NAME}.`,
+    title: buildConciseTitle(topicTitle, subjectContext),
+    description: contextualDescription,
     path: `/subjects/${subjectSlug}/${topicSlug}`,
   });
 }

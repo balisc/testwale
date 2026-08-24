@@ -89,7 +89,7 @@ export default function LoadingTestPageContent() {
               </div>
               <h1 className="mx-auto max-w-2xl text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl md:text-6xl lg:text-7xl">
                 <Link href="/" className="mx-auto flex items-center justify-center gap-2.5 max-w-[23rem] truncate text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-slate-950 hover:opacity-90 transition">
-                  <Image src="/logo/questionwale_logo.webp" alt="Questionwale logo" width={66} height={66} priority className="object-contain rounded" />
+                  <Image src="/logo/questionwale_logo.webp" alt="Questionwale logo" width={66} height={66} preload fetchPriority="high" className="object-contain rounded" />
                   <span className="leading-tight">uestionWale</span>
                 </Link>
               </h1>

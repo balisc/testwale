@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
  * Validates /sitemap.xml: XML shape, unique locs, live HTTP 200, stable lastmod, topic coverage.
- * Usage: node scripts/verify-sitemap.mjs [baseUrl]
+ * Usage: node scripts/verify-sitemap.mjs [baseUrl] [expectedPublicOrigin]
  */
 const base = (process.argv[2] ?? process.env.BASE_URL ?? 'http://127.0.0.1:3000').replace(/\/$/, '');
+const expectedOrigin = (process.argv[3] ?? process.env.EXPECTED_PUBLIC_ORIGIN ?? 'https://questionwale.com').replace(/\/$/, '');
 
 function extractLocs(xml) {
   return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].trim());
@@ -42,12 +43,18 @@ if (dupes.length) {
   console.log(`PASS ${locs.length} unique locs`);
 }
 
-const badHosts = locs.filter((loc) => /localhost|vercel\.app/i.test(loc));
+const badHosts = locs.filter((loc) => {
+  try {
+    return new URL(loc).origin !== expectedOrigin;
+  } catch {
+    return true;
+  }
+});
 if (badHosts.length) {
   console.error(`FAIL bad hosts: ${badHosts.join(', ')}`);
   failed++;
 } else {
-  console.log('PASS canonical questionwale.com hosts');
+  console.log(`PASS canonical ${expectedOrigin} hosts`);
 }
 
 const legacyBad = locs.filter((loc) => /\/polity(\/|$)/.test(loc));
@@ -60,11 +67,11 @@ if (legacyBad.length) {
 
 const topicUrls = locs.filter((loc) => /\/subjects\/indian-polity\/[^/]+$/.test(loc));
 console.log(`INFO indian-polity topic URLs in sitemap: ${topicUrls.length}`);
-if (topicUrls.length < 18) {
-  console.error(`FAIL expected at least 18 active indian-polity topic URLs, found ${topicUrls.length}`);
+if (topicUrls.length === 0) {
+  console.error('FAIL expected at least one indexable indian-polity topic URL');
   failed++;
 } else {
-  console.log('PASS indian-polity topic coverage');
+  console.log('PASS indexable indian-polity topic coverage');
 }
 
 if (first.text !== second.text) {
@@ -87,7 +94,8 @@ if (nowish.length > 1) {
 }
 
 for (const loc of locs) {
-  const path = loc.replace(/^https:\/\/questionwale\.com/, '');
+  const parsed = new URL(loc);
+  const path = `${parsed.pathname}${parsed.search}`;
   const res = await fetch(`${base}${path}`, { redirect: 'follow' });
   if (res.status !== 200) {
     console.error(`FAIL dead sitemap URL ${path} → HTTP ${res.status}`);

@@ -2,6 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useAuth } from '@/lib/AuthContext';
+import {
+  clearClientCache,
+  fetchClientJson,
+  isClientCacheFresh,
+  readClientCache,
+} from '@/lib/clientRequestCache';
 import type { ProfileGoalsData } from '@/lib/profileGoalsTypes';
 import ProfileShell from './ProfileShell';
 import { getProfileGoalsCopy } from './profileGoalsCopy';
@@ -11,6 +18,7 @@ import ProfileGoalsEditModal from './components/ProfileGoalsEditModal';
 
 export default function ProfileGoalsPage() {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const copy = useMemo(() => getProfileGoalsCopy(language), [language]);
   const [goals, setGoals] = useState<ProfileGoalsData | null>(null);
   const [fetching, setFetching] = useState(true);
@@ -20,13 +28,28 @@ export default function ProfileGoalsPage() {
   const [saveError, setSaveError] = useState(false);
   const [goalForm, setGoalForm] = useState({ daily_goal: 50, weekly_goal: 300, monthly_goal: 1500 });
 
-  const loadGoals = useCallback(async () => {
-    setFetching(true);
+  const loadGoals = useCallback(async (force = false) => {
+    if (!user) return;
+    const cacheKey = `profile-goals:${user.id}`;
+    const cached = readClientCache<ProfileGoalsData>(cacheKey);
+    if (cached) {
+      setGoals(cached);
+      setFetching(false);
+      setGoalForm({
+        daily_goal: cached.targets.daily_goal,
+        weekly_goal: cached.targets.weekly_goal,
+        monthly_goal: cached.targets.monthly_goal,
+      });
+      if (!force && isClientCacheFresh(cacheKey, 60_000)) return;
+    } else {
+      setFetching(true);
+    }
     setError(false);
     try {
-      const res = await fetch('/api/profile/goals', { cache: 'no-store', credentials: 'include' });
-      if (!res.ok) throw new Error('failed');
-      const json = (await res.json()) as ProfileGoalsData;
+      const json = await fetchClientJson<ProfileGoalsData>(cacheKey, '/api/profile/goals', {
+        maxAgeMs: 60_000,
+        force,
+      });
       setGoals(json);
       setGoalForm({
         daily_goal: json.targets.daily_goal,
@@ -38,7 +61,7 @@ export default function ProfileGoalsPage() {
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     void loadGoals();
@@ -56,7 +79,11 @@ export default function ProfileGoalsPage() {
       });
       if (!res.ok) throw new Error('failed');
       setEditOpen(false);
-      await loadGoals();
+      if (user) {
+        clearClientCache(`profile:${user.id}`);
+        clearClientCache(`profile-goals:${user.id}`);
+      }
+      await loadGoals(true);
     } catch {
       setSaveError(true);
     } finally {
@@ -73,7 +100,7 @@ export default function ProfileGoalsPage() {
               <p className="text-sm text-red-600">{copy.loadError}</p>
               <button
                 type="button"
-                onClick={() => void loadGoals()}
+                onClick={() => void loadGoals(true)}
                 className="mt-4 inline-flex min-h-[44px] items-center text-sm text-brand underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
               >
                 {copy.retry}

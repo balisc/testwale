@@ -18,6 +18,12 @@ import { buildCatalogSubjectMetadata } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
 import { buildBreadcrumbListSchema } from '@/lib/breadcrumbSchema';
 import { hasPublishedRevisionForSubject } from '@/lib/revision/registry';
+import { getSelectedExamLearning } from '@/lib/examLearningServer';
+import ExamContentUnavailable from '@/components/ExamContentUnavailable';
+import { redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
+import { findPublishedSyllabusSubject } from '@/lib/examSyllabus';
+import { isSscCglExamCode } from '@/lib/sscCglSyllabus';
 
 export const revalidate = 3600;
 
@@ -53,6 +59,55 @@ export default async function SubjectSlugPage({ params, searchParams }: PageProp
   const resolvedSearchParams = await searchParams;
   const examParam = resolveExamParam(resolvedSearchParams.exam);
   const examCode = buildExamQuery(examParam);
+
+  const selected = await getSelectedExamLearning();
+  if (selected.status === 'incomplete') {
+    redirect(`/onboarding?returnTo=${encodeURIComponent(`/subjects/${routeSubject}`)}`);
+  }
+  if (selected.status === 'inactive') return <ExamContentUnavailable reason="inactive_exam" />;
+  if (selected.status === 'error') return <ExamContentUnavailable reason="error" />;
+  if (selected.status === 'ready') {
+    if (isSscCglExamCode(selected.snapshot.exam.code)) redirect('/ssc-cgl');
+    const scopedSubject = findPublishedSyllabusSubject(selected.snapshot.subjects, routeSubject);
+    if (!scopedSubject) notFound();
+    const subjectSlug = scopedSubject.slug;
+    const subject = {
+      ...scopedSubject,
+      topic_count: scopedSubject.topic_count,
+      question_count: scopedSubject.question_count,
+      is_active: true,
+    };
+    const exams = await getAllExams();
+    const topics = selected.snapshot.topics
+      .filter((row) => row.subject_id === scopedSubject.id)
+      .map((row) => ({
+        id: row.id,
+        title: row.title,
+        slug: row.slug,
+        description: row.description,
+        scope: row.scope,
+        icon_key: row.icon_key,
+        subtopic_count: row.subtopic_count,
+        question_count: row.question_count,
+        priority: row.priority ?? 999,
+        importance: row.importance,
+        is_recommended: row.is_recommended,
+      }));
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
+        <SubjectPageContent
+          subject={subject}
+          subjectSlug={subjectSlug}
+          topics={topics}
+          exams={exams}
+          examCode={selected.snapshot.exam.code}
+          topicCount={scopedSubject.topic_count}
+          questionCount={scopedSubject.question_count}
+          examLocked
+        />
+      </div>
+    );
+  }
 
   const { subject, subjectSlug } = await requireSubjectByRouteSlug(routeSubject);
   const exams = await getAllExams();

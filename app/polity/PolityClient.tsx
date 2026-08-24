@@ -241,8 +241,8 @@ export default function PolityClient({ topics }: PolityClientProps) {
                 alt="Indian Parliament and Constitution of India illustration"
                 width={800}
                 height={607}
-                priority
-                unoptimized
+                preload
+                fetchPriority="high"
                 className="h-full w-full max-h-[clamp(11rem,36vw,28rem)] object-contain object-center"
                 sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 480px"
               />

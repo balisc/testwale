@@ -46,6 +46,8 @@ export type Topic = {
   title: LocalizedText;
   slug: string;
   description: LocalizedText | null;
+  /** Human-readable syllabus coverage shown below the topic title. */
+  scope?: LocalizedText | null;
   icon_key: string | null;
   sort_order: number | null;
   subtopic_count: number | null;
@@ -58,6 +60,8 @@ export type TopicWithPriority = {
   title: LocalizedText;
   slug: string;
   description: LocalizedText | null;
+  /** Human-readable syllabus coverage shown below the topic title. */
+  scope?: LocalizedText | null;
   icon_key: string | null;
   subtopic_count: number | null;
   question_count: number | null;
@@ -72,6 +76,8 @@ export type Subtopic = {
   title: LocalizedText;
   slug: string;
   description: LocalizedText | null;
+  /** Broader syllabus context shown below the subtopic title. */
+  scope?: LocalizedText | null;
   sort_order: number | null;
   question_count: number | null;
   is_active: boolean;

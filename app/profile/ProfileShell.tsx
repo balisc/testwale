@@ -1,9 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
+import {
+  ClientJsonError,
+  fetchClientJson,
+  isClientCacheFresh,
+  readClientCache,
+  writeClientCache,
+} from '@/lib/clientRequestCache';
 import { useLanguage } from '@/lib/LanguageContext';
 import type { ProfilePageData } from '@/lib/profileAnalytics';
 import { getProfileCopy } from './profileCopy';
@@ -25,7 +32,7 @@ type ProfileShellProps = {
 };
 
 export default function ProfileShell({ activeTab, title, subtitle, children }: ProfileShellProps) {
-  const { user, loading: authLoading, refreshUser } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { language } = useLanguage();
   const router = useRouter();
   const copy = useMemo(() => getProfileCopy(language), [language]);
@@ -34,57 +41,56 @@ export default function ProfileShell({ activeTab, title, subtitle, children }: P
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [editMode, setEditMode] = useState<'full' | 'examGoal'>('full');
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState({ bio: '', country: '', target_exam: '', exam_date: '' });
-  const [sessionChecked, setSessionChecked] = useState(false);
-  const loadedForUserRef = useRef<string | null>(null);
+  const profileCacheKey = user ? `profile:${user.id}` : null;
 
-  const loadProfile = useCallback(async () => {
-    setFetching(true);
+  const applyProfile = useCallback((json: ProfilePageData) => {
+    setData(json);
+    setEditForm({
+      bio: json.profile.bio ?? '',
+      country: json.profile.country ?? '',
+      target_exam: json.profile.target_exam ?? '',
+      exam_date: json.profile.exam_date?.slice(0, 10) ?? '',
+    });
+  }, []);
+
+  const loadProfile = useCallback(async (force = false) => {
+    if (!profileCacheKey) return;
+    const cached = readClientCache<ProfilePageData>(profileCacheKey);
+    if (cached) {
+      applyProfile(cached);
+      setFetching(false);
+      if (!force && isClientCacheFresh(profileCacheKey, 60_000)) return;
+    } else {
+      setFetching(true);
+    }
     setError(false);
     try {
-      const res = await fetch('/api/profile', { cache: 'no-store', credentials: 'include' });
-      if (res.status === 401) {
+      const json = await fetchClientJson<ProfilePageData>(profileCacheKey, '/api/profile', {
+        maxAgeMs: 60_000,
+        force,
+      });
+      applyProfile(json);
+    } catch (error) {
+      if (error instanceof ClientJsonError && error.status === 401) {
         router.replace(`/login?redirect=${encodeURIComponent(profileTabRedirectPath(activeTab))}`);
         return;
       }
-      if (!res.ok) throw new Error('failed');
-      const json = (await res.json()) as ProfilePageData;
-      setData(json);
-      setEditForm({
-        bio: json.profile.bio ?? '',
-        country: json.profile.country ?? '',
-        target_exam: json.profile.target_exam ?? '',
-        exam_date: json.profile.exam_date?.slice(0, 10) ?? '',
-      });
-    } catch {
       setError(true);
     } finally {
       setFetching(false);
     }
-  }, [router, activeTab]);
+  }, [profileCacheKey, applyProfile, router, activeTab]);
 
   useEffect(() => {
     if (authLoading) return;
-
     if (user) {
-      setSessionChecked(true);
-      if (loadedForUserRef.current === user.id) return;
-      loadedForUserRef.current = user.id;
       void loadProfile();
       return;
     }
-
-    loadedForUserRef.current = null;
-    if (sessionChecked) return;
-    void refreshUser().finally(() => setSessionChecked(true));
-  }, [user, authLoading, sessionChecked, refreshUser, loadProfile]);
-
-  useEffect(() => {
-    if (authLoading || !sessionChecked || user) return;
     router.replace(`/login?redirect=${encodeURIComponent(profileTabRedirectPath(activeTab))}`);
-  }, [authLoading, sessionChecked, user, router, activeTab]);
+  }, [user, authLoading, router, activeTab, loadProfile]);
 
   useEffect(() => {
     if (fetching || !data || authLoading) return;
@@ -103,13 +109,8 @@ export default function ProfileShell({ activeTab, title, subtitle, children }: P
       });
       if (!res.ok) throw new Error('save failed');
       const json = (await res.json()) as ProfilePageData;
-      setData(json);
-      setEditForm({
-        bio: json.profile.bio ?? '',
-        country: json.profile.country ?? '',
-        target_exam: json.profile.target_exam ?? '',
-        exam_date: json.profile.exam_date?.slice(0, 10) ?? '',
-      });
+      if (profileCacheKey) writeClientCache(profileCacheKey, json);
+      applyProfile(json);
       setEditOpen(false);
     } catch {
       /* keep modal open */
@@ -119,19 +120,13 @@ export default function ProfileShell({ activeTab, title, subtitle, children }: P
   };
 
   const openEdit = () => {
-    setEditMode('full');
     setEditOpen(true);
   };
   const openTargetExam = () => {
-    if (data && needsProfileOnboarding(data.profile)) {
-      router.push('/onboarding?redirect=%2Fprofile');
-      return;
-    }
-    setEditMode('examGoal');
-    setEditOpen(true);
+    router.push('/onboarding?edit=1&returnTo=%2Fdashboard');
   };
 
-  if (authLoading || (!user && !sessionChecked)) {
+  if (authLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-brand" aria-label="Loading" />
@@ -147,7 +142,7 @@ export default function ProfileShell({ activeTab, title, subtitle, children }: P
         <p className="text-sm text-red-600 sm:text-base">{copy.loadError}</p>
         <button
           type="button"
-          onClick={() => void loadProfile()}
+          onClick={() => void loadProfile(true)}
           className="mt-4 inline-flex min-h-[44px] items-center text-sm text-brand underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           {copy.retry}
@@ -157,7 +152,7 @@ export default function ProfileShell({ activeTab, title, subtitle, children }: P
   }
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-[1200px] overflow-x-hidden px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+    <div className="mx-auto w-full min-w-0 max-w-[1200px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <header className="mb-6 sm:mb-8">
         <h1 className="text-2xl font-bold text-[#0F172A] sm:text-3xl">{title}</h1>
         <p className="mt-1 text-sm text-slate-500 sm:text-base">{subtitle}</p>
@@ -165,7 +160,7 @@ export default function ProfileShell({ activeTab, title, subtitle, children }: P
 
       <ProfileTabs copy={copy} activeTab={activeTab} />
 
-      <div role="tabpanel" className="mt-6 sm:mt-8">
+      <div role="tabpanel" className="mt-6 w-full min-w-0 max-w-full sm:mt-8">
         {children({ profileData: data, fetching, openEdit, openTargetExam })}
       </div>
 
@@ -174,7 +169,7 @@ export default function ProfileShell({ activeTab, title, subtitle, children }: P
         onClose={() => setEditOpen(false)}
         copy={copy}
         language={language}
-        mode={editMode}
+        mode="full"
         form={editForm}
         onChange={(field, value) => setEditForm((prev) => ({ ...prev, [field]: value }))}
         onSave={() => void handleSaveProfile()}

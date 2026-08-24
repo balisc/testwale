@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { ChevronDown, Search, Target, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { normalizeExamCode, sortExamsForDisplay } from '@/lib/polity';
+import { normalizeExamCode, sortExamsForDisplay } from '@/lib/examCode';
 import { JURISDICTION_GROUP_LABELS } from '@/lib/polity/examRankingLabels';
 import { useLanguage } from '@/lib/LanguageContext';
 import { pickCatalogText, useCatalogText } from '@/lib/useCatalogText';

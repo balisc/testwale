@@ -26,6 +26,7 @@ import ReportComingSoonModal from '@/components/practice/ReportComingSoonModal';
 import VerifiedSources from '@/components/questions/VerifiedSources';
 import ModalPortal from '@/components/ModalPortal';
 import { useAuth } from '@/lib/AuthContext';
+import { expireClientCache } from '@/lib/clientRequestCache';
 import { useRequireOnboarding } from '@/lib/useRequireOnboarding';
 import { useLanguage } from '@/lib/LanguageContext';
 import {
@@ -61,6 +62,9 @@ type QuestionPracticeProps = {
   questionBatchScope?: 'subtopic' | 'topic';
   questionBatchScopeId?: string;
   examCode?: string;
+  examProfileId?: string;
+  stageCode?: string;
+  stageTag?: string;
   backHref: string;
   backLabel?: string;
   title?: string;
@@ -218,14 +222,18 @@ function buildPracticeScopeKey(
   scope: QuestionPracticeProps['questionBatchScope'],
   scopeId: string | undefined,
   exam: string | undefined,
+  examProfileId: string | undefined,
+  stage: string | undefined,
 ): string {
+  const stageKey = stage?.trim() ? `:${stage.trim()}` : '';
+  const profileKey = examProfileId?.trim() ? `:${examProfileId.trim()}` : '';
   if (scope === 'subtopic' && scopeId) {
-    return `subtopic:${scopeId}:${exam?.trim() || ''}`;
+    return `subtopic:${scopeId}:${exam?.trim() || ''}${profileKey}${stageKey}`;
   }
   if (scope === 'topic' && scopeId) {
-    return `topic:${scopeId}:${exam?.trim() || ''}`;
+    return `topic:${scopeId}:${exam?.trim() || ''}${stageKey}`;
   }
-  return 'legacy';
+  return `legacy${stageKey}`;
 }
 
 function applyAttemptRows(attempts: PracticeAttemptRestoreRow[]): {
@@ -280,6 +288,9 @@ export default function QuestionPractice({
   questionBatchScope,
   questionBatchScopeId,
   examCode,
+  examProfileId,
+  stageCode,
+  stageTag,
   backHref,
   backLabel = 'Back to topic',
   title,
@@ -317,8 +328,8 @@ export default function QuestionPractice({
   const isSubtopicMasteryMode = isSubtopicBatchMode && Boolean(user) && !authLoading;
 
   const practiceScopeKey = useMemo(
-    () => buildPracticeScopeKey(questionBatchScope, questionBatchScopeId, examCode),
-    [questionBatchScope, questionBatchScopeId, examCode],
+    () => buildPracticeScopeKey(questionBatchScope, questionBatchScopeId, examCode, examProfileId, stageCode),
+    [questionBatchScope, questionBatchScopeId, examCode, examProfileId, stageCode],
   );
 
   const resolvedInitialQuestions = useMemo(
@@ -454,6 +465,12 @@ export default function QuestionPractice({
     return ids;
   }, [correctQuestionIds, sessionHiddenIds, masteredQuestionIds, resultsByQuestion]);
 
+  const personalizationPending = Boolean(user?.id) && (
+    personalizedForUserRef.current !== user?.id ||
+    checkingQuestionState ||
+    checkingCorrectIds
+  );
+
   const activeQuestions = useMemo(() => {
     // Current batch page: always show the full page (up to 10), including attempted
     // questions on this page. Eligibility only gates new batch fetches, not in-page nav.
@@ -464,7 +481,9 @@ export default function QuestionPractice({
         .filter((question): question is PublicQuestion => {
           if (!question) return false;
           if (!user?.id) return true;
-          if (!verifiedQuestionIds.has(question.id)) return false;
+          if (!verifiedQuestionIds.has(question.id)) {
+            return personalizationPending || verifyingBatchIds.has(question.id);
+          }
           if (sessionPassRemovedIds.has(question.id)) return false;
           if (hiddenQuestionIds.has(question.id)) return false;
           return true;
@@ -493,6 +512,8 @@ export default function QuestionPractice({
     isSubtopicMasteryMode,
     user,
     verifiedQuestionIds,
+    personalizationPending,
+    verifyingBatchIds,
     hiddenQuestionIds,
     eligibleQuestionIds,
     sessionPassRemovedIds,
@@ -514,7 +535,7 @@ export default function QuestionPractice({
   const displayQuestionTotal =
     knownSubtopicTotal != null && knownSubtopicTotal > 0
       ? knownSubtopicTotal
-      : Math.max(pageNumberOffset + total, total);
+      : Math.max(pageNumberOffset + total, total, current ? 1 : 0);
   const currentResult = current ? resultsByQuestion[current.id] : undefined;
 
   const displayTitle = titleLocalized
@@ -749,8 +770,8 @@ export default function QuestionPractice({
           if (isAbortError(error)) return;
           if (isStaleGeneration(generation, scopeKey)) return;
 
-          // Still surface newly fetched public questions if mastery RPC fails mid-session.
-          if (!options?.isInitial && unchecked.length > 0) {
+          // Public questions remain usable while personalized mastery data is unavailable.
+          if (unchecked.length > 0) {
             setVerifiedQuestionIds((prev) => {
               const next = new Set(prev);
               for (const id of unchecked) next.add(id);
@@ -766,14 +787,10 @@ export default function QuestionPractice({
             }
           }
 
+          // Session expiry requires action. Progress/mastery is best-effort and
+          // must never replace valid public questions with a fatal error card.
           setQuestionStateError(
-            (error as Error).message === 'unauthorized'
-              ? c.sessionExpired
-              : (error as Error).message === 'migration_pending'
-                ? c.migrationPendingError
-                : (error as Error).message === 'question_state_invalid'
-                  ? c.invalidResponseError
-                  : c.questionStateError,
+            (error as Error).message === 'unauthorized' ? c.sessionExpired : null,
           );
         } finally {
           questionStateInFlightRef.current = false;
@@ -800,9 +817,6 @@ export default function QuestionPractice({
       isStaleGeneration,
       applyQuestionBatchState,
       c.sessionExpired,
-      c.questionStateError,
-      c.invalidResponseError,
-      c.migrationPendingError,
     ],
   );
 
@@ -888,6 +902,9 @@ export default function QuestionPractice({
       });
       if (cursor) params.set('cursor', cursor);
       if (examCode) params.set('examCode', examCode);
+      if (examProfileId) params.set('examProfileId', examProfileId);
+      if (stageCode) params.set('stage_code', stageCode);
+      if (stageTag) params.set('stage_tag', stageTag);
 
       const res = await fetch(`/api/practice/question-batch?${params.toString()}`, {
         cache: 'no-store',
@@ -902,7 +919,7 @@ export default function QuestionPractice({
 
       return validated.page;
     },
-    [examCode, questionBatchScopeId, isStaleGeneration],
+    [examCode, examProfileId, questionBatchScopeId, isStaleGeneration, stageCode, stageTag],
   );
 
   const loadQuestionBatch = useCallback(
@@ -1197,13 +1214,7 @@ export default function QuestionPractice({
       } catch (error) {
         if (!isStaleGeneration(generation, scopeKey)) {
           setQuestionStateError(
-            (error as Error).message === 'unauthorized'
-              ? c.sessionExpired
-              : (error as Error).message === 'migration_pending'
-                ? c.migrationPendingError
-                : (error as Error).message === 'advance_invalid'
-                  ? c.invalidResponseError
-                  : c.questionStateError,
+            (error as Error).message === 'unauthorized' ? c.sessionExpired : null,
           );
         }
         return null;
@@ -1220,9 +1231,6 @@ export default function QuestionPractice({
       isStaleGeneration,
       restartPublicScan,
       c.sessionExpired,
-      c.questionStateError,
-      c.invalidResponseError,
-      c.migrationPendingError,
     ],
   );
 
@@ -1237,26 +1245,26 @@ export default function QuestionPractice({
       if (!user) return;
 
       if (isSubtopicMasteryMode) {
-        await fetchQuestionStateForBatch(
-          batchQuestions.map((question) => question.id),
-          signal,
-          generation,
-          scopeKey,
-          options,
-        );
-        if (isStaleGeneration(generation, scopeKey)) return;
-        try {
-          await fetchAttemptsRestore(
-            batchQuestions.map((question) => question.id),
+        const questionIds = batchQuestions.map((question) => question.id);
+        await Promise.all([
+          fetchQuestionStateForBatch(
+            questionIds,
             signal,
             generation,
             scopeKey,
-          );
-        } catch (error) {
-          if (isAbortError(error)) return;
-          if (isStaleGeneration(generation, scopeKey)) return;
-          setAttemptsError(c.loadError);
-        }
+            options,
+          ),
+          fetchAttemptsRestore(
+            questionIds,
+            signal,
+            generation,
+            scopeKey,
+          ).catch((error) => {
+            if (isAbortError(error) || isStaleGeneration(generation, scopeKey)) return;
+            setAttemptsError(c.loadError);
+          }),
+        ]);
+        if (isStaleGeneration(generation, scopeKey)) return;
         return;
       }
 
@@ -1815,18 +1823,25 @@ export default function QuestionPractice({
     });
     const url = new URL(window.location.href);
 
-    if (url.pathname === seoPath) return;
+    if (stageCode) url.searchParams.set('stage_code', stageCode);
+    else url.searchParams.delete('stage_code');
+    if (stageTag) url.searchParams.set('stage_tag', stageTag);
+    else url.searchParams.delete('stage_tag');
+
+    if (url.pathname === seoPath && window.location.search === url.search) return;
 
     url.pathname = seoPath;
     window.history.replaceState(
       {
         practiceScopeKey,
         questionId: current.id,
+        stageCode: stageCode ?? null,
+        stageTag: stageTag ?? null,
       },
       '',
       `${url.pathname}${url.search}${url.hash}`,
     );
-  }, [current, seoTopic, seoSubtopic, titleLocalized, title, language, practiceScopeKey]);
+  }, [current, seoTopic, seoSubtopic, titleLocalized, title, language, practiceScopeKey, stageCode, stageTag]);
 
   useEffect(() => {
     if (!isSubtopicBatchMode) {
@@ -2235,6 +2250,17 @@ export default function QuestionPractice({
       }
 
       const result = payload;
+      if (user) {
+        // Keep stale private data available for an instant tab/page paint while
+        // forcing its refresh in the background on the next visit.
+        expireClientCache(`learning-dashboard:${user.id}`);
+        expireClientCache(`profile:${user.id}`);
+        expireClientCache(`profile-insights:${user.id}`);
+        expireClientCache(`profile-activity:${user.id}`);
+        expireClientCache(`profile-saved:${user.id}`);
+        expireClientCache(`profile-goals:${user.id}`);
+      }
+      setQuestionStateError(null);
       setResultsByQuestion((prev) => ({ ...prev, [current.id]: result }));
       setAttemptedIds((prev) => new Set(prev).add(current.id));
       setSubmitted(true);
@@ -2260,31 +2286,13 @@ export default function QuestionPractice({
         void passFirstAttemptCorrectQuestion(current.id);
       }
 
-      if (isSubtopicBatchMode) {
-        const attemptedAfterSubmit = new Set(attemptedIds);
-        attemptedAfterSubmit.add(current.id);
-        const pageIds = currentPageIds.length > 0 ? currentPageIds : activeQuestions.map((q) => q.id);
-        const pageComplete =
-          pageIds.length > 0 &&
-          pageIds.every(
-            (id) => attemptedAfterSubmit.has(id) || Boolean(resultsByQuestion[id]),
-          );
-
-        if (pageComplete) {
-          ignoreAbort(advanceToNextQuestionPage(pageIds));
-        } else if (index === total - 1 && pageIds.length > 0) {
-          setIndex(0);
-          resetQuestionState();
-          setBatchGateOpen(true);
-        }
-      }
+      // Never navigate or reset here. The submitted answer and explanation stay
+      // visible until the learner explicitly presses Next/Continue.
+      if (isSubtopicBatchMode) setBatchGateOpen(false);
 
       if (user && result.progress) {
         setPracticeProgress(result.progress);
         trackPracticeDebug('answer_submit', 'progress from RPC — no refetch');
-      } else if (user) {
-        setPracticeProgress(null);
-        setProgressRefreshKey((prev) => prev + 1);
       }
     } catch (error) {
       logPracticeDebug('[practice/submit] client attempt', {
@@ -2314,14 +2322,7 @@ export default function QuestionPractice({
     user,
     isSubtopicMasteryMode,
     isSubtopicBatchMode,
-    attemptedIds,
-    currentPageIds,
-    activeQuestions,
     resultsByQuestion,
-    advanceToNextQuestionPage,
-    index,
-    total,
-    resetQuestionState,
     c.errorSubmit,
     c.errorStaleQuestions,
     c.errorService,
@@ -2392,6 +2393,20 @@ export default function QuestionPractice({
     if (!current) return;
 
     if (reviewQuestion) {
+      if (
+        isSubtopicBatchMode &&
+        activeQuestions.length === 0 &&
+        nextCursorRef.current
+      ) {
+        setBatchLoadError(null);
+        ignoreAbort(
+          loadNextBatch({ manual: true }).then((loaded) => {
+            if (!loaded) return;
+            resetQuestionState();
+          }),
+        );
+        return;
+      }
       setReviewQuestion(null);
       resetQuestionState();
       return;
@@ -2546,7 +2561,7 @@ export default function QuestionPractice({
     </button>
   );
 
-  if ((authLoading && isSubtopicBatchMode) || (user && !onboardingReady)) {
+  if (user && !onboardingReady) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center">
         <div className="rounded-3xl border border-slate-100 bg-white px-6 py-12 shadow-sm">
@@ -2604,7 +2619,7 @@ export default function QuestionPractice({
     !hasMore &&
     index >= total - 1;
 
-  if (total === 0) {
+  if (total === 0 && !reviewQuestion) {
     if (
       authLoading ||
       (isSubtopicMasteryMode ? checkingQuestionState : checkingCorrectIds) ||
@@ -3115,7 +3130,7 @@ export default function QuestionPractice({
                     {c.nextQuestion}
                     <ArrowRight className="h-4 w-4" />
                   </button>
-                ) : isSubtopicBatchMode && user && (reviewQuestion || isQuestionCorrectlyAnswered(current.id)) ? (
+                ) : isSubtopicBatchMode && user ? (
                   <button
                     type="button"
                     onClick={handleNextQuestion}

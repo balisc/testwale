@@ -42,6 +42,10 @@ type DbProfileRow = {
   city: string | null;
   target_exam: string | null;
   exam_date: string | null;
+  target_exam_profile_id: string | null;
+  target_exam_id: string | null;
+  exam_onboarding_required: boolean | null;
+  exam_onboarding_completed_at: string | null;
   is_premium: boolean | null;
   daily_goal: number | null;
   weekly_goal: number | null;
@@ -67,12 +71,14 @@ export async function getUserRecordFromDb(userId: string): Promise<DbUserRow | n
 }
 
 const PROFILE_ROW_SELECT_WITH_EXAM_DATE =
-  'bio, country, state, city, target_exam, exam_date, is_premium, daily_goal, weekly_goal, monthly_goal';
+  'bio, country, state, city, target_exam, exam_date, target_exam_profile_id, target_exam_id, exam_onboarding_required, exam_onboarding_completed_at, is_premium, daily_goal, weekly_goal, monthly_goal';
 const PROFILE_ROW_SELECT_LEGACY =
   'bio, country, state, city, target_exam, is_premium, daily_goal, weekly_goal, monthly_goal';
 
-function isMissingExamDateColumn(error: { message?: string } | null): boolean {
-  return Boolean(error?.message?.includes('exam_date'));
+function isMissingProfileColumn(error: { message?: string } | null): boolean {
+  return /exam_date|target_exam_profile_id|target_exam_id|exam_onboarding_required|exam_onboarding_completed_at/.test(
+    error?.message ?? '',
+  );
 }
 
 async function fetchUserProfileRow(
@@ -89,7 +95,7 @@ async function fetchUserProfileRow(
     return (withDate.data as DbProfileRow | null) ?? null;
   }
 
-  if (!isMissingExamDateColumn(withDate.error)) {
+  if (!isMissingProfileColumn(withDate.error)) {
     console.error('[profile/fetchUserProfileRow]', withDate.error);
     return null;
   }
@@ -105,15 +111,31 @@ async function fetchUserProfileRow(
     return null;
   }
 
-  return { ...(legacy.data as DbProfileRow), exam_date: null };
+  return {
+    ...(legacy.data as DbProfileRow),
+    exam_date: null,
+    target_exam_profile_id: null,
+    target_exam_id: null,
+    exam_onboarding_required: false,
+    exam_onboarding_completed_at: null,
+  };
 }
 
 export async function getUserProfileRow(userId: string): Promise<DbProfileRow | null> {
   const admin = getSupabaseAdmin();
   const client = admin ?? supabase;
 
-  await client.from('user_profiles').upsert({ user_id: userId }, { onConflict: 'user_id' });
+  const existing = await fetchUserProfileRow(client, userId);
+  if (existing) return existing;
 
+  const created = await client.from('user_profiles').upsert(
+    { user_id: userId },
+    { onConflict: 'user_id' },
+  );
+  if (created.error) {
+    console.error('[profile/getUserProfileRow]', created.error);
+    return null;
+  }
   return fetchUserProfileRow(client, userId);
 }
 
@@ -134,8 +156,11 @@ export async function buildProfilePageForSession(session: SessionUser): Promise<
     return mergeSessionUser(page, session);
   }
 
-  const dbUser = await getUserRecordFromDb(session.id);
-  const dbProfile = await getUserProfileRow(session.id);
+  const [dbUser, dbProfile, attempts] = await Promise.all([
+    getUserRecordFromDb(session.id),
+    getUserProfileRow(session.id),
+    fetchUserAttemptSnapshots(session.id),
+  ]);
   const profileUser = profileUserFromSession(session, dbUser);
   const empty = createEmptyProfilePage(profileUser, {
     bio: dbProfile?.bio ?? undefined,
@@ -144,12 +169,15 @@ export async function buildProfilePageForSession(session: SessionUser): Promise<
     city: dbProfile?.city ?? undefined,
     target_exam: dbProfile?.target_exam ?? undefined,
     exam_date: dbProfile?.exam_date ?? undefined,
+    target_exam_id: dbProfile?.target_exam_id ?? undefined,
+    exam_onboarding_required: dbProfile?.exam_onboarding_required ?? false,
+    exam_onboarding_completed_at: dbProfile?.exam_onboarding_completed_at ?? undefined,
     is_premium: dbProfile?.is_premium ?? undefined,
     daily_goal: dbProfile?.daily_goal ?? undefined,
     weekly_goal: dbProfile?.weekly_goal ?? undefined,
     monthly_goal: dbProfile?.monthly_goal ?? undefined,
   });
-  const enriched = await enrichProfilePageData(empty, session.id);
+  const enriched = enrichProfilePageWithOverviewMetrics(empty, attempts);
   return mergeSessionUser(enriched, session);
 }
 
@@ -202,39 +230,36 @@ export function enrichProfilePageWithOverviewMetrics(profile: ProfilePageData, a
   };
 }
 
-async function enrichProfilePageData(profile: ProfilePageData, userId: string): Promise<ProfilePageData> {
-  const attempts = await fetchUserAttemptSnapshots(userId);
-  return enrichProfilePageWithOverviewMetrics(profile, attempts);
-}
-
 async function getUserProfilePageFallback(userId: string): Promise<ProfilePageData | null> {
   const admin = getSupabaseAdmin();
   const client = admin ?? supabase;
 
-  const { data: user, error: userError } = await client
-    .from('users')
-    .select('id, full_name, email, avatar_url, provider, created_at')
-    .eq('id', userId)
-    .maybeSingle();
+  const [userResult, profileResult, attemptsResult] = await Promise.all([
+    client
+      .from('users')
+      .select('id, full_name, email, avatar_url, provider, created_at')
+      .eq('id', userId)
+      .maybeSingle(),
+    client
+      .from('user_profiles')
+      .select('user_id, bio, country, state, city, target_exam, is_premium, daily_goal, weekly_goal, monthly_goal, updated_at')
+      .eq('user_id', userId)
+      .maybeSingle(),
+    client
+      .from('user_question_attempts')
+      .select('question_id, is_correct, attempted_at')
+      .eq('user_id', userId)
+      .order('attempted_at', { ascending: false }),
+  ]);
+  const { data: user, error: userError } = userResult;
 
   if (userError || !user) {
     console.error('[profile/getUserProfilePageFallback] user lookup failed:', userError);
     return null;
   }
 
-  await client.from('user_profiles').upsert({ user_id: userId }, { onConflict: 'user_id' });
-
-  const { data: profile } = await client
-    .from('user_profiles')
-    .select('user_id, bio, country, state, city, target_exam, is_premium, daily_goal, weekly_goal, monthly_goal, updated_at')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  const { data: attempts, error: attemptsError } = await client
-    .from('user_question_attempts')
-    .select('question_id, is_correct, attempted_at')
-    .eq('user_id', userId)
-    .order('attempted_at', { ascending: false });
+  const profile = profileResult.data;
+  const { data: attempts, error: attemptsError } = attemptsResult;
 
   if (attemptsError) {
     console.error('[profile/getUserProfilePageFallback] attempts lookup failed:', attemptsError);
@@ -310,29 +335,29 @@ async function getUserProfilePageFallback(userId: string): Promise<ProfilePageDa
 
 export async function getUserProfilePage(userId: string): Promise<ProfilePageData | null> {
   const admin = getSupabaseAdmin();
-
-  let profile: ProfilePageData | null = null;
-
-  if (admin) {
-    const { data, error } = await admin.rpc('get_user_profile_page', { p_user_id: userId });
-    if (!error && data) {
-      profile = normalizeProfilePage(data as Record<string, unknown>);
-    } else if (error) {
-      console.error('[profile/getUserProfilePage] RPC failed:', error);
+  const profilePromise = (async (): Promise<ProfilePageData | null> => {
+    if (admin) {
+      const { data, error } = await admin.rpc('get_user_profile_page', { p_user_id: userId });
+      if (!error && data) return normalizeProfilePage(data as Record<string, unknown>);
+      if (error) console.error('[profile/getUserProfilePage] RPC failed:', error);
+    } else {
+      console.warn(
+        '[profile/getUserProfilePage] SUPABASE_SERVICE_ROLE_KEY not set; RPC requires service_role. Using fallback.',
+      );
     }
-  } else {
-    console.warn(
-      '[profile/getUserProfilePage] SUPABASE_SERVICE_ROLE_KEY not set; RPC requires service_role. Using fallback.',
-    );
-  }
+    return getUserProfilePageFallback(userId);
+  })();
 
-  if (!profile) {
-    profile = await getUserProfilePageFallback(userId);
-  }
+  // These are independent user reads. Running them together avoids multiplying
+  // a slow Supabase wake-up across the profile page's critical path.
+  const [profile, dbFields, attempts] = await Promise.all([
+    profilePromise,
+    getUserProfileRow(userId),
+    fetchUserAttemptSnapshots(userId),
+  ]);
 
   if (!profile) return null;
 
-  const dbFields = await getUserProfileRow(userId);
   if (dbFields) {
     if (dbFields.bio != null) profile.profile.bio = dbFields.bio;
     if (dbFields.country != null) profile.profile.country = dbFields.country;
@@ -343,9 +368,13 @@ export async function getUserProfilePage(userId: string): Promise<ProfilePageDat
     if (dbFields.target_exam != null) {
       profile.profile.target_exam = dbFields.target_exam;
     }
+    profile.profile.target_exam_id = dbFields.target_exam_id;
+    profile.profile.target_exam_profile_id = dbFields.target_exam_profile_id;
+    profile.profile.exam_onboarding_required = dbFields.exam_onboarding_required === true;
+    profile.profile.exam_onboarding_completed_at = dbFields.exam_onboarding_completed_at;
   }
 
-  return enrichProfilePageData(profile, userId);
+  return enrichProfilePageWithOverviewMetrics(profile, attempts);
 }
 
 export function mergeSessionUser(profile: ProfilePageData, session: SessionUser): ProfilePageData {
@@ -387,7 +416,7 @@ export async function updateUserProfile(
   );
 
   if (error) {
-    if (patch.exam_date && isMissingExamDateColumn(error)) {
+    if (patch.exam_date && isMissingProfileColumn(error)) {
       console.error(
         '[profile/updateUserProfile] exam_date column missing — run scripts/migrate_user_profile_exam_date.sql',
       );

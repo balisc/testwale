@@ -5,6 +5,8 @@ import {
   privateNoStoreJsonResponse,
 } from '@/lib/publicQuestionApiGuards';
 import { serializeError, logPracticeDebug } from '@/lib/practiceDebugLog';
+import { getSelectedExamContext } from '@/lib/examLearningServer';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +54,26 @@ export async function POST(request: Request) {
   }
 
   try {
-    const validIds = await filterLivePublicQuestionIds(parsed.questionIds);
+    const selected = await getSelectedExamContext();
+    let validIds: string[];
+    if (selected.status === 'ready') {
+      const admin = getSupabaseAdmin();
+      if (!admin) throw new Error('service_unavailable');
+      const filteredQuery = admin.from('questions')
+        .select('id, question_exam_profile_mappings!inner(exam_profile_id, is_active)')
+        .in('id', parsed.questionIds)
+        .eq('is_active', true)
+        .eq('is_verified', true)
+        .eq('question_exam_profile_mappings.exam_profile_id', selected.examProfileId)
+        .eq('question_exam_profile_mappings.is_active', true);
+      const filtered = await filteredQuery;
+      if (filtered.error) throw filtered.error;
+      validIds = (filtered.data ?? []).map((row: { id: string }) => String(row.id));
+    } else if (selected.status === 'unauthenticated') {
+      validIds = await filterLivePublicQuestionIds(parsed.questionIds);
+    } else {
+      validIds = [];
+    }
     const liveSet = new Set(validIds);
     const missingIds = parsed.questionIds.filter((id) => !liveSet.has(id));
 

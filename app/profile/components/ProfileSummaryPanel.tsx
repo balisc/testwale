@@ -12,6 +12,7 @@ import type { ProfilePageData } from '@/lib/profileAnalytics';
 import type { ProfileCopy } from '../profileCopy';
 import ProfileProgressBar from './ProfileProgressBar';
 import ExamCountdownBadge from './ExamCountdownBadge';
+import { pickCatalogText } from '@/lib/useCatalogText';
 
 type ProfileSummaryPanelProps = {
   copy: ProfileCopy;
@@ -38,14 +39,23 @@ export default function ProfileSummaryPanel({
 }: ProfileSummaryPanelProps) {
   const completion = calcProfileCompletionPercent(profile);
   const dailyGoal = profile.daily_goal > 0 ? profile.daily_goal : 20;
+  const targetExamName =
+    (profile.target_exam_title ? pickCatalogText(profile.target_exam_title, language) : '') ||
+    profile.target_exam;
+  const formattedExamDate = profile.exam_date
+    ? new Intl.DateTimeFormat(language === 'hi' ? 'hi-IN' : 'en-IN', {
+        dateStyle: 'long',
+        timeZone: 'Asia/Kolkata',
+      }).format(new Date(`${profile.exam_date}T12:00:00+05:30`))
+    : null;
 
   return (
     <section
       aria-label={copy.title}
-      className="rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-6 lg:grid lg:grid-cols-[1fr_auto] lg:gap-8 lg:p-8"
+      className="w-full min-w-0 max-w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-6 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-8 lg:p-8"
     >
       <div className="min-w-0">
-        <div className="flex items-center gap-4 sm:gap-5">
+        <div className="flex min-w-0 max-w-full items-center gap-4 sm:gap-5">
           <UserAvatar
             name={user.full_name}
             id={user.id}
@@ -57,7 +67,7 @@ export default function ProfileSummaryPanel({
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <h2 className="break-words text-xl font-bold text-[#0F172A] sm:text-2xl">{user.full_name}</h2>
-              {!profile.exam_date && profile.target_exam ? (
+              {!profile.exam_date && targetExamName ? (
                 <button
                   type="button"
                   onClick={onSetTargetExam}
@@ -74,11 +84,14 @@ export default function ProfileSummaryPanel({
               <p className="mt-2 break-words text-sm text-slate-600">{profile.bio.trim()}</p>
             ) : null}
             <div className="mt-3 flex flex-wrap items-start gap-2">
-              {profile.target_exam ? (
+              {targetExamName ? (
                 <div className="flex flex-col items-start gap-2">
                   <span className="inline-flex max-w-full items-center rounded-full border border-[#DDD6FE] bg-[#FAF5FF] px-3 py-1 text-xs font-medium text-brand">
-                    {profile.target_exam}
+                    <span className="min-w-0 break-words">{targetExamName}</span>
                   </span>
+                  {formattedExamDate ? (
+                    <span className="text-xs font-medium text-slate-600">{formattedExamDate}</span>
+                  ) : null}
                   {profile.exam_date ? (
                     <div className="md:hidden">
                       <ExamCountdownBadge examDate={profile.exam_date} copy={copy} language={language} />
@@ -107,7 +120,7 @@ export default function ProfileSummaryPanel({
                 </span>
               ) : null}
             </div>
-            {!profile.target_exam && profile.exam_date ? (
+            {!targetExamName && profile.exam_date ? (
               <div className="mt-3 md:hidden">
                 <ExamCountdownBadge examDate={profile.exam_date} copy={copy} language={language} />
               </div>

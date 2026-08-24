@@ -6,6 +6,7 @@ import {
   privateNoStoreJsonResponse,
 } from '@/lib/publicQuestionApiGuards';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { getSelectedExamContext } from '@/lib/examLearningServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,7 +48,24 @@ export async function POST(request: Request) {
     return errorResponse(parsed.error, 400);
   }
 
-  const correctQuestionIds = await getCorrectQuestionIdsForBatch(admin, user.id, parsed.questionIds);
+  const selected = await getSelectedExamContext();
+  if (selected.status === 'incomplete') return errorResponse('onboarding_incomplete', 409);
+  if (selected.status === 'inactive') return errorResponse('selected_exam_inactive', 409);
+  if (selected.status !== 'ready' || selected.userId !== user.id) return errorResponse('exam_scope_failed', 503);
+
+  const allowedQuery = admin
+    .from('questions')
+    .select('id, question_exam_profile_mappings!inner(exam_profile_id, is_active)')
+    .in('id', parsed.questionIds)
+    .eq('is_active', true)
+    .eq('is_verified', true)
+    .eq('question_exam_profile_mappings.exam_profile_id', selected.examProfileId)
+    .eq('question_exam_profile_mappings.is_active', true);
+  const allowed = await allowedQuery;
+  if (allowed.error) return errorResponse('correct_ids_failed', 500);
+  const allowedIds = (allowed.data ?? []).map((row: { id: string }) => String(row.id));
+
+  const correctQuestionIds = await getCorrectQuestionIdsForBatch(admin, user.id, allowedIds);
   if (correctQuestionIds === null) {
     return errorResponse('correct_ids_failed', 500);
   }

@@ -38,7 +38,7 @@ test('calcProfileCompletionPercent counts editable fields only', () => {
       target_exam: 'SSC CGL',
       exam_date: '2026-08-15',
     }),
-    50,
+    67,
   );
 });
 

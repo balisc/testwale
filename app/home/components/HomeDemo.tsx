@@ -41,7 +41,7 @@ const LANG_OPTIONS: { id: LangMode; label: string }[] = [
 const OPTION_KEYS: OptionKey[] = ['A', 'B', 'C', 'D'];
 
 export default function HomeDemo() {
-  const [lang, setLang] = useState<LangMode>('both');
+  const [lang, setLang] = useState<LangMode>('en');
   const [selected, setSelected] = useState<OptionKey | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
@@ -62,7 +62,7 @@ export default function HomeDemo() {
 
         <div className="mt-10 grid min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg md:grid-cols-2 max-[479px]:mt-8">
           <div className="min-w-0 border-b border-slate-200 p-5 sm:p-7 md:border-b-0 md:border-r max-[479px]:p-3">
-            <div className="inline-flex max-w-full flex-wrap rounded-full border border-slate-200 bg-zinc-50 p-0.5 text-xs font-semibold max-[479px]:text-[11px]">
+            <div className="hidden" aria-hidden="true">
               {LANG_OPTIONS.map((item) => (
                 <button
                   key={item.id}

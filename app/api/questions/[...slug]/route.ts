@@ -7,6 +7,8 @@ import {
   inferSubjectKeyFromTopicSlug,
 } from '@/lib/questionLookup';
 import { generateQuestionSlug } from '@/lib/slugGenerator';
+import { getSelectedExamLearning } from '@/lib/examLearningServer';
+import { resolvePracticeExamQuestionTag } from '@/lib/polity/practiceExamFilter';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -43,6 +45,17 @@ function toPublicQuestionPayload(question: Record<string, unknown>) {
   return safe;
 }
 
+async function questionAllowedForSelectedExam(question: Record<string, unknown>) {
+  const selected = await getSelectedExamLearning();
+  if (selected.status === 'unauthenticated') return true;
+  if (selected.status !== 'ready') return false;
+  const questionTag = selected.snapshot.exam.question_tag
+    ?? await resolvePracticeExamQuestionTag(selected.snapshot.exam.code);
+  if (!questionTag) return false;
+  const tags = Array.isArray(question.exam_tags) ? question.exam_tags.map(String) : [];
+  return tags.includes(questionTag);
+}
+
 export async function GET(request: Request, context: { params: Promise<{ slug: string[] }> }) {
   const params = await context.params;
   const pathSegments = getQuestionPath(params);
@@ -61,6 +74,9 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     );
     if (!question) {
       return NextResponse.json({ error: 'Question not found.' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
+    }
+    if (!(await questionAllowedForSelectedExam(question as Record<string, unknown>))) {
+      return NextResponse.json({ error: 'Question not included in selected exam.' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
     }
     return NextResponse.json(
       { question: toPublicQuestionPayload(question as Record<string, unknown>) },
@@ -83,6 +99,9 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
   const question = await fetchQuestionById(questionId, lookupContext);
   if (!question) {
     return NextResponse.json({ error: 'Question not found.' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
+  }
+  if (!(await questionAllowedForSelectedExam(question as Record<string, unknown>))) {
+    return NextResponse.json({ error: 'Question not included in selected exam.' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
   }
 
   const canonicalQuestionSlug = generateQuestionSlug(getQuestionTextField(question) ?? '', question.id).trim();

@@ -141,9 +141,9 @@ export default function SubjectGrid({ counts: initialCounts, gridClassName }: Su
                 </div>
 
                 <div className="flex-1 flex flex-col min-w-0">
-                  <h3 className="text-slate-900 font-bold text-base min-[360px]:text-lg mb-0.5 break-words">
+                  <h2 className="text-slate-900 font-bold text-base min-[360px]:text-lg mb-0.5 break-words">
                     {t[subject.titleKey as keyof typeof t] || subject.titleKey}
-                  </h3>
+                  </h2>
                   <p className="text-sm text-slate-500 mb-auto">
                     {displayCount.toLocaleString()} {t.questions}
                   </p>

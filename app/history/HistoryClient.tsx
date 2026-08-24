@@ -104,10 +104,8 @@ function HistoryCard({ module }: { module: HistoryModule }) {
             src={module.imageSrc}
             alt={module.imageAlt}
             fill
-            unoptimized
             className="object-contain object-bottom-right"
             sizes="142px"
-            priority={module.slug === 'ancient'}
           />
         </div>
       </div>

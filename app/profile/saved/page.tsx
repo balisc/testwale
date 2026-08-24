@@ -18,7 +18,7 @@ export default function ProfileSavedRoute() {
     redirect('/profile');
   }
 
-  return (    <main className="min-h-screen overflow-x-hidden bg-white">
+  return (    <main className="min-h-screen w-full min-w-0 max-w-full bg-white">
       <ProfileSavedPage />
     </main>
   );

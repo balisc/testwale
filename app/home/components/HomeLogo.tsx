@@ -1,10 +1,16 @@
 ﻿import Link from 'next/link';
 import QuestionWaleLogoMark from '@/components/QuestionWaleLogoMark';
 
-export default function HomeLogo({ className = '' }: { className?: string }) {
+export default function HomeLogo({
+  className = '',
+  href = '/',
+}: {
+  className?: string;
+  href?: string;
+}) {
   return (
     <Link
-      href="/"
+      href={href}
       className={`inline-flex min-w-0 max-w-full items-center gap-2.5 max-[359px]:gap-1.5 ${className}`}
       aria-label="QuestionWale home"
     >

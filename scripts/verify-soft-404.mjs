@@ -16,6 +16,12 @@ const INVALID_PATHS = [
     path: '/subjects/indian-polity/constitutional-history-making/practice/not-a-real-subtopic',
     label: 'invalid-subtopic-practice',
   },
+  { path: '/exams/not-a-real-exam-xyz', label: 'invalid-exam' },
+  { path: '/exams/ssc-cgl/not-a-real-subject-xyz', label: 'invalid-exam-subject' },
+  {
+    path: '/question/not-a-real-question-00000000-0000-4000-8000-000000000000',
+    label: 'invalid-question',
+  },
   { path: '/totally-unknown-route-404-test', label: 'unknown-top-level' },
 ];
 
@@ -25,6 +31,15 @@ const VALID_PATHS = [
     path: '/subjects/indian-polity/constitutional-history-making',
     label: 'valid-topic',
   },
+  {
+    path: '/subjects/indian-polity/constitutional-history-making/practice/company-rule-acts-1773-1853',
+    label: 'valid-search-subtopic',
+  },
+  {
+    path: '/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision',
+    label: 'valid-subtopic-revision',
+  },
+  { path: '/exams/ssc-cgl', label: 'valid-exam' },
 ];
 
 let failed = 0;

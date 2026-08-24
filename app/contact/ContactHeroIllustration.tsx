@@ -13,8 +13,9 @@ export default function ContactHeroIllustration() {
         alt="Contact illustration with envelope, paper plane and email symbol"
         width={640}
         height={480}
-        priority
-        unoptimized
+        preload
+        fetchPriority="high"
+        sizes="(max-width: 640px) calc(100vw - 32px), (max-width: 1023px) 420px, 400px"
         className="h-auto w-full max-w-[400px] object-contain sm:max-w-[420px]"
       />
     </div>

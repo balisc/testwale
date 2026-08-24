@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import HomeClientLegacy from '../HomeClientLegacy';
-import { canonical } from '@/lib/seo';
+import { buildPageMetadata } from '@/lib/seo';
 import { getHomeData } from '@/lib/homeData';
 
-export const metadata: Metadata = {
-  title: 'Classic Home - QuestionWale',
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Classic Home',
   description: 'Previous QuestionWale homepage layout.',
-  ...canonical('/classic'),
-};
+  path: '/classic',
+  noIndex: true,
+});
 
 export const revalidate = 300;
 

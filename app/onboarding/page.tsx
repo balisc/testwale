@@ -13,7 +13,7 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default function OnboardingPage() {
   return (
-    <main className="min-h-screen bg-[#F8FAFC]">
+    <main className="min-h-screen bg-[#F8F7FF]">
       <OnboardingClient />
     </main>
   );

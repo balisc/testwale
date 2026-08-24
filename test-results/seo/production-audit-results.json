@@ -1,0 +1,5034 @@
+{
+  "generatedAt": "2026-08-24T08:54:30.096Z",
+  "base": "https://questionwale.com",
+  "expectedOrigin": "https://questionwale.com",
+  "routeInventory": {
+    "pages": [
+      "/",
+      "/[subject]",
+      "/[subject]/topics",
+      "/[subject]/topics/[topicSlug]",
+      "/about_us",
+      "/classic",
+      "/contact",
+      "/dashboard",
+      "/demo",
+      "/disclaimer",
+      "/economics",
+      "/examples/seo-example",
+      "/exams/[examSlug]",
+      "/exams/[examSlug]/[subjectSlug]",
+      "/exams/[examSlug]/[subjectSlug]/[topicSlug]",
+      "/exams/[examSlug]/[subjectSlug]/[topicSlug]/[subtopicSlug]",
+      "/geography",
+      "/history",
+      "/loading-test",
+      "/login",
+      "/map-practice",
+      "/math",
+      "/onboarding",
+      "/pcb_page",
+      "/privacy",
+      "/profile",
+      "/profile/activity",
+      "/profile/goals",
+      "/profile/insights",
+      "/profile/saved",
+      "/pyq",
+      "/question/[...questionSlug]",
+      "/reasoning",
+      "/refund-policy",
+      "/science",
+      "/signup",
+      "/ssc-cgl",
+      "/ssc-cgl/[...path]",
+      "/ssc-cgl/auth-return",
+      "/subjects",
+      "/subjects/[subject]",
+      "/subjects/[subject]/[topicSlug]",
+      "/subjects/[subject]/[topicSlug]/[subtopicSlug]/revision",
+      "/subjects/[subject]/[topicSlug]/practice",
+      "/subjects/[subject]/[topicSlug]/practice/[subtopicSlug]",
+      "/terms"
+    ],
+    "handlers": [
+      "/api/admin/revalidate-question-batch",
+      "/api/auth/flash",
+      "/api/auth/google",
+      "/api/auth/google/redirect",
+      "/api/auth/google/start",
+      "/api/auth/login",
+      "/api/auth/logout",
+      "/api/auth/me",
+      "/api/auth/public-config",
+      "/api/catalog/exams",
+      "/api/catalog/path-exists",
+      "/api/catalog/ranked-exams",
+      "/api/contact",
+      "/api/history/questions",
+      "/api/history/topics",
+      "/api/home/search",
+      "/api/learning/dashboard",
+      "/api/map-practice/questions",
+      "/api/onboarding/exam",
+      "/api/onboarding/status",
+      "/api/onboarding/tracks",
+      "/api/practice/advance-cycle",
+      "/api/practice/attempts",
+      "/api/practice/correct-ids",
+      "/api/practice/dashboard",
+      "/api/practice/progress",
+      "/api/practice/question-batch",
+      "/api/practice/question-state",
+      "/api/practice/report",
+      "/api/practice/reset-subtopic",
+      "/api/practice/submit",
+      "/api/practice/subtopic-state",
+      "/api/practice/validate-question-ids",
+      "/api/profile",
+      "/api/profile/activity",
+      "/api/profile/exam-preference",
+      "/api/profile/goals",
+      "/api/profile/insights",
+      "/api/profile/saved",
+      "/api/profile/ssc-cgl-preference",
+      "/api/questions",
+      "/api/questions/[...slug]",
+      "/api/search-suggestions",
+      "/api/signup",
+      "/api/site-stats",
+      "/api/subject-counts",
+      "/api/topics",
+      "/auth/callback",
+      "/sitemaps/[part]",
+      "/sitemaps/sitemap-questions",
+      "/sitemaps/sitemap-questions.xml"
+    ]
+  },
+  "counts": {
+    "pagePatterns": 46,
+    "handlerPatterns": 51,
+    "sitemapUrls": 43,
+    "crawledSitemapUrls": 43,
+    "internalLinksChecked": 119,
+    "internalLinksFetched": 17,
+    "searchItems": 94,
+    "catalogPathsChecked": 94,
+    "orphanSitemapPages": 0,
+    "failures": 139,
+    "warnings": 0
+  },
+  "robots": {
+    "status": 200,
+    "body": "User-Agent: *\nAllow: /\nDisallow: /api/\nDisallow: /auth/\n\nSitemap: https://questionwale.com/sitemap.xml\n"
+  },
+  "sitemap": {
+    "status": 200,
+    "locs": [
+      "https://questionwale.com/",
+      "https://questionwale.com/subjects",
+      "https://questionwale.com/about_us",
+      "https://questionwale.com/contact",
+      "https://questionwale.com/privacy",
+      "https://questionwale.com/terms",
+      "https://questionwale.com/disclaimer",
+      "https://questionwale.com/refund-policy",
+      "https://questionwale.com/map-practice",
+      "https://questionwale.com/subjects/indian-polity",
+      "https://questionwale.com/subjects/indian-polity/constitutional-history-making",
+      "https://questionwale.com/subjects/indian-polity/constitution-basics-preamble-schedules",
+      "https://questionwale.com/subjects/indian-polity/territory-citizenship-language",
+      "https://questionwale.com/subjects/indian-polity/fundamental-rights",
+      "https://questionwale.com/subjects/indian-polity/dpsp-fundamental-duties",
+      "https://questionwale.com/subjects/indian-polity/amendment-basic-structure",
+      "https://questionwale.com/subjects/indian-polity/federalism-centre-state-relations",
+      "https://questionwale.com/subjects/indian-polity/union-executive",
+      "https://questionwale.com/subjects/indian-polity/parliament",
+      "https://questionwale.com/subjects/indian-polity/judiciary",
+      "https://questionwale.com/subjects/indian-polity/state-government",
+      "https://questionwale.com/subjects/indian-polity/local-district-administration",
+      "https://questionwale.com/subjects/indian-polity/elections-political-parties",
+      "https://questionwale.com/subjects/indian-polity/constitutional-government-bodies",
+      "https://questionwale.com/subjects/indian-polity/emergency-special-provisions",
+      "https://questionwale.com/subjects/indian-polity/civil-services-governance-accountability",
+      "https://questionwale.com/subjects/indian-polity/social-justice-welfare-rights",
+      "https://questionwale.com/subjects/indian-polity/state-ut-polity-administration",
+      "https://questionwale.com/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/revision",
+      "https://questionwale.com/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/revision",
+      "https://questionwale.com/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "https://questionwale.com/history",
+      "https://questionwale.com/history/topics",
+      "https://questionwale.com/science",
+      "https://questionwale.com/science/topics",
+      "https://questionwale.com/economics",
+      "https://questionwale.com/economics/topics",
+      "https://questionwale.com/geography",
+      "https://questionwale.com/geography/topics",
+      "https://questionwale.com/math",
+      "https://questionwale.com/math/topics",
+      "https://questionwale.com/reasoning",
+      "https://questionwale.com/reasoning/topics"
+    ]
+  },
+  "pages": [
+    {
+      "loc": "https://questionwale.com/",
+      "pathname": "/",
+      "status": 200,
+      "title": "Government Exam MCQ Practice in Hindi & English",
+      "description": "Practice source-verified bilingual MCQs for SSC, Railway, UPSC and State Exams with clear explanations, topic-wise quizzes and progress tracking.",
+      "canonical": "https://questionwale.com",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Master Every Topic. One MCQ at a Time."
+        },
+        {
+          "level": 2,
+          "text": "Choose Your Subject"
+        },
+        {
+          "level": 3,
+          "text": "Indian Polity"
+        },
+        {
+          "level": 3,
+          "text": "Indian History"
+        },
+        {
+          "level": 3,
+          "text": "More Subjects Coming Soon"
+        },
+        {
+          "level": 2,
+          "text": "Try a Question Now"
+        },
+        {
+          "level": 2,
+          "text": "Why Choose QuestionWale?"
+        },
+        {
+          "level": 3,
+          "text": "Bilingual Questions"
+        },
+        {
+          "level": 3,
+          "text": "Clear Explanations"
+        },
+        {
+          "level": 3,
+          "text": "Topic-wise Practice"
+        },
+        {
+          "level": 3,
+          "text": "Progress Tracking"
+        },
+        {
+          "level": 2,
+          "text": "Practice With Better Content Confidence"
+        },
+        {
+          "level": 2,
+          "text": "Turn Every Attempt Into Progress"
+        },
+        {
+          "level": 3,
+          "text": "Weekly Activity"
+        },
+        {
+          "level": 2,
+          "text": "Practice in Three Simple Steps"
+        },
+        {
+          "level": 3,
+          "text": "Choose a Subject"
+        },
+        {
+          "level": 3,
+          "text": "Pick a Topic"
+        },
+        {
+          "level": 3,
+          "text": "Practice and Learn"
+        },
+        {
+          "level": 2,
+          "text": "Want to Save Your Progress?"
+        },
+        {
+          "level": 3,
+          "text": "Strengths & Weaknesses"
+        },
+        {
+          "level": 2,
+          "text": "Ready to Strengthen Your Preparation?"
+        },
+        {
+          "level": 2,
+          "text": "Not Sure Where to Begin?"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/subjects",
+        "/subjects/indian-polity",
+        "/subjects",
+        "/about_us",
+        "/#sign-in",
+        "/subjects/indian-polity",
+        "/terms",
+        "/privacy",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules?exam=SSC",
+        "/subjects/indian-polity/fundamental-rights?exam=SSC",
+        "/subjects/indian-polity/dpsp-fundamental-duties?exam=SSC",
+        "/subjects/indian-polity/union-executive?exam=SSC",
+        "/subjects/indian-polity/parliament?exam=SSC",
+        "/subjects/indian-polity?exam=SSC"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects",
+      "pathname": "/subjects",
+      "status": 200,
+      "title": "Subjects — MCQ Practice | QuestionWale",
+      "description": "Explore QuestionWale subjects and start practicing with curated topics for competitive exams.",
+      "canonical": "https://questionwale.com/subjects",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Choose Your Subject"
+        },
+        {
+          "level": 3,
+          "text": "Polity"
+        },
+        {
+          "level": 3,
+          "text": "History"
+        },
+        {
+          "level": 3,
+          "text": "Geography"
+        },
+        {
+          "level": 3,
+          "text": "Economics"
+        },
+        {
+          "level": 3,
+          "text": "Math"
+        },
+        {
+          "level": 3,
+          "text": "Science"
+        },
+        {
+          "level": 3,
+          "text": "General Knowledge"
+        },
+        {
+          "level": 3,
+          "text": "Current Affairs"
+        },
+        {
+          "level": 3,
+          "text": "Reasoning"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/subjects/indian-polity",
+        "/history",
+        "/geography",
+        "/economics",
+        "/math",
+        "/science",
+        "/general-knowledge",
+        "/current-affairs",
+        "/reasoning"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/about_us",
+      "pathname": "/about_us",
+      "status": 200,
+      "title": "About QuestionWale - Exam MCQ Practice Platform | QuestionWale",
+      "description": "QuestionWale helps government exam aspirants practice topic-wise MCQs with detailed explanations in English and Hindi for UPSC, State PSC, SSC and more.",
+      "canonical": "https://questionwale.com/about_us",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Empowering Aspirants. One Question at a Time."
+        },
+        {
+          "level": 2,
+          "text": "Our Mission"
+        },
+        {
+          "level": 3,
+          "text": "Exam Focused"
+        },
+        {
+          "level": 3,
+          "text": "Quality Content"
+        },
+        {
+          "level": 3,
+          "text": "Smart Practice"
+        },
+        {
+          "level": 3,
+          "text": "Bilingual Support"
+        },
+        {
+          "level": 2,
+          "text": "Why Choose QuestionWale?"
+        },
+        {
+          "level": 3,
+          "text": "Topic-wise Practice"
+        },
+        {
+          "level": 3,
+          "text": "Detailed Explanations"
+        },
+        {
+          "level": 3,
+          "text": "Exam-Oriented"
+        },
+        {
+          "level": 3,
+          "text": "Access Anywhere"
+        },
+        {
+          "level": 3,
+          "text": "Built for Aspirants"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/subjects"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/contact",
+      "pathname": "/contact",
+      "status": 200,
+      "title": "Contact QuestionWale - Get Help & Support | QuestionWale",
+      "description": "Contact QuestionWale for support, feedback, topic requests, or to report wrong questions. Our team responds within 24–48 hours to help improve your exam preparation.",
+      "canonical": "https://questionwale.com/contact",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "We're Here to Help You"
+        },
+        {
+          "level": 2,
+          "text": "Get in Touch"
+        },
+        {
+          "level": 2,
+          "text": "Send us a Message"
+        },
+        {
+          "level": 2,
+          "text": "Report Wrong Questions Easily"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/privacy",
+      "pathname": "/privacy",
+      "status": 200,
+      "title": "Privacy Policy | QuestionWale",
+      "description": "Privacy Policy for QuestionWale — how we handle your data when you sign in and practice MCQs.",
+      "canonical": "https://questionwale.com/privacy",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Privacy Policy"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/contact",
+        "/",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/terms",
+      "pathname": "/terms",
+      "status": 200,
+      "title": "Terms of Service | QuestionWale",
+      "description": "Terms of Service for QuestionWale — rules for using our MCQ practice platform.",
+      "canonical": "https://questionwale.com/terms",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Terms of Service"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/disclaimer",
+      "pathname": "/disclaimer",
+      "status": 200,
+      "title": "Disclaimer | QuestionWale",
+      "description": "Disclaimer for QuestionWale — educational use, accuracy limits, and third-party content.",
+      "canonical": "https://questionwale.com/disclaimer",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Disclaimer"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/subjects",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/refund-policy",
+      "pathname": "/refund-policy",
+      "status": 200,
+      "title": "Refund Policy | QuestionWale",
+      "description": "Refund Policy for QuestionWale — free MCQ practice platform with no paid subscriptions.",
+      "canonical": "https://questionwale.com/refund-policy",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Refund Policy"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/contact",
+        "/",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/map-practice",
+      "pathname": "/map-practice",
+      "status": 200,
+      "title": "Map Practice | QuestionWale",
+      "description": "Practice India, World, and current affairs map-based questions with interactive click-to-answer mode.",
+      "canonical": "https://questionwale.com/map-practice",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Map Practice"
+        },
+        {
+          "level": 2,
+          "text": "Question Panel"
+        },
+        {
+          "level": 2,
+          "text": "Score"
+        },
+        {
+          "level": 2,
+          "text": "Interactive Map"
+        },
+        {
+          "level": 2,
+          "text": "Score"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity",
+      "pathname": "/subjects/indian-polity",
+      "status": 200,
+      "title": "Indian Polity — Topics & MCQ Practice | QuestionWale",
+      "description": "Complete topic-wise Indian Polity MCQ practice for UPSC, SSC, Railway, State PCS and State One-Day exams.",
+      "canonical": "https://questionwale.com/subjects/indian-polity",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Indian Polity"
+        },
+        {
+          "level": 2,
+          "text": "Choose a Topic"
+        },
+        {
+          "level": 3,
+          "text": "British Rule Acts and Constitution Making"
+        },
+        {
+          "level": 3,
+          "text": "Constitution: Basics, Features, Preamble and Schedules"
+        },
+        {
+          "level": 3,
+          "text": "Indian Territory, Citizenship and Official Language"
+        },
+        {
+          "level": 3,
+          "text": "Fundamental Rights and Writs"
+        },
+        {
+          "level": 3,
+          "text": "DPSP, Fundamental Duties and Rights–DPSP Relationship"
+        },
+        {
+          "level": 3,
+          "text": "Constitutional Amendments, Basic Structure and Doctrines"
+        },
+        {
+          "level": 3,
+          "text": "Federal System and Union–State Relations"
+        },
+        {
+          "level": 3,
+          "text": "Union Executive: President, Vice-President and Prime Minister"
+        },
+        {
+          "level": 3,
+          "text": "Parliament and Parliamentary Procedure"
+        },
+        {
+          "level": 3,
+          "text": "Judiciary and Justice System"
+        },
+        {
+          "level": 3,
+          "text": "State Executive and Legislature"
+        },
+        {
+          "level": 3,
+          "text": "Panchayats, Municipalities and District Administration"
+        },
+        {
+          "level": 3,
+          "text": "Elections, Election Laws and Political Parties"
+        },
+        {
+          "level": 3,
+          "text": "Constitutional, Statutory and Other Important Bodies"
+        },
+        {
+          "level": 3,
+          "text": "Emergency and Special Provisions"
+        },
+        {
+          "level": 3,
+          "text": "Civil Services, Governance and Accountability"
+        },
+        {
+          "level": 3,
+          "text": "Social Justice, Safeguards and Welfare Rights"
+        },
+        {
+          "level": 3,
+          "text": "State/UT Polity and Administration"
+        },
+        {
+          "level": 3,
+          "text": "Not sure where to begin?"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects",
+        "/subjects/indian-polity/constitutional-history-making",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules",
+        "/subjects/indian-polity/territory-citizenship-language",
+        "/subjects/indian-polity/fundamental-rights",
+        "/subjects/indian-polity/dpsp-fundamental-duties",
+        "/subjects/indian-polity/amendment-basic-structure",
+        "/subjects/indian-polity/federalism-centre-state-relations",
+        "/subjects/indian-polity/union-executive",
+        "/subjects/indian-polity/parliament",
+        "/subjects/indian-polity/judiciary",
+        "/subjects/indian-polity/state-government",
+        "/subjects/indian-polity/local-district-administration",
+        "/subjects/indian-polity/elections-political-parties",
+        "/subjects/indian-polity/constitutional-government-bodies",
+        "/subjects/indian-polity/emergency-special-provisions",
+        "/subjects/indian-polity/civil-services-governance-accountability",
+        "/subjects/indian-polity/social-justice-welfare-rights",
+        "/subjects/indian-polity/state-ut-polity-administration"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/constitutional-history-making",
+      "pathname": "/subjects/indian-polity/constitutional-history-making",
+      "status": 200,
+      "title": "British Rule Acts and Constitution Making — Indian Polity | QuestionWale",
+      "description": "British Rule Acts and Constitution Making MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/constitutional-history-making",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "British Rule Acts and Constitution Making"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "Company Rule Acts, 1773–1853"
+        },
+        {
+          "level": 3,
+          "text": "Crown Rule Acts and Reforms, 1858–1909"
+        },
+        {
+          "level": 3,
+          "text": "Constitutional Reforms, 1919–1935"
+        },
+        {
+          "level": 3,
+          "text": "Independence Plans and Transfer of Power, 1935–1947"
+        },
+        {
+          "level": 3,
+          "text": "Constituent Assembly and Making of the Constitution"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity/constitutional-history-making/practice",
+        "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+        "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/practice",
+        "/subjects/indian-polity/constitutional-history-making/crown-rule-reforms-1858-1909/practice",
+        "/subjects/indian-polity/constitutional-history-making/constitutional-reforms-1919-1935/practice",
+        "/subjects/indian-polity/constitutional-history-making/independence-transfer-power-1935-1947/practice",
+        "/subjects/indian-polity/constitutional-history-making/constituent-assembly-constitution-making/practice"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/constitution-basics-preamble-schedules",
+      "pathname": "/subjects/indian-polity/constitution-basics-preamble-schedules",
+      "status": 200,
+      "title": "Constitution: Basics, Features, Preamble and Schedules — Indian Polity | QuestionWale",
+      "description": "Constitution: Basics, Features, Preamble and Schedules MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/constitution-basics-preamble-schedules",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Constitution: Basics, Features, Preamble and Schedules"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "Constitution: Meaning, Types and Constitutionalism"
+        },
+        {
+          "level": 3,
+          "text": "Features and Sources of the Indian Constitution"
+        },
+        {
+          "level": 3,
+          "text": "Parts, Articles, Schedules and Key Terms"
+        },
+        {
+          "level": 3,
+          "text": "Preamble: Words, Ideals and Status"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules/practice",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-meaning-types-constitutionalism/practice",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/revision",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/practice",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/revision",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/practice"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/territory-citizenship-language",
+      "pathname": "/subjects/indian-polity/territory-citizenship-language",
+      "status": 200,
+      "title": "Indian Territory, Citizenship and Official Language — Indian Polity | QuestionWale",
+      "description": "Indian Territory, Citizenship and Official Language MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/territory-citizenship-language",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Indian Territory, Citizenship and Official Language"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "States: Formation and Reorganisation"
+        },
+        {
+          "level": 3,
+          "text": "Union Territories and Special Provisions"
+        },
+        {
+          "level": 3,
+          "text": "Citizenship and OCI"
+        },
+        {
+          "level": 3,
+          "text": "Official Language and Language Safeguards"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity/territory-citizenship-language/practice",
+        "/subjects/indian-polity/territory-citizenship-language/union-states-formation-reorganisation/practice",
+        "/subjects/indian-polity/territory-citizenship-language/indian-citizenship-constitution-act-oci/practice"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/fundamental-rights",
+      "pathname": "/subjects/indian-polity/fundamental-rights",
+      "status": 200,
+      "title": "Fundamental Rights and Writs — Indian Polity | QuestionWale",
+      "description": "Fundamental Rights and Writs MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/fundamental-rights",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Fundamental Rights and Writs"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "Right to Equality and Reservation"
+        },
+        {
+          "level": 3,
+          "text": "Right to Freedom, Life and Personal Liberty"
+        },
+        {
+          "level": 3,
+          "text": "Exploitation, Religion and Minority Rights"
+        },
+        {
+          "level": 3,
+          "text": "Writs and Constitutional Remedies"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity/fundamental-rights/practice",
+        "/subjects/indian-polity/fundamental-rights/fundamental-rights-equality-reservation/practice",
+        "/subjects/indian-polity/fundamental-rights/freedom-criminal-protection-life-liberty/practice",
+        "/subjects/indian-polity/fundamental-rights/exploitation-religion-cultural-education-rights/practice",
+        "/subjects/indian-polity/fundamental-rights/writs-remedies-limits-fundamental-rights/practice"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/dpsp-fundamental-duties",
+      "pathname": "/subjects/indian-polity/dpsp-fundamental-duties",
+      "status": 200,
+      "title": "DPSP, Fundamental Duties and Rights–DPSP Relationship — Indian Polity | QuestionWale",
+      "description": "DPSP, Fundamental Duties and Rights–DPSP Relationship MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/dpsp-fundamental-duties",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "DPSP, Fundamental Duties and Rights–DPSP Relationship"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "DPSP: Articles, Types and Implementation"
+        },
+        {
+          "level": 3,
+          "text": "Fundamental Duties: Article 51A"
+        },
+        {
+          "level": 3,
+          "text": "Fundamental Rights–DPSP Relationship"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity/dpsp-fundamental-duties/practice",
+        "/subjects/indian-polity/dpsp-fundamental-duties/dpsp-articles-classification-implementation/practice"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/amendment-basic-structure",
+      "pathname": "/subjects/indian-polity/amendment-basic-structure",
+      "status": 200,
+      "title": "Constitutional Amendments, Basic Structure and Doctrines — Indian Polity | QuestionWale",
+      "description": "Constitutional Amendments, Basic Structure and Doctrines MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/amendment-basic-structure",
+      "robotsMeta": "noindex, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Constitutional Amendments, Basic Structure and Doctrines"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "Constitutional Amendment Procedure"
+        },
+        {
+          "level": 3,
+          "text": "Important Constitutional Amendments"
+        },
+        {
+          "level": 3,
+          "text": "Basic Structure, Doctrines and Major Cases"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/federalism-centre-state-relations",
+      "pathname": "/subjects/indian-polity/federalism-centre-state-relations",
+      "status": 200,
+      "title": "Federal System and Union–State Relations — Indian Polity | QuestionWale",
+      "description": "Federal System and Union–State Relations MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/federalism-centre-state-relations",
+      "robotsMeta": "noindex, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Federal System and Union–State Relations"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "Union–State Legislative Relations and Division of Powers"
+        },
+        {
+          "level": 3,
+          "text": "Union–State Administrative Relations and Coordination"
+        },
+        {
+          "level": 3,
+          "text": "Union–State Financial Relations"
+        },
+        {
+          "level": 3,
+          "text": "Inter-State Disputes, River Water and Trade"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/union-executive",
+      "pathname": "/subjects/indian-polity/union-executive",
+      "status": 200,
+      "title": "Union Executive: President, Vice-President and Prime Minister — Indian Polity | QuestionWale",
+      "description": "Union Executive: President, Vice-President and Prime Minister MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/union-executive",
+      "robotsMeta": "noindex, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Union Executive: President, Vice-President and Prime Minister"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "President and Vice-President: Election, Term and Removal"
+        },
+        {
+          "level": 3,
+          "text": "President: Powers and Constitutional Position"
+        },
+        {
+          "level": 3,
+          "text": "Prime Minister, Council of Ministers and Cabinet"
+        },
+        {
+          "level": 3,
+          "text": "Union Ministries, Cabinet Committees, PMO and Secretariat"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/parliament",
+      "pathname": "/subjects/indian-polity/parliament",
+      "status": 200,
+      "title": "Parliament and Parliamentary Procedure — Indian Polity | QuestionWale",
+      "description": "Parliament and Parliamentary Procedure MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/parliament",
+      "robotsMeta": "noindex, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Parliament and Parliamentary Procedure"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "Parliament: Houses, Members, Sessions and Officers"
+        },
+        {
+          "level": 3,
+          "text": "Bills and Law-Making Procedure"
+        },
+        {
+          "level": 3,
+          "text": "Budget, Money Bills and Financial Procedure"
+        },
+        {
+          "level": 3,
+          "text": "Questions, Motions and Government Accountability"
+        },
+        {
+          "level": 3,
+          "text": "Parliamentary Committees, Privileges and Anti-Defection"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/judiciary",
+      "pathname": "/subjects/indian-polity/judiciary",
+      "status": 200,
+      "title": "Judiciary and Justice System — Indian Polity | QuestionWale",
+      "description": "Judiciary and Justice System MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/judiciary",
+      "robotsMeta": "noindex, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Judiciary and Justice System"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "Court Structure, Judges and Judicial Independence"
+        },
+        {
+          "level": 3,
+          "text": "Supreme Court and High Courts: Powers and Jurisdiction"
+        },
+        {
+          "level": 3,
+          "text": "Subordinate Courts, Tribunals and Legal Aid"
+        },
+        {
+          "level": 3,
+          "text": "Judicial Review, PIL and Major Cases"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/state-government",
+      "pathname": "/subjects/indian-polity/state-government",
+      "status": 200,
+      "title": "State Executive and Legislature — Indian Polity | QuestionWale",
+      "description": "State Executive and Legislature MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/state-government",
+      "robotsMeta": "noindex, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "State Executive and Legislature"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "Governor: Appointment, Powers and Discretion"
+        },
+        {
+          "level": 3,
+          "text": "Chief Minister, Council of Ministers and State Secretariat"
+        },
+        {
+          "level": 3,
+          "text": "State Legislature: Houses, Members and Presiding Officers"
+        },
+        {
+          "level": 3,
+          "text": "State Bills, Budget and Legislative Control"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/local-district-administration",
+      "pathname": "/subjects/indian-polity/local-district-administration",
+      "status": 200,
+      "title": "Panchayats, Municipalities and District Administration — Indian Polity | QuestionWale",
+      "description": "Panchayats, Municipalities and District Administration MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/local-district-administration",
+      "robotsMeta": "noindex, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Panchayats, Municipalities and District Administration"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "Local Government and the 73rd–74th Amendments"
+        },
+        {
+          "level": 3,
+          "text": "Panchayati Raj and Gram Sabha"
+        },
+        {
+          "level": 3,
+          "text": "Municipalities and Urban Local Bodies"
+        },
+        {
+          "level": 3,
+          "text": "Local Elections, Finance and Planning"
+        },
+        {
+          "level": 3,
+          "text": "District, Tehsil and Revenue Administration"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/elections-political-parties",
+      "pathname": "/subjects/indian-polity/elections-political-parties",
+      "status": 200,
+      "title": "Elections, Election Laws and Political Parties — Indian Polity | QuestionWale",
+      "description": "Elections, Election Laws and Political Parties MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/elections-political-parties",
+      "robotsMeta": "noindex, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Elections, Election Laws and Political Parties"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "Election Commission, Electoral Rolls and Constituencies"
+        },
+        {
+          "level": 3,
+          "text": "Election Laws, Candidates and Petitions"
+        },
+        {
+          "level": 3,
+          "text": "Political Parties, Symbols, Campaigns and Funding"
+        },
+        {
+          "level": 3,
+          "text": "Electoral Systems, EVM–VVPAT and Reforms"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/constitutional-government-bodies",
+      "pathname": "/subjects/indian-polity/constitutional-government-bodies",
+      "status": 200,
+      "title": "Constitutional, Statutory and Other Important Bodies — Indian Polity | QuestionWale",
+      "description": "Constitutional, Statutory and Other Important Bodies MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/constitutional-government-bodies",
+      "robotsMeta": "noindex, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Constitutional, Statutory and Other Important Bodies"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "Public Service and Recruitment Commissions"
+        },
+        {
+          "level": 3,
+          "text": "Finance Commission, CAG and GST Council"
+        },
+        {
+          "level": 3,
+          "text": "SC, ST, OBC and Linguistic Minority Commissions"
+        },
+        {
+          "level": 3,
+          "text": "Law Officers and Law Commission"
+        },
+        {
+          "level": 3,
+          "text": "Anti-Corruption, Information and Rights Bodies"
+        },
+        {
+          "level": 3,
+          "text": "NITI Aayog, NDMA and Regulatory Bodies"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/emergency-special-provisions",
+      "pathname": "/subjects/indian-polity/emergency-special-provisions",
+      "status": 200,
+      "title": "Emergency and Special Provisions — Indian Polity | QuestionWale",
+      "description": "Emergency and Special Provisions MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/emergency-special-provisions",
+      "robotsMeta": "noindex, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Emergency and Special Provisions"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "National Emergency, President’s Rule and Financial Emergency"
+        },
+        {
+          "level": 3,
+          "text": "Fifth–Sixth Schedules and PESA"
+        },
+        {
+          "level": 3,
+          "text": "Articles 371–371J: Special State Provisions"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/civil-services-governance-accountability",
+      "pathname": "/subjects/indian-polity/civil-services-governance-accountability",
+      "status": 200,
+      "title": "Civil Services, Governance and Accountability — Indian Polity | QuestionWale",
+      "description": "Civil Services, Governance and Accountability MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/civil-services-governance-accountability",
+      "robotsMeta": "noindex, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Civil Services, Governance and Accountability"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "Public Administration: Structure and Principles"
+        },
+        {
+          "level": 3,
+          "text": "Civil Services: Recruitment, Conduct and Safeguards"
+        },
+        {
+          "level": 3,
+          "text": "RTI, Citizen’s Charter and Grievance Redressal"
+        },
+        {
+          "level": 3,
+          "text": "E-Governance, Social Audit and Public Policy"
+        },
+        {
+          "level": 3,
+          "text": "Government Ethics and Anti-Corruption Measures"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/social-justice-welfare-rights",
+      "pathname": "/subjects/indian-polity/social-justice-welfare-rights",
+      "status": 200,
+      "title": "Social Justice, Safeguards and Welfare Rights — Indian Polity | QuestionWale",
+      "description": "Social Justice, Safeguards and Welfare Rights MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/social-justice-welfare-rights",
+      "robotsMeta": "noindex, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Social Justice, Safeguards and Welfare Rights"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "SC, ST, OBC and EWS: Safeguards and Representation"
+        },
+        {
+          "level": 3,
+          "text": "Women and Children: Rights and Protection"
+        },
+        {
+          "level": 3,
+          "text": "Minorities, Persons with Disabilities and Vulnerable Groups"
+        },
+        {
+          "level": 3,
+          "text": "Education, Health, Food, Work and Social Security Rights"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/state-ut-polity-administration",
+      "pathname": "/subjects/indian-polity/state-ut-polity-administration",
+      "status": 200,
+      "title": "State/UT Polity and Administration — Indian Polity | QuestionWale",
+      "description": "State/UT Polity and Administration MCQ course module.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/state-ut-polity-administration",
+      "robotsMeta": "noindex, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "State/UT Polity and Administration"
+        },
+        {
+          "level": 2,
+          "text": "Subtopics"
+        },
+        {
+          "level": 3,
+          "text": "State Formation, Government and Institutions"
+        },
+        {
+          "level": 3,
+          "text": "State Commissions, Services and Accountability Laws"
+        },
+        {
+          "level": 3,
+          "text": "State Local Bodies, Land, Revenue and District Laws"
+        },
+        {
+          "level": 3,
+          "text": "UT Polity and Administration"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/revision",
+      "pathname": "/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/revision",
+      "status": 200,
+      "title": "Sources of the Indian Constitution — Revision Notes | QuestionWale",
+      "description": "Revise how India adapted British, US, Irish, French and Canadian ideas with nationalist and colonial experience. Official NCERT and Constitution links included.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/revision",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Sources of the Indian Constitution"
+        },
+        {
+          "level": 2,
+          "text": "Key concepts"
+        },
+        {
+          "level": 3,
+          "text": "Britain"
+        },
+        {
+          "level": 3,
+          "text": "United States"
+        },
+        {
+          "level": 3,
+          "text": "Ireland, France and Canada"
+        },
+        {
+          "level": 3,
+          "text": "Indian historical stream"
+        },
+        {
+          "level": 2,
+          "text": "Important constitutional points"
+        },
+        {
+          "level": 3,
+          "text": "Inspiration versus operation"
+        },
+        {
+          "level": 3,
+          "text": "Part III and Part IV cluster traps"
+        },
+        {
+          "level": 3,
+          "text": "Constituent Assembly method"
+        },
+        {
+          "level": 2,
+          "text": "Common misconceptions"
+        },
+        {
+          "level": 2,
+          "text": "Memory aids"
+        },
+        {
+          "level": 2,
+          "text": "Revision summary"
+        },
+        {
+          "level": 2,
+          "text": "Sources and references"
+        },
+        {
+          "level": 2,
+          "text": "Ready to practise?"
+        },
+        {
+          "level": 2,
+          "text": "Related links"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/practice",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules",
+        "https://ncert.nic.in/textbook/pdf/iess402.pdf",
+        "https://ncert.nic.in/textbook/pdf/keps201.pdf",
+        "https://www.legislative.gov.in/static/uploads/2025/07/76b9f1c47176fc65accc160f19c982b7.pdf",
+        "https://ncert.nic.in/textbook/pdf/keps207.pdf",
+        "https://ncert.nic.in/textbook/pdf/keps209.pdf",
+        "https://ncert.nic.in/textbook/pdf/keps204.pdf",
+        "https://ncert.nic.in/textbook/pdf/keps203.pdf",
+        "https://api.sci.gov.in/supremecourt/2019/29796/29796_2019_1_1501_49019_Judgement_11-Dec-2023.pdf",
+        "https://ncert.nic.in/textbook/pdf/keps206.pdf",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/practice",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/revision",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/practice"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList",
+        "LearningResource"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/revision",
+      "pathname": "/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/revision",
+      "status": 200,
+      "title": "Preamble Meaning and Importance — Revision Notes | QuestionWale",
+      "description": "Revise what the Preamble does: identity of We the People, constitutional ideals, interpretive guidance, and limits. Links to the official Constitution and Supreme Court PDFs.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/revision",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Preamble — Meaning and Importance"
+        },
+        {
+          "level": 2,
+          "text": "Key concepts"
+        },
+        {
+          "level": 3,
+          "text": "What a preamble does"
+        },
+        {
+          "level": 3,
+          "text": "“We, the People of India”"
+        },
+        {
+          "level": 3,
+          "text": "Adoption clause and date"
+        },
+        {
+          "level": 3,
+          "text": "Interpretive role"
+        },
+        {
+          "level": 2,
+          "text": "Important constitutional points"
+        },
+        {
+          "level": 3,
+          "text": "Part of the Constitution"
+        },
+        {
+          "level": 3,
+          "text": "Not an independent power clause"
+        },
+        {
+          "level": 3,
+          "text": "Bridge to Parts III and IV"
+        },
+        {
+          "level": 2,
+          "text": "Common misconceptions"
+        },
+        {
+          "level": 2,
+          "text": "Memory aids"
+        },
+        {
+          "level": 2,
+          "text": "Revision summary"
+        },
+        {
+          "level": 2,
+          "text": "Sources and references"
+        },
+        {
+          "level": 2,
+          "text": "Ready to practise?"
+        },
+        {
+          "level": 2,
+          "text": "Related links"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/practice",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules",
+        "https://www.legislative.gov.in/static/uploads/2025/07/88cca69e868e50b217f855be2fb8bdba.pdf",
+        "https://ncert.nic.in/textbook/pdf/keps201.pdf",
+        "https://api.sci.gov.in/supremecourt/2012/35071/35071_2012_Judgement_24-Aug-2017.pdf",
+        "https://www.legislative.gov.in/static/uploads/2025/07/76b9f1c47176fc65accc160f19c982b7.pdf",
+        "https://ncert.nic.in/textbook/pdf/iess402.pdf",
+        "https://ncert.nic.in/textbook/pdf/keps210.pdf",
+        "https://digital.nios.ac.in/content/317en/317EL5.pdf",
+        "https://api.sci.gov.in/supremecourt/2020/13773/13773_2020_1_39_57487_Judgement_25-Nov-2024.pdf",
+        "https://api.sci.gov.in/judgment/judis/12491.pdf",
+        "https://api.sci.gov.in/jonew/judis/29981.pdf",
+        "https://api.sci.gov.in/jonew/judis/31353.pdf",
+        "https://api.sci.gov.in/supremecourt/2019/29796/29796_2019_1_1501_49019_Judgement_11-Dec-2023.pdf",
+        "https://api.sci.gov.in/supremecourt/2017/27935/27935_2017_1_1501_50573_Judgement_15-Feb-2024.pdf",
+        "https://api.sci.gov.in/supremecourt/2023/6310/6310_2023_3_23_42310_Judgement_27-Feb-2023.pdf",
+        "https://api.sci.gov.in/supremecourt/2021/19991/19991_2021_2_1502_70707_Judgement_29-Apr-2026.pdf",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/practice",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/revision",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules",
+        "/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/practice"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList",
+        "LearningResource"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "pathname": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "status": 200,
+      "title": "Company Rule and Early Acts Revision Notes in Hindi | Indian Polity | QuestionWale",
+      "description": "Charter 1600, Hugli factory, Plassey, Buxar, Treaty of Allahabad, Diwani, Nizamat and Dual Government explained in easy Hindi with timeline, mind map and MCQs.",
+      "canonical": "https://questionwale.com/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Company Rule Acts, 1773–1853"
+        },
+        {
+          "level": 2,
+          "text": "How Company rule changed in seven landmark Acts"
+        },
+        {
+          "level": 3,
+          "text": "The story in one view"
+        },
+        {
+          "level": 4,
+          "text": "Regulation begins"
+        },
+        {
+          "level": 4,
+          "text": "Political control strengthens"
+        },
+        {
+          "level": 4,
+          "text": "Company trade declines"
+        },
+        {
+          "level": 4,
+          "text": "Administration and legislation evolve"
+        },
+        {
+          "level": 3,
+          "text": "Seven Acts Timeline (1773–1853)"
+        },
+        {
+          "level": 4,
+          "text": "Regulating Act"
+        },
+        {
+          "level": 4,
+          "text": "Act of Settlement"
+        },
+        {
+          "level": 4,
+          "text": "Pitt's India Act"
+        },
+        {
+          "level": 4,
+          "text": "Charter Act"
+        },
+        {
+          "level": 4,
+          "text": "Charter Act"
+        },
+        {
+          "level": 4,
+          "text": "Charter Act"
+        },
+        {
+          "level": 4,
+          "text": "Charter Act"
+        },
+        {
+          "level": 2,
+          "text": "Parliament enters Company government"
+        },
+        {
+          "level": 3,
+          "text": "Why did Parliament intervene?"
+        },
+        {
+          "level": 3,
+          "text": "★ Key Features of the Regulating Act, 1773"
+        },
+        {
+          "level": 3,
+          "text": "Exam Trap"
+        },
+        {
+          "level": 3,
+          "text": "Memory Formula"
+        },
+        {
+          "level": 3,
+          "text": "⎇ Administrative structure under the Act"
+        },
+        {
+          "level": 3,
+          "text": "Supreme Court fact card"
+        },
+        {
+          "level": 3,
+          "text": "Why did the arrangement create conflict?"
+        },
+        {
+          "level": 3,
+          "text": "Act of Settlement: Correcting the judicial conflict"
+        },
+        {
+          "level": 2,
+          "text": "Judicial conflict is corrected"
+        },
+        {
+          "level": 3,
+          "text": "Why was another Act needed after 1773?"
+        },
+        {
+          "level": 3,
+          "text": "Key corrections made by the Act"
+        },
+        {
+          "level": 3,
+          "text": "Where did the Supreme Court’s authority operate?"
+        },
+        {
+          "level": 3,
+          "text": "1773 problem versus 1781 correction"
+        },
+        {
+          "level": 4,
+          "text": "Supreme Court"
+        },
+        {
+          "level": 4,
+          "text": "Official acts"
+        },
+        {
+          "level": 4,
+          "text": "Revenue"
+        },
+        {
+          "level": 4,
+          "text": "Mofussil justice"
+        },
+        {
+          "level": 4,
+          "text": "Personal laws"
+        },
+        {
+          "level": 3,
+          "text": "What the 1781 Act did not do"
+        },
+        {
+          "level": 3,
+          "text": "Exam Trap"
+        },
+        {
+          "level": 3,
+          "text": "Memory Formula"
+        },
+        {
+          "level": 3,
+          "text": "Civil appeal route outside Calcutta"
+        },
+        {
+          "level": 3,
+          "text": "Recognition of personal laws and usages"
+        },
+        {
+          "level": 4,
+          "text": "Patna dispute"
+        },
+        {
+          "level": 4,
+          "text": "Cossijurah conflict"
+        },
+        {
+          "level": 3,
+          "text": "What changed after the correction?"
+        },
+        {
+          "level": 3,
+          "text": "Pitt’s India Act: Political control becomes stronger"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity/constitutional-history-making"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite",
+        "BreadcrumbList",
+        "LearningResource",
+        "FAQPage"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/history",
+      "pathname": "/history",
+      "status": 200,
+      "title": "History Topics & MCQ Practice | QuestionWale",
+      "description": "Browse History topics, practice curated questions, and improve your competitive exam skills on QuestionWale.",
+      "canonical": "https://questionwale.com/history",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "History"
+        },
+        {
+          "level": 2,
+          "text": "1 . Ancient History"
+        },
+        {
+          "level": 2,
+          "text": "2 . Medieval History"
+        },
+        {
+          "level": 2,
+          "text": "3 . Modern History"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/history/topics?sub_category=ancient",
+        "/history/topics?sub_category=medieval",
+        "/history/topics?sub_category=modern"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/history/topics",
+      "pathname": "/history/topics",
+      "status": 200,
+      "title": "History Topics | QuestionWale",
+      "description": "Browse History topics and practice questions.",
+      "canonical": "https://questionwale.com/history/topics",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Master History Topics"
+        },
+        {
+          "level": 1,
+          "text": "History Topics"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/science",
+      "pathname": "/science",
+      "status": 200,
+      "title": "Science Topics & MCQ Practice | QuestionWale",
+      "description": "Browse Science topics, practice curated questions, and improve your competitive exam skills on QuestionWale.",
+      "canonical": "https://questionwale.com/science",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Science"
+        },
+        {
+          "level": 2,
+          "text": "1 . Physics"
+        },
+        {
+          "level": 2,
+          "text": "2 . Chemistry"
+        },
+        {
+          "level": 2,
+          "text": "3 . Biology"
+        },
+        {
+          "level": 2,
+          "text": "4 . General Science"
+        },
+        {
+          "level": 2,
+          "text": "5 . Space Science & Astronomy"
+        },
+        {
+          "level": 2,
+          "text": "6 . Computer & Information Technology"
+        },
+        {
+          "level": 2,
+          "text": "7 . Applied Science & Emerging Technologies"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/science/topics?category=physics",
+        "/science/topics?category=chemistry",
+        "/science/topics?category=biology",
+        "/science/topics?category=general-science",
+        "/science/topics?category=space-astronomy",
+        "/science/topics?category=computer-it",
+        "/science/topics?category=applied-science"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/science/topics",
+      "pathname": "/science/topics",
+      "status": 200,
+      "title": "Science Topics | QuestionWale",
+      "description": "Browse Science topics and practice questions.",
+      "canonical": "https://questionwale.com/science/topics",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Master Science Topics"
+        },
+        {
+          "level": 1,
+          "text": "Science Topics"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/economics",
+      "pathname": "/economics",
+      "status": 200,
+      "title": "Economics Topics & MCQ Practice | QuestionWale",
+      "description": "Browse Economics topics, practice curated questions, and improve your competitive exam skills on QuestionWale.",
+      "canonical": "https://questionwale.com/economics",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Economics"
+        },
+        {
+          "level": 2,
+          "text": "1 . Economic Fundamentals"
+        },
+        {
+          "level": 2,
+          "text": "2 . National Income & Macroeconomics"
+        },
+        {
+          "level": 2,
+          "text": "3 . Money, Banking & Financial System"
+        },
+        {
+          "level": 2,
+          "text": "4 . Public Finance"
+        },
+        {
+          "level": 2,
+          "text": "5 . Indian Economy — Sectors"
+        },
+        {
+          "level": 2,
+          "text": "6 . Economic Planning & Development"
+        },
+        {
+          "level": 2,
+          "text": "7 . External Sector"
+        },
+        {
+          "level": 2,
+          "text": "8 . Inflation, Employment & Poverty"
+        },
+        {
+          "level": 2,
+          "text": "9 . International Economic Organizations"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/economics/topics?category=economic-fundamentals",
+        "/economics/topics?category=national-income-macroeconomics",
+        "/economics/topics?category=money-banking-financial-system",
+        "/economics/topics?category=public-finance",
+        "/economics/topics?category=indian-economy-sectors",
+        "/economics/topics?category=economic-planning-development",
+        "/economics/topics?category=external-sector",
+        "/economics/topics?category=inflation-employment-poverty",
+        "/economics/topics?category=international-economic-organizations"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/economics/topics",
+      "pathname": "/economics/topics",
+      "status": 200,
+      "title": "Economics Topics | QuestionWale",
+      "description": "Browse Economics topics and practice questions.",
+      "canonical": "https://questionwale.com/economics/topics",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Master Economics Topics"
+        },
+        {
+          "level": 1,
+          "text": "Economics Topics"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/geography",
+      "pathname": "/geography",
+      "status": 200,
+      "title": "Geography Topics & MCQ Practice | QuestionWale",
+      "description": "Browse Geography topics, practice curated questions, and improve your competitive exam skills on QuestionWale.",
+      "canonical": "https://questionwale.com/geography",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Geography"
+        },
+        {
+          "level": 2,
+          "text": "1 . Physical Geography"
+        },
+        {
+          "level": 2,
+          "text": "2 . Indian Geography"
+        },
+        {
+          "level": 2,
+          "text": "3 . World Geography"
+        },
+        {
+          "level": 2,
+          "text": "4 . Environment & Ecology"
+        },
+        {
+          "level": 2,
+          "text": "5 . Maps & Geographic Locations"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/geography/topics?category=physical-geography",
+        "/geography/topics?category=indian-geography",
+        "/geography/topics?category=world-geography",
+        "/geography/topics?category=environment-ecology",
+        "/map-practice"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/geography/topics",
+      "pathname": "/geography/topics",
+      "status": 200,
+      "title": "Geography Topics | QuestionWale",
+      "description": "Browse Geography topics and practice questions.",
+      "canonical": "https://questionwale.com/geography/topics",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Master Geography Topics"
+        },
+        {
+          "level": 1,
+          "text": "Geography Topics"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/math",
+      "pathname": "/math",
+      "status": 200,
+      "title": "Mathematics Topics & MCQ Practice | QuestionWale",
+      "description": "Browse Mathematics topics, practice curated questions, and improve your competitive exam skills on QuestionWale.",
+      "canonical": "https://questionwale.com/math",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Mathematics"
+        },
+        {
+          "level": 2,
+          "text": "1 . Number System"
+        },
+        {
+          "level": 2,
+          "text": "2 . Arithmetic"
+        },
+        {
+          "level": 2,
+          "text": "3 . Algebra"
+        },
+        {
+          "level": 2,
+          "text": "4 . Geometry & Mensuration"
+        },
+        {
+          "level": 2,
+          "text": "5 . Trigonometry"
+        },
+        {
+          "level": 2,
+          "text": "6 . Data Interpretation"
+        },
+        {
+          "level": 2,
+          "text": "7 . Statistics & Probability"
+        },
+        {
+          "level": 2,
+          "text": "8 . Advanced Mathematics"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/math/topics?category=number-system",
+        "/math/topics?category=arithmetic",
+        "/math/topics?category=algebra",
+        "/math/topics?category=geometry-mensuration",
+        "/math/topics?category=trigonometry",
+        "/math/topics?category=data-interpretation",
+        "/math/topics?category=statistics-probability",
+        "/math/topics?category=advanced-mathematics"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/math/topics",
+      "pathname": "/math/topics",
+      "status": 200,
+      "title": "Math Topics | QuestionWale",
+      "description": "Browse Math topics and practice questions.",
+      "canonical": "https://questionwale.com/math/topics",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Master Math Topics"
+        },
+        {
+          "level": 1,
+          "text": "Math Topics"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/reasoning",
+      "pathname": "/reasoning",
+      "status": 200,
+      "title": "Reasoning Topics & MCQ Practice | QuestionWale",
+      "description": "Browse Reasoning topics, practice curated questions, and improve your competitive exam skills on QuestionWale.",
+      "canonical": "https://questionwale.com/reasoning",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Reasoning"
+        },
+        {
+          "level": 2,
+          "text": "01 . Analogy & Classification"
+        },
+        {
+          "level": 2,
+          "text": "02 . Series"
+        },
+        {
+          "level": 2,
+          "text": "03 . Coding-Decoding"
+        },
+        {
+          "level": 2,
+          "text": "04 . Blood Relations"
+        },
+        {
+          "level": 2,
+          "text": "05 . Direction & Distance"
+        },
+        {
+          "level": 2,
+          "text": "06 . Ranking, Order & Arrangement"
+        },
+        {
+          "level": 2,
+          "text": "07 . Seating Arrangement & Puzzle"
+        },
+        {
+          "level": 2,
+          "text": "08 . Syllogism"
+        },
+        {
+          "level": 2,
+          "text": "09 . Statement-Based Reasoning"
+        },
+        {
+          "level": 2,
+          "text": "10 . Logical & Mathematical Operations"
+        },
+        {
+          "level": 2,
+          "text": "11 . Non-Verbal Reasoning"
+        },
+        {
+          "level": 2,
+          "text": "12 . Clock & Calendar"
+        },
+        {
+          "level": 2,
+          "text": "13 . Spatial Reasoning (Cube & Dice)"
+        },
+        {
+          "level": 2,
+          "text": "14 . Data Sufficiency & Decision Making"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/reasoning/topics?category=analogy-classification",
+        "/reasoning/topics?category=series",
+        "/reasoning/topics?category=coding-decoding",
+        "/reasoning/topics?category=blood-relations",
+        "/reasoning/topics?category=direction-distance",
+        "/reasoning/topics?category=ranking-order-arrangement",
+        "/reasoning/topics?category=seating-arrangement-puzzle",
+        "/reasoning/topics?category=syllogism",
+        "/reasoning/topics?category=statement-based-reasoning",
+        "/reasoning/topics?category=logical-mathematical-operations",
+        "/reasoning/topics?category=non-verbal-reasoning",
+        "/reasoning/topics?category=clock-calendar",
+        "/reasoning/topics?category=spatial-reasoning",
+        "/reasoning/topics?category=data-sufficiency-decision-making"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    },
+    {
+      "loc": "https://questionwale.com/reasoning/topics",
+      "pathname": "/reasoning/topics",
+      "status": 200,
+      "title": "Reasoning Topics | QuestionWale",
+      "description": "Browse Reasoning topics and practice questions.",
+      "canonical": "https://questionwale.com/reasoning/topics",
+      "robotsMeta": "index, follow",
+      "headings": [
+        {
+          "level": 2,
+          "text": "Master Reasoning Topics"
+        },
+        {
+          "level": 1,
+          "text": "Reasoning Topics"
+        }
+      ],
+      "anchors": [
+        "/",
+        "/",
+        "/subjects",
+        "/about_us",
+        "/contact",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/",
+        "/#subjects",
+        "/subjects/indian-polity",
+        "/subjects/indian-polity",
+        "/#subjects",
+        "/about_us",
+        "/contact",
+        "/about_us",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/refund-policy",
+        "/reasoning/topics/analogies",
+        "/reasoning/topics/classification",
+        "/reasoning/topics/series",
+        "/reasoning/topics/coding-decoding-and-operations",
+        "/reasoning/topics/analytical-and-logical-reasoning",
+        "/reasoning/topics/spatial-and-figural-reasoning",
+        "/reasoning/topics/observation-memory-and-relationships",
+        "/reasoning/topics/matching-and-indexing",
+        "/reasoning/topics/word-skills-trends-and-human-intelligence"
+      ],
+      "schemaTypes": [
+        "EducationalOrganization",
+        "WebSite"
+      ]
+    }
+  ],
+  "internalLinks": [
+    {
+      "href": "/",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/about_us",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/contact",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/privacy",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/terms",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/disclaimer",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/refund-policy",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/constitution-basics-preamble-schedules?exam=SSC",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/fundamental-rights?exam=SSC",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/dpsp-fundamental-duties?exam=SSC",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/union-executive?exam=SSC",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/parliament?exam=SSC",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity?exam=SSC",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/history",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/geography",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/economics",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/math",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/science",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/constitutional-history-making",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/constitution-basics-preamble-schedules",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/territory-citizenship-language",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/fundamental-rights",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/dpsp-fundamental-duties",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/amendment-basic-structure",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/federalism-centre-state-relations",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/union-executive",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/parliament",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/judiciary",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/state-government",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/local-district-administration",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/elections-political-parties",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/constitutional-government-bodies",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/emergency-special-provisions",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/civil-services-governance-accountability",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/social-justice-welfare-rights",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/state-ut-polity-administration",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/constitutional-history-making/practice",
+      "status": "structural",
+      "mode": "route-structure"
+    },
+    {
+      "href": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/constitution-basics-preamble-schedules/practice",
+      "status": "structural",
+      "mode": "route-structure"
+    },
+    {
+      "href": "/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/revision",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/revision",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/subjects/indian-polity/territory-citizenship-language/practice",
+      "status": "structural",
+      "mode": "route-structure"
+    },
+    {
+      "href": "/subjects/indian-polity/fundamental-rights/practice",
+      "status": "structural",
+      "mode": "route-structure"
+    },
+    {
+      "href": "/subjects/indian-polity/dpsp-fundamental-duties/practice",
+      "status": "structural",
+      "mode": "route-structure"
+    },
+    {
+      "href": "/history/topics?sub_category=ancient",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/history/topics?sub_category=medieval",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/history/topics?sub_category=modern",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/science/topics?category=physics",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/science/topics?category=chemistry",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/science/topics?category=biology",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/science/topics?category=general-science",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/science/topics?category=space-astronomy",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/science/topics?category=computer-it",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/science/topics?category=applied-science",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/economics/topics?category=economic-fundamentals",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/economics/topics?category=national-income-macroeconomics",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/economics/topics?category=money-banking-financial-system",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/economics/topics?category=public-finance",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/economics/topics?category=indian-economy-sectors",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/economics/topics?category=economic-planning-development",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/economics/topics?category=external-sector",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/economics/topics?category=inflation-employment-poverty",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/economics/topics?category=international-economic-organizations",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/geography/topics?category=physical-geography",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/geography/topics?category=indian-geography",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/geography/topics?category=world-geography",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/geography/topics?category=environment-ecology",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/map-practice",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/math/topics?category=number-system",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/math/topics?category=arithmetic",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/math/topics?category=algebra",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/math/topics?category=geometry-mensuration",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/math/topics?category=trigonometry",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/math/topics?category=data-interpretation",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/math/topics?category=statistics-probability",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/math/topics?category=advanced-mathematics",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics?category=analogy-classification",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics?category=series",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics?category=coding-decoding",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics?category=blood-relations",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics?category=direction-distance",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics?category=ranking-order-arrangement",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics?category=seating-arrangement-puzzle",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics?category=syllogism",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics?category=statement-based-reasoning",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics?category=logical-mathematical-operations",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics?category=non-verbal-reasoning",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics?category=clock-calendar",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics?category=spatial-reasoning",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics?category=data-sufficiency-decision-making",
+      "status": 200,
+      "mode": "sitemap-crawl"
+    },
+    {
+      "href": "/reasoning/topics/analogies",
+      "status": "structural",
+      "mode": "route-structure"
+    },
+    {
+      "href": "/reasoning/topics/classification",
+      "status": "structural",
+      "mode": "route-structure"
+    },
+    {
+      "href": "/reasoning/topics/series",
+      "status": "structural",
+      "mode": "route-structure"
+    },
+    {
+      "href": "/reasoning/topics/coding-decoding-and-operations",
+      "status": "structural",
+      "mode": "route-structure"
+    },
+    {
+      "href": "/reasoning/topics/analytical-and-logical-reasoning",
+      "status": "structural",
+      "mode": "route-structure"
+    },
+    {
+      "href": "/reasoning/topics/spatial-and-figural-reasoning",
+      "status": "structural",
+      "mode": "route-structure"
+    },
+    {
+      "href": "/reasoning/topics/observation-memory-and-relationships",
+      "status": "structural",
+      "mode": "route-structure"
+    },
+    {
+      "href": "/reasoning/topics/matching-and-indexing",
+      "status": "structural",
+      "mode": "route-structure"
+    },
+    {
+      "href": "/reasoning/topics/word-skills-trends-and-human-intelligence",
+      "status": "structural",
+      "mode": "route-structure"
+    },
+    {
+      "href": "/general-knowledge",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/current-affairs",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/practice",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/constitutional-history-making/crown-rule-reforms-1858-1909/practice",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/constitutional-history-making/constitutional-reforms-1919-1935/practice",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/constitutional-history-making/independence-transfer-power-1935-1947/practice",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/constitutional-history-making/constituent-assembly-constitution-making/practice",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-meaning-types-constitutionalism/practice",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/practice",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/practice",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/territory-citizenship-language/union-states-formation-reorganisation/practice",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/territory-citizenship-language/indian-citizenship-constitution-act-oci/practice",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/fundamental-rights/fundamental-rights-equality-reservation/practice",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/fundamental-rights/freedom-criminal-protection-life-liberty/practice",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/fundamental-rights/exploitation-religion-cultural-education-rights/practice",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/fundamental-rights/writs-remedies-limits-fundamental-rights/practice",
+      "status": 200,
+      "mode": "http"
+    },
+    {
+      "href": "/subjects/indian-polity/dpsp-fundamental-duties/dpsp-articles-classification-implementation/practice",
+      "status": 200,
+      "mode": "http"
+    }
+  ],
+  "noindexChecks": [
+    {
+      "pathname": "/classic",
+      "status": 200,
+      "robotsMeta": "index, follow"
+    },
+    {
+      "pathname": "/demo",
+      "status": 200,
+      "robotsMeta": "noindex, follow"
+    },
+    {
+      "pathname": "/examples/seo-example",
+      "status": 200,
+      "robotsMeta": "noindex, nofollow"
+    },
+    {
+      "pathname": "/loading-test",
+      "status": 200,
+      "robotsMeta": "noindex, nofollow"
+    }
+  ],
+  "redirectChecks": [
+    {
+      "pathname": "/pcb_page",
+      "status": 200,
+      "location": ""
+    },
+    {
+      "pathname": "/pyq",
+      "status": 200,
+      "location": ""
+    }
+  ],
+  "searchCatalog": {
+    "items": 94,
+    "checks": [
+      {
+        "id": "subject:2a0ef29a-31ad-4404-b4f3-512949955081",
+        "type": "subject",
+        "href": "/subjects/indian-polity",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:961c6649-2922-43f4-b660-c7308163c511",
+        "type": "topic",
+        "href": "/subjects/indian-polity/constitutional-history-making",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:817b55ba-d8f6-45fc-8f62-48e036b562b6",
+        "type": "topic",
+        "href": "/subjects/indian-polity/constitution-basics-preamble-schedules",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:c6dc6b95-454f-4d0f-8ca7-1bc854d82eed",
+        "type": "topic",
+        "href": "/subjects/indian-polity/territory-citizenship-language",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:71576ea4-4521-4608-964a-fd41cf9a5848",
+        "type": "topic",
+        "href": "/subjects/indian-polity/fundamental-rights",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:29c1fd9e-e4a7-40a7-b3d9-259447826a31",
+        "type": "topic",
+        "href": "/subjects/indian-polity/dpsp-fundamental-duties",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:6a2e58e1-6480-43d1-84c2-0d4d780a90b4",
+        "type": "topic",
+        "href": "/subjects/indian-polity/amendment-basic-structure",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:dedb72a3-6e09-46ec-bb38-4210a86669d0",
+        "type": "topic",
+        "href": "/subjects/indian-polity/federalism-centre-state-relations",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:fa871f00-cfed-4087-ab79-63eb23afb43c",
+        "type": "topic",
+        "href": "/subjects/indian-polity/union-executive",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:641477a0-d068-4c46-b287-16df9052e114",
+        "type": "topic",
+        "href": "/subjects/indian-polity/parliament",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:67189368-5fe4-4d89-a997-34e21ba9bf3b",
+        "type": "topic",
+        "href": "/subjects/indian-polity/judiciary",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:e8166cff-f48f-4450-a001-77eb8b62b7ef",
+        "type": "topic",
+        "href": "/subjects/indian-polity/state-government",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:00442169-cc9f-46d2-abc2-a18a6100dcc0",
+        "type": "topic",
+        "href": "/subjects/indian-polity/local-district-administration",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:ff0f7cf6-d5b3-4c7d-b39f-4f736a85a9f8",
+        "type": "topic",
+        "href": "/subjects/indian-polity/elections-political-parties",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:968c9921-c5e5-40f9-ae1d-10ae62775431",
+        "type": "topic",
+        "href": "/subjects/indian-polity/constitutional-government-bodies",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:2a425ba9-9d91-4cf7-8169-f831c861cd53",
+        "type": "topic",
+        "href": "/subjects/indian-polity/emergency-special-provisions",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:1b058e04-2d54-4630-bd24-5469956de4f7",
+        "type": "topic",
+        "href": "/subjects/indian-polity/civil-services-governance-accountability",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:00c21181-403f-417a-9726-2f8a11460a79",
+        "type": "topic",
+        "href": "/subjects/indian-polity/social-justice-welfare-rights",
+        "structurallyValid": true
+      },
+      {
+        "id": "topic:d397a56d-1ea7-4eeb-9d26-2df6688f43e4",
+        "type": "topic",
+        "href": "/subjects/indian-polity/state-ut-polity-administration",
+        "structurallyValid": true
+      },
+      {
+        "id": "subtopic:ce0d9936-0356-48ba-8de6-a6ec74918735",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/social-justice-welfare-rights/sc-st-obc-ews-safeguards-representation/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:ce181696-b260-40a3-8550-256c074705f9",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-meaning-types-constitutionalism/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:b3533b4f-cd35-4dbd-8204-69df41a04029",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/parliament/parliament-houses-members-sessions-officers/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:2118e76a-e789-4af7-8301-88cbc9ea54ab",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/elections-political-parties/election-commission-rolls-constituencies/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:172421db-d4c9-492c-9468-5c385ca040bc",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/fundamental-rights/fundamental-rights-equality-reservation/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:9c6d56e8-0f9b-4790-922b-9b2de778058c",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/amendment-basic-structure/constitutional-amendment-procedure/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:2e308547-c863-4a58-9510-560d02a10a67",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/judiciary/judiciary-structure-independence-appointments/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:69fd5232-342a-4976-8134-3dcb1e3f6f0b",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/federalism-centre-state-relations/indian-federalism-legislative-relations/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:60751647-539e-44fe-abce-20194b378698",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/state-ut-polity-administration/state-government-institutions-profile/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:0b0684f2-4bf4-4f5a-9e09-ad4f275aebfc",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/civil-services-governance-accountability/public-administration-organisation-principles/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:e967b079-e835-4d54-b4e5-ff8089ad5799",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/union-executive/president-vice-president-election-term-removal/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:aa14ea5d-7063-4f02-b7d9-253544113ae3",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/territory-citizenship-language/union-states-formation-reorganisation/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:a6698cb2-6f2f-4795-9010-9163e96b7778",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/local-district-administration/local-government-history-constitutional-framework/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:22baaa9d-9835-4d54-a050-98359c9045ea",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitutional-government-bodies/public-service-recruitment-commissions/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:374ec737-05bc-4d56-b42c-e334736e49c0",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/dpsp-fundamental-duties/dpsp-articles-classification-implementation/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:d761db42-2415-4d5d-9ce8-f511db2eb990",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/state-government/governor-appointment-powers-discretion/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:7848b38a-7c6e-48fd-a5fb-8b64b6ff194d",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:5edbbae9-2268-460a-bf49-a8bb25de57c9",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/emergency-special-provisions/national-state-financial-emergencies/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:720fa9b0-7026-4fa7-92a1-f4f08fcaf321",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitutional-government-bodies/finance-audit-gst-constitutional-bodies/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:0cc105fb-0964-4a8e-aee7-125a45356a7b",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/local-district-administration/panchayati-raj-gram-sabha/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:98eb3fa6-d8b1-43e1-b9d6-a045bdf5dae7",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/social-justice-welfare-rights/women-children-rights-protection/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:fec5d498-0add-4ce0-8386-72b1fac7f144",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/civil-services-governance-accountability/civil-services-recruitment-conduct-protection/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:bb4faa77-28a0-4fe7-a058-03f3ee4b009d",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/dpsp-fundamental-duties/fundamental-duties-article-51a/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:97993800-a26f-4002-b0e3-0f520bb265f9",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/emergency-special-provisions/fifth-sixth-schedules-tribal-areas-pesa/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:6335931c-a645-483d-bd31-8f39686238ec",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/parliament/parliament-bills-law-making/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:c3baf463-8bf7-4b75-8559-3422e7b1f025",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/judiciary/supreme-high-courts-jurisdiction-powers/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:753a4625-e262-4b5c-966b-3c1089d8b9c8",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/amendment-basic-structure/important-constitutional-amendments-effects/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:a59c34d1-8088-4e0f-ac61-6e7786938220",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/fundamental-rights/freedom-criminal-protection-life-liberty/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:0a04beb7-714b-4831-b999-168ca1b24e4e",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:44a991e8-fc89-4f1c-b21d-5ecfbb6447f9",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitutional-history-making/crown-rule-reforms-1858-1909/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:2cccda42-5c72-4a99-aa91-fc9570fde086",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/territory-citizenship-language/union-territories-special-administration/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:91ba73d7-85bb-4fb3-b15d-396a5e6cf7f5",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/state-ut-polity-administration/state-commissions-services-accountability-laws/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:f0ee2e02-338b-4f66-9c75-45edf81a937b",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/federalism-centre-state-relations/centre-state-administrative-relations/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:45297609-0465-40c4-b83a-00693cd20a91",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/state-government/chief-minister-state-ministers-secretariat/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:ed116346-33b4-41a6-b510-bc144b0793ad",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/union-executive/president-powers-constitutional-role/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:c18826d3-fe86-4ffa-a429-94dbbdb5ab2a",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/elections-political-parties/election-law-candidates-petitions/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:a0f9070b-2a06-427e-bb93-2d95866e7e55",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitutional-history-making/constitutional-reforms-1919-1935/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:a53701f7-3fa7-465a-aa5c-8832c0f95c6f",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitution-basics-preamble-schedules/parts-articles-schedules-key-terms/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:d6e7858a-f8e5-48a1-84c1-841073f04ad0",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/emergency-special-provisions/articles-371-371j-special-state-provisions/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:cc2f56b7-8559-4d99-b79d-991c45b38610",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/state-ut-polity-administration/state-local-land-revenue-district-laws/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:b21bb3cc-4a59-4f54-bbcf-60543967c9dd",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/fundamental-rights/exploitation-religion-cultural-education-rights/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:cbdcf369-a8b6-4324-a20a-7054845ced78",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/social-justice-welfare-rights/minorities-disabilities-vulnerable-groups-rights/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:32174a7a-5465-4ced-af8f-f125fc1678ea",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/local-district-administration/municipalities-urban-local-government/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:93b68471-66f6-4df1-bf76-5780f90c5d5d",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/federalism-centre-state-relations/centre-state-financial-relations/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:836967d8-b336-44bc-8c9e-3abba1718482",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/dpsp-fundamental-duties/fundamental-rights-dpsp-relationship/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:6512314c-b162-4e2f-8243-ac0458d00305",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/state-government/state-legislature-houses-members-officers/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:5d921f51-e90e-4f0b-a728-c5d259114896",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/judiciary/lower-courts-tribunals-legal-aid-adr/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:5bf64ad3-713d-4ae3-8a12-9eadcf7e06e3",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitutional-government-bodies/social-justice-constitutional-commissions/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:c14cdeca-a66a-49f7-bd99-6493fde7fef5",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/elections-political-parties/political-parties-symbols-campaign-funding/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:bcf4cc49-f73a-4f38-97a1-afef556e6678",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/parliament/parliament-budget-money-bills/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:1e721ed3-c17b-4de8-946a-e6fdfd6e5e53",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/amendment-basic-structure/basic-structure-doctrines-cases/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:a7856e00-2281-4d09-9ffc-43fc253a0c0e",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/civil-services-governance-accountability/rti-citizen-charter-grievance-redress/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:4935e033-0c27-4c6d-996b-9ff76ea3f32d",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/union-executive/prime-minister-council-ministers-cabinet/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:47dbe935-442a-4cac-9016-3b2b9131da2f",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/territory-citizenship-language/indian-citizenship-constitution-act-oci/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:09cca334-a472-433f-856c-5eecf998f8b3",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/fundamental-rights/writs-remedies-limits-fundamental-rights/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:c903c1cf-383e-466e-80ef-b63417b11c84",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/local-district-administration/local-elections-finance-planning-devolution/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:eb3e98cf-b075-4d69-9ed3-58b7d77d1e32",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:7d59bf0c-6eaa-404d-bc55-70eada2699ab",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitutional-history-making/independence-transfer-power-1935-1947/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:b001b0c7-56a9-4a14-b339-63de19549acf",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/civil-services-governance-accountability/e-governance-social-audit-public-policy/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:0ae47df5-6294-4cb6-b04a-0cd464f9bee0",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitutional-government-bodies/law-officers-legal-advisory-bodies/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:8c5f1164-0686-4f55-ab0b-dd2786173b54",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/territory-citizenship-language/official-language-linguistic-safeguards/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:c4d9d2bf-b7c9-4ffa-8f2f-fb2918f127dd",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/social-justice-welfare-rights/education-health-food-work-social-security/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:edf2d768-2398-43fc-9fea-2c0eca8bfd77",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/union-executive/union-government-ministries-pmo-secretariat/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:f7a03d0a-5162-4823-8bb0-438babbe6272",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/state-ut-polity-administration/union-territories-local-polity-administration/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:5da52a5b-00da-46db-bcf2-41b3de479baa",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/federalism-centre-state-relations/inter-state-disputes-water-trade/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:ebcc8c3e-4706-40c3-b898-3be7c85adbb0",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/elections-political-parties/electoral-systems-voting-reforms/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:db7ef483-32a6-4364-940c-e242cb6a246b",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/judiciary/judicial-review-pil-accountability-cases/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:15dd114e-bcb2-41e3-8f88-3a43cd72209e",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/parliament/parliament-questions-motions-accountability/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:2cbf02ae-6006-4f5f-8161-305946d1f9ef",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/state-government/state-legislature-bills-budget-accountability/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:ec4ed195-6ee7-4456-b35d-3964fffea7d8",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/local-district-administration/district-tehsil-revenue-rural-administration/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:9a0403f4-999b-440a-bf0c-8926385f7232",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitutional-government-bodies/anti-corruption-information-rights-bodies/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:9ab18270-88da-4f5f-8f3b-8294335bf8f6",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/parliament/parliament-committees-privileges-anti-defection/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:1b6bc9e1-19a6-43bd-90bf-5045b34b4046",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitutional-history-making/constituent-assembly-constitution-making/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:60a50464-91d3-4356-8494-06392805112c",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/civil-services-governance-accountability/probity-ethics-corruption-control/practice",
+        "structurallyValid": false
+      },
+      {
+        "id": "subtopic:d851c0cc-1419-41f6-96d6-063e3ed801f9",
+        "type": "subtopic",
+        "href": "/subjects/indian-polity/constitutional-government-bodies/policy-regulatory-quasi-judicial-bodies/practice",
+        "structurallyValid": false
+      }
+    ]
+  },
+  "orphans": [],
+  "failures": [
+    {
+      "scope": "/manifest.webmanifest",
+      "detail": "HTTP 404"
+    },
+    {
+      "scope": "/subjects",
+      "detail": "heading jump H1 → H3"
+    },
+    {
+      "scope": "/subjects",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/contact",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/about_us",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/privacy",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/terms",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/disclaimer",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/refund-policy",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/map-practice",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/constitutional-history-making",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/fundamental-rights",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/territory-citizenship-language",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/dpsp-fundamental-duties",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/amendment-basic-structure",
+      "detail": "sitemap URL is noindex"
+    },
+    {
+      "scope": "/subjects/indian-polity/amendment-basic-structure",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/federalism-centre-state-relations",
+      "detail": "sitemap URL is noindex"
+    },
+    {
+      "scope": "/subjects/indian-polity/federalism-centre-state-relations",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/union-executive",
+      "detail": "title is excessively long (92 characters)"
+    },
+    {
+      "scope": "/subjects/indian-polity/union-executive",
+      "detail": "sitemap URL is noindex"
+    },
+    {
+      "scope": "/subjects/indian-polity/union-executive",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/constitution-basics-preamble-schedules",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/parliament",
+      "detail": "sitemap URL is noindex"
+    },
+    {
+      "scope": "/subjects/indian-polity/parliament",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/state-government",
+      "detail": "sitemap URL is noindex"
+    },
+    {
+      "scope": "/subjects/indian-polity/state-government",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/elections-political-parties",
+      "detail": "sitemap URL is noindex"
+    },
+    {
+      "scope": "/subjects/indian-polity/elections-political-parties",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/judiciary",
+      "detail": "sitemap URL is noindex"
+    },
+    {
+      "scope": "/subjects/indian-polity/judiciary",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/local-district-administration",
+      "detail": "sitemap URL is noindex"
+    },
+    {
+      "scope": "/subjects/indian-polity/local-district-administration",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/constitutional-government-bodies",
+      "detail": "sitemap URL is noindex"
+    },
+    {
+      "scope": "/subjects/indian-polity/constitutional-government-bodies",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/emergency-special-provisions",
+      "detail": "sitemap URL is noindex"
+    },
+    {
+      "scope": "/subjects/indian-polity/emergency-special-provisions",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/civil-services-governance-accountability",
+      "detail": "sitemap URL is noindex"
+    },
+    {
+      "scope": "/subjects/indian-polity/civil-services-governance-accountability",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/social-justice-welfare-rights",
+      "detail": "sitemap URL is noindex"
+    },
+    {
+      "scope": "/subjects/indian-polity/social-justice-welfare-rights",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/state-ut-polity-administration",
+      "detail": "sitemap URL is noindex"
+    },
+    {
+      "scope": "/subjects/indian-polity/state-ut-polity-administration",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/history",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "detail": "deprecated FAQPage schema is present"
+    },
+    {
+      "scope": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/revision",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/history/topics",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/science",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/economics",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/science/topics",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/revision",
+      "detail": "meta description is excessively long (174 characters)"
+    },
+    {
+      "scope": "/subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/revision",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/geography",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/geography/topics",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/economics/topics",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/math",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/math/topics",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/reasoning",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/reasoning/topics",
+      "detail": "site identity schema must appear on the homepage only"
+    },
+    {
+      "scope": "/classic",
+      "detail": "expected noindex"
+    },
+    {
+      "scope": "/pcb_page",
+      "detail": "expected permanent redirect to /science, found 200 "
+    },
+    {
+      "scope": "/pyq",
+      "detail": "expected permanent redirect to /subjects, found 200 "
+    },
+    {
+      "scope": "query-canonical",
+      "detail": "stage variant canonical is https://questionwale.com"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/social-justice-welfare-rights/sc-st-obc-ews-safeguards-representation/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitution-basics-preamble-schedules/constitution-meaning-types-constitutionalism/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/parliament/parliament-houses-members-sessions-officers/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/elections-political-parties/election-commission-rolls-constituencies/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/fundamental-rights/fundamental-rights-equality-reservation/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/amendment-basic-structure/constitutional-amendment-procedure/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/judiciary/judiciary-structure-independence-appointments/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/federalism-centre-state-relations/indian-federalism-legislative-relations/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/state-ut-polity-administration/state-government-institutions-profile/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/civil-services-governance-accountability/public-administration-organisation-principles/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/union-executive/president-vice-president-election-term-removal/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/territory-citizenship-language/union-states-formation-reorganisation/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/local-district-administration/local-government-history-constitutional-framework/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitutional-government-bodies/public-service-recruitment-commissions/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/dpsp-fundamental-duties/dpsp-articles-classification-implementation/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/state-government/governor-appointment-powers-discretion/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/emergency-special-provisions/national-state-financial-emergencies/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitutional-government-bodies/finance-audit-gst-constitutional-bodies/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/local-district-administration/panchayati-raj-gram-sabha/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/social-justice-welfare-rights/women-children-rights-protection/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/civil-services-governance-accountability/civil-services-recruitment-conduct-protection/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/dpsp-fundamental-duties/fundamental-duties-article-51a/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/emergency-special-provisions/fifth-sixth-schedules-tribal-areas-pesa/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/parliament/parliament-bills-law-making/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/judiciary/supreme-high-courts-jurisdiction-powers/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/amendment-basic-structure/important-constitutional-amendments-effects/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/fundamental-rights/freedom-criminal-protection-life-liberty/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitution-basics-preamble-schedules/constitution-features-sources-comparison/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitutional-history-making/crown-rule-reforms-1858-1909/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/territory-citizenship-language/union-territories-special-administration/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/state-ut-polity-administration/state-commissions-services-accountability-laws/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/federalism-centre-state-relations/centre-state-administrative-relations/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/state-government/chief-minister-state-ministers-secretariat/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/union-executive/president-powers-constitutional-role/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/elections-political-parties/election-law-candidates-petitions/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitutional-history-making/constitutional-reforms-1919-1935/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitution-basics-preamble-schedules/parts-articles-schedules-key-terms/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/emergency-special-provisions/articles-371-371j-special-state-provisions/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/state-ut-polity-administration/state-local-land-revenue-district-laws/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/fundamental-rights/exploitation-religion-cultural-education-rights/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/social-justice-welfare-rights/minorities-disabilities-vulnerable-groups-rights/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/local-district-administration/municipalities-urban-local-government/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/federalism-centre-state-relations/centre-state-financial-relations/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/dpsp-fundamental-duties/fundamental-rights-dpsp-relationship/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/state-government/state-legislature-houses-members-officers/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/judiciary/lower-courts-tribunals-legal-aid-adr/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitutional-government-bodies/social-justice-constitutional-commissions/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/elections-political-parties/political-parties-symbols-campaign-funding/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/parliament/parliament-budget-money-bills/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/amendment-basic-structure/basic-structure-doctrines-cases/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/civil-services-governance-accountability/rti-citizen-charter-grievance-redress/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/union-executive/prime-minister-council-ministers-cabinet/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/territory-citizenship-language/indian-citizenship-constitution-act-oci/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/fundamental-rights/writs-remedies-limits-fundamental-rights/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/local-district-administration/local-elections-finance-planning-devolution/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitution-basics-preamble-schedules/preamble-words-ideals-legal-status/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitutional-history-making/independence-transfer-power-1935-1947/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/civil-services-governance-accountability/e-governance-social-audit-public-policy/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitutional-government-bodies/law-officers-legal-advisory-bodies/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/territory-citizenship-language/official-language-linguistic-safeguards/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/social-justice-welfare-rights/education-health-food-work-social-security/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/union-executive/union-government-ministries-pmo-secretariat/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/state-ut-polity-administration/union-territories-local-polity-administration/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/federalism-centre-state-relations/inter-state-disputes-water-trade/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/elections-political-parties/electoral-systems-voting-reforms/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/judiciary/judicial-review-pil-accountability-cases/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/parliament/parliament-questions-motions-accountability/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/state-government/state-legislature-bills-budget-accountability/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/local-district-administration/district-tehsil-revenue-rural-administration/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitutional-government-bodies/anti-corruption-information-rights-bodies/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/parliament/parliament-committees-privileges-anti-defection/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitutional-history-making/constituent-assembly-constitution-making/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/civil-services-governance-accountability/probity-ethics-corruption-control/practice"
+    },
+    {
+      "scope": "search-catalog",
+      "detail": "subtopic has invalid canonical path: /subjects/indian-polity/constitutional-government-bodies/policy-regulatory-quasi-judicial-bodies/practice"
+    }
+  ],
+  "warnings": []
+}

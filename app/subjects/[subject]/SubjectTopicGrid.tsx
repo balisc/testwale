@@ -7,7 +7,7 @@ import IconByKey from '@/components/IconByKey';
 import PracticePathBuilder from '@/components/PracticePathBuilder';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useCatalogText } from '@/lib/useCatalogText';
-import { normalizeExamCode } from '@/lib/polity';
+import { normalizeExamCode } from '@/lib/examCode';
 import type { Exam, Topic, TopicWithPriority } from '@/types/polity';
 import type { PolityRankedExamOption } from '@/types/polityExamRankingV2';
 import { topicMatchesSearch } from './SubjectPageContent';
@@ -19,6 +19,7 @@ type SubjectTopicGridProps = {
   examCode: string | null;
   exams: Exam[];
   rankedExams?: PolityRankedExamOption[];
+  examLocked?: boolean;
 };
 
 function isPriorityTopic(topic: Topic | TopicWithPriority): topic is TopicWithPriority {
@@ -48,10 +49,11 @@ function TopicCard({
     viewSubtopics: string;
     subtopics: string;
     questions: string;
+    scope: string;
   };
 }) {
   const title = useCatalogText(topic.title);
-  const description = useCatalogText(topic.description);
+  const scope = useCatalogText(topic.scope ?? topic.description);
   // Always call hook — never inside ternary (Rules of Hooks)
   const importanceText = useCatalogText(isPriorityTopic(topic) ? topic.importance : null);
   const importance = isPriorityTopic(topic) && importanceText ? importanceText : null;
@@ -84,8 +86,11 @@ function TopicCard({
         </div>
       </div>
 
-      {description && (
-        <p className="mt-3 line-clamp-2 flex-1 text-xs leading-relaxed text-slate-500 sm:text-sm">{description}</p>
+      {scope && (
+        <p className="mt-3 line-clamp-3 flex-1 text-xs leading-relaxed text-slate-500 sm:text-sm">
+          <span className="font-semibold text-slate-700">{c.scope}: </span>
+          {scope}
+        </p>
       )}
 
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
@@ -122,6 +127,7 @@ const COPY = {
     viewSubtopics: 'View Subtopics',
     subtopics: 'subtopics',
     questions: 'questions',
+    scope: 'Scope',
   },
   hi: {
     chooseTopic: 'एक विषय चुनें',
@@ -134,6 +140,7 @@ const COPY = {
     viewSubtopics: 'उप-विषय देखें',
     subtopics: 'उप-विषय',
     questions: 'प्रश्न',
+    scope: 'दायरा',
   },
 };
 
@@ -144,6 +151,7 @@ export default function SubjectTopicGrid({
   examCode,
   exams,
   rankedExams,
+  examLocked = false,
 }: SubjectTopicGridProps) {
   const { language } = useLanguage();
   const c = COPY[language];
@@ -213,12 +221,14 @@ export default function SubjectTopicGrid({
         )}
       </section>
 
-      <PracticePathBuilder
-        subjectSlug={subjectSlug}
-        exams={exams}
-        rankedExams={rankedExams}
-        selectedExam={examCode}
-      />
+      {!examLocked ? (
+        <PracticePathBuilder
+          subjectSlug={subjectSlug}
+          exams={exams}
+          rankedExams={rankedExams}
+          selectedExam={examCode}
+        />
+      ) : null}
     </>
   );
 }

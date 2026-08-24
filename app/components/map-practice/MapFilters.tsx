@@ -66,7 +66,7 @@ export default function MapFilters({
             type="checkbox"
             checked={timerEnabled}
             onChange={(event) => onTimerToggle(event.target.checked)}
-            className="h-4 w-4 accent-indigo-600"
+            className="h-6 w-6 accent-indigo-600"
           />
           30s timer mode
         </label>

@@ -168,10 +168,10 @@ export default function HomeHero({ totalQuestions }: { totalQuestions: number | 
               Start Free Practice →
             </Link>
             <Link
-              href="/#subjects"
+              href="/#public-exam-explorer"
               className="inline-flex h-12 items-center justify-center rounded-xl border border-[#E4E7EC] bg-white px-6 text-[15px] font-semibold text-[#18181B] transition hover:border-[#DDD6FE] hover:bg-[#F5F3FF] max-[479px]:h-11 max-[479px]:w-full max-[479px]:px-4 max-[479px]:text-sm"
             >
-              Explore Subjects
+              Explore SSC Exams
             </Link>
           </div>
 

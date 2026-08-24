@@ -6,6 +6,7 @@ import {
   parseBatchQuestionIdsPayload,
   privateNoStoreJsonResponse,
 } from '@/lib/publicQuestionApiGuards';
+import { getSelectedExamContext } from '@/lib/examLearningServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,13 +66,21 @@ export async function POST(request: Request) {
     return privateNoStoreJsonResponse({ attempts: [] as PracticeAttemptRestoreRow[] });
   }
 
+  const selected = await getSelectedExamContext();
+  if (selected.status === 'incomplete') return privateErrorResponse('onboarding_incomplete', 409);
+  if (selected.status === 'inactive') return privateErrorResponse('selected_exam_inactive', 409);
+  if (selected.status !== 'ready' || selected.userId !== user!.id) return privateErrorResponse('exam_scope_failed', 503);
+
   // Only restore attempts for IDs that still exist as public practice questions.
-  const { data: liveRows, error: liveError } = await admin
+  const liveQuery = admin
     .from('questions')
-    .select('id')
+    .select('id, question_exam_profile_mappings!inner(exam_profile_id, is_active)')
     .in('id', questionIds)
     .eq('is_active', true)
-    .eq('is_verified', true);
+    .eq('is_verified', true)
+    .eq('question_exam_profile_mappings.exam_profile_id', selected.examProfileId)
+    .eq('question_exam_profile_mappings.is_active', true);
+  const { data: liveRows, error: liveError } = await liveQuery;
 
   if (liveError) {
     console.error('[practice/attempts] live filter', liveError.message);

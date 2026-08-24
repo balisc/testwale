@@ -5,10 +5,10 @@ const COLUMNS = [
   {
     title: 'Practice',
     links: [
-      { label: 'Subjects', href: '/#subjects' },
+      { label: 'SSC Exams', href: '/#public-exam-explorer' },
       { label: 'Indian Polity', href: '/subjects/indian-polity' },
       { label: 'Practice MCQs', href: '/subjects/indian-polity' },
-      { label: 'Exam Practice Paths', href: '/#subjects' },
+      { label: 'Exam Practice Paths', href: '/#public-exam-explorer' },
     ],
   },
   {

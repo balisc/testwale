@@ -114,7 +114,7 @@ export function buildPracticeHref(
   examCode: string | null,
 ): string {
   const base = subtopicSlug
-    ? `/subjects/${subjectSlug}/${topicSlug}/${subtopicSlug}/practice`
+    ? `/subjects/${subjectSlug}/${topicSlug}/practice/${subtopicSlug}`
     : `/subjects/${subjectSlug}/${topicSlug}/practice`;
   if (!examCode) return base;
   return `${base}?exam=${encodeURIComponent(examCode)}`;

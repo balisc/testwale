@@ -26,7 +26,7 @@ export default function HomeHeroIllustration() {
           alt="Student practicing bilingual MCQs on QuestionWale"
           width={1160}
           height={773}
-          priority
+          preload
           fetchPriority="high"
           className="h-auto w-full object-contain"
           sizes="(max-width: 1024px) 94vw, 580px"

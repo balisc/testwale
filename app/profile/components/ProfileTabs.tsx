@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   isProfileTabEnabled,
   profileTabHref,
@@ -23,6 +25,7 @@ type ProfileTabsProps = {
 };
 
 export default function ProfileTabs({ copy, activeTab }: ProfileTabsProps) {
+  const router = useRouter();
   const tabs: TabDef[] = [
     { id: 'overview', label: copy.tabs.overview, href: '/profile', available: isProfileTabEnabled('overview') },
     { id: 'insights', label: copy.tabs.insights, href: profileTabHref('insights'), available: isProfileTabEnabled('insights') },
@@ -31,11 +34,24 @@ export default function ProfileTabs({ copy, activeTab }: ProfileTabsProps) {
     { id: 'goals', label: copy.tabs.goals, href: profileTabHref('goals'), available: isProfileTabEnabled('goals') },
   ];
 
+  useEffect(() => {
+    const paths = [
+      '/profile',
+      profileTabHref('insights'),
+      profileTabHref('activity'),
+      profileTabHref('saved'),
+      profileTabHref('goals'),
+    ];
+    for (const path of paths) {
+      if (path) router.prefetch(path);
+    }
+  }, [router]);
+
   return (
     <div
       role="tablist"
       aria-label={copy.title}
-      className="flex gap-1 overflow-x-auto border-b border-[#E2E8F0] pb-px [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="flex w-full min-w-0 max-w-full gap-1 overflow-x-auto overscroll-x-contain border-b border-[#E2E8F0] pb-px [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {tabs.map((tab) => {
         const isActive = tab.id === activeTab;

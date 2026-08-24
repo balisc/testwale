@@ -19,6 +19,7 @@ const COPY = {
     topics: 'Topics',
     questions: 'Questions',
     bilingual: 'English + Hindi bilingual MCQs',
+    changeExam: 'Change exam',
   },
   hi: {
     home: 'होम',
@@ -27,6 +28,7 @@ const COPY = {
     topics: 'विषय',
     questions: 'प्रश्न',
     bilingual: 'English + हिंदी द्विभाषी MCQs',
+    changeExam: 'परीक्षा बदलें',
   },
 };
 
@@ -39,6 +41,7 @@ type SubjectPageContentProps = {
   examCode: string | null;
   topicCount: number;
   questionCount: number;
+  examLocked?: boolean;
 };
 
 export default function SubjectPageContent({
@@ -50,11 +53,15 @@ export default function SubjectPageContent({
   examCode,
   topicCount,
   questionCount,
+  examLocked = false,
 }: SubjectPageContentProps) {
   const { language } = useLanguage();
   const c = COPY[language];
   const subjectTitle = useCatalogText(subject.title);
   const subjectDescription = useCatalogText(subject.description);
+  const lockedExamTitle = examCode
+    ? pickCatalogText(exams.find((exam) => exam.code === examCode)?.title ?? null, language) || examCode
+    : '';
 
   return (
     <div className="mx-auto max-w-[1240px] px-4 pb-14 pt-6 sm:px-6 lg:px-8">
@@ -96,13 +103,20 @@ export default function SubjectPageContent({
               </p>
             )}
 
-            <TargetExamSelector
-              subjectSlug={subjectSlug}
-              exams={exams}
-              rankedExams={rankedExams}
-              selectedExam={examCode}
-              className="mt-5"
-            />
+            {examLocked ? (
+              <div className="mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-purple-200 bg-white p-4">
+                <span className="font-semibold text-slate-800">{lockedExamTitle}</span>
+                <Link href="/onboarding?edit=1&returnTo=%2Fdashboard" className="text-sm font-semibold text-brand hover:underline">{c.changeExam}</Link>
+              </div>
+            ) : (
+              <TargetExamSelector
+                subjectSlug={subjectSlug}
+                exams={exams}
+                rankedExams={rankedExams}
+                selectedExam={examCode}
+                className="mt-5"
+              />
+            )}
           </div>
 
           <div className="relative flex min-h-[200px] items-center justify-center">
@@ -113,7 +127,9 @@ export default function SubjectPageContent({
                 width={640}
                 height={480}
                 className="max-h-[280px] w-full object-contain"
-                unoptimized
+                sizes="(max-width: 1023px) calc(100vw - 74px), 448px"
+                preload
+                fetchPriority="high"
               />
             ) : (
               <div className="flex h-40 w-40 items-center justify-center rounded-3xl bg-white/80 shadow-sm">
@@ -160,6 +176,7 @@ export default function SubjectPageContent({
         examCode={examCode}
         exams={exams}
         rankedExams={rankedExams}
+        examLocked={examLocked}
       />
     </div>
   );

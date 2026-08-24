@@ -1,0 +1,1059 @@
+{
+  "generatedAt": "2026-08-24T10:06:07.020Z",
+  "baseUrl": "http://127.0.0.1:3017",
+  "browser": "Chrome DevTools Protocol",
+  "viewports": [
+    {
+      "width": 320,
+      "height": 640
+    },
+    {
+      "width": 360,
+      "height": 800
+    },
+    {
+      "width": 375,
+      "height": 812
+    },
+    {
+      "width": 390,
+      "height": 844
+    },
+    {
+      "width": 412,
+      "height": 915
+    },
+    {
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "width": 1440,
+      "height": 900
+    }
+  ],
+  "routes": [
+    "/",
+    "/subjects",
+    "/exams/ssc-cgl/subj-reasoning/rea-analogies",
+    "/subjects/indian-polity",
+    "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+    "/map-practice",
+    "/contact"
+  ],
+  "failures": 0,
+  "results": [
+    {
+      "route": "/",
+      "routeName": "home",
+      "viewport": {
+        "width": 320,
+        "height": 640
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 320,
+      "scrollWidth": 320,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Government Exam MCQ Practice in Hindi & English"
+    },
+    {
+      "route": "/subjects",
+      "routeName": "subjects",
+      "viewport": {
+        "width": 320,
+        "height": 640
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 320,
+      "scrollWidth": 320,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Subjects — MCQ Practice | QuestionWale"
+    },
+    {
+      "route": "/exams/ssc-cgl/subj-reasoning/rea-analogies",
+      "routeName": "exam-topic",
+      "viewport": {
+        "width": 320,
+        "height": 640
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 320,
+      "scrollWidth": 320,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Analogies — SSC CGL Syllabus | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity",
+      "routeName": "catalog-subject",
+      "viewport": {
+        "width": 320,
+        "height": 640
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 320,
+      "scrollWidth": 320,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Indian Polity — MCQ Topics | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "routeName": "revision",
+      "viewport": {
+        "width": 320,
+        "height": 640
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 320,
+      "scrollWidth": 320,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Company Rule and Early Acts Revision Notes in Hindi | Indian Polity | QuestionWale"
+    },
+    {
+      "route": "/map-practice",
+      "routeName": "map-practice",
+      "viewport": {
+        "width": 320,
+        "height": 640
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 320,
+      "scrollWidth": 320,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Map Practice | QuestionWale"
+    },
+    {
+      "route": "/contact",
+      "routeName": "contact",
+      "viewport": {
+        "width": 320,
+        "height": 640
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 320,
+      "scrollWidth": 320,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Contact & Support | QuestionWale"
+    },
+    {
+      "route": "/",
+      "routeName": "home",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 360,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Government Exam MCQ Practice in Hindi & English"
+    },
+    {
+      "route": "/subjects",
+      "routeName": "subjects",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 360,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Subjects — MCQ Practice | QuestionWale"
+    },
+    {
+      "route": "/exams/ssc-cgl/subj-reasoning/rea-analogies",
+      "routeName": "exam-topic",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 360,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Analogies — SSC CGL Syllabus | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity",
+      "routeName": "catalog-subject",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 360,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Indian Polity — MCQ Topics | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "routeName": "revision",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 360,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Company Rule and Early Acts Revision Notes in Hindi | Indian Polity | QuestionWale"
+    },
+    {
+      "route": "/map-practice",
+      "routeName": "map-practice",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 360,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Map Practice | QuestionWale"
+    },
+    {
+      "route": "/contact",
+      "routeName": "contact",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 360,
+      "scrollWidth": 360,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Contact & Support | QuestionWale"
+    },
+    {
+      "route": "/",
+      "routeName": "home",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 375,
+      "scrollWidth": 375,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Government Exam MCQ Practice in Hindi & English"
+    },
+    {
+      "route": "/subjects",
+      "routeName": "subjects",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 375,
+      "scrollWidth": 375,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Subjects — MCQ Practice | QuestionWale"
+    },
+    {
+      "route": "/exams/ssc-cgl/subj-reasoning/rea-analogies",
+      "routeName": "exam-topic",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 375,
+      "scrollWidth": 375,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Analogies — SSC CGL Syllabus | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity",
+      "routeName": "catalog-subject",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 375,
+      "scrollWidth": 375,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Indian Polity — MCQ Topics | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "routeName": "revision",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 375,
+      "scrollWidth": 375,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Company Rule and Early Acts Revision Notes in Hindi | Indian Polity | QuestionWale"
+    },
+    {
+      "route": "/map-practice",
+      "routeName": "map-practice",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 375,
+      "scrollWidth": 375,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Map Practice | QuestionWale"
+    },
+    {
+      "route": "/contact",
+      "routeName": "contact",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 375,
+      "scrollWidth": 375,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Contact & Support | QuestionWale"
+    },
+    {
+      "route": "/",
+      "routeName": "home",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Government Exam MCQ Practice in Hindi & English"
+    },
+    {
+      "route": "/subjects",
+      "routeName": "subjects",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Subjects — MCQ Practice | QuestionWale"
+    },
+    {
+      "route": "/exams/ssc-cgl/subj-reasoning/rea-analogies",
+      "routeName": "exam-topic",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Analogies — SSC CGL Syllabus | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity",
+      "routeName": "catalog-subject",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Indian Polity — MCQ Topics | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "routeName": "revision",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Company Rule and Early Acts Revision Notes in Hindi | Indian Polity | QuestionWale"
+    },
+    {
+      "route": "/map-practice",
+      "routeName": "map-practice",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Map Practice | QuestionWale"
+    },
+    {
+      "route": "/contact",
+      "routeName": "contact",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Contact & Support | QuestionWale"
+    },
+    {
+      "route": "/",
+      "routeName": "home",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 412,
+      "scrollWidth": 412,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Government Exam MCQ Practice in Hindi & English"
+    },
+    {
+      "route": "/subjects",
+      "routeName": "subjects",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 412,
+      "scrollWidth": 412,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Subjects — MCQ Practice | QuestionWale"
+    },
+    {
+      "route": "/exams/ssc-cgl/subj-reasoning/rea-analogies",
+      "routeName": "exam-topic",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 412,
+      "scrollWidth": 412,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Analogies — SSC CGL Syllabus | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity",
+      "routeName": "catalog-subject",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 412,
+      "scrollWidth": 412,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Indian Polity — MCQ Topics | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "routeName": "revision",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 412,
+      "scrollWidth": 412,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Company Rule and Early Acts Revision Notes in Hindi | Indian Polity | QuestionWale"
+    },
+    {
+      "route": "/map-practice",
+      "routeName": "map-practice",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 412,
+      "scrollWidth": 412,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Map Practice | QuestionWale"
+    },
+    {
+      "route": "/contact",
+      "routeName": "contact",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 412,
+      "scrollWidth": 412,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Contact & Support | QuestionWale"
+    },
+    {
+      "route": "/",
+      "routeName": "home",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 768,
+      "scrollWidth": 768,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Government Exam MCQ Practice in Hindi & English"
+    },
+    {
+      "route": "/subjects",
+      "routeName": "subjects",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 768,
+      "scrollWidth": 768,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Subjects — MCQ Practice | QuestionWale"
+    },
+    {
+      "route": "/exams/ssc-cgl/subj-reasoning/rea-analogies",
+      "routeName": "exam-topic",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 768,
+      "scrollWidth": 768,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Analogies — SSC CGL Syllabus | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity",
+      "routeName": "catalog-subject",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 768,
+      "scrollWidth": 768,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Indian Polity — MCQ Topics | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "routeName": "revision",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 768,
+      "scrollWidth": 768,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Company Rule and Early Acts Revision Notes in Hindi | Indian Polity | QuestionWale"
+    },
+    {
+      "route": "/map-practice",
+      "routeName": "map-practice",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 768,
+      "scrollWidth": 768,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Map Practice | QuestionWale"
+    },
+    {
+      "route": "/contact",
+      "routeName": "contact",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 768,
+      "scrollWidth": 768,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Contact & Support | QuestionWale"
+    },
+    {
+      "route": "/",
+      "routeName": "home",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 1024,
+      "scrollWidth": 1024,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Government Exam MCQ Practice in Hindi & English"
+    },
+    {
+      "route": "/subjects",
+      "routeName": "subjects",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 1024,
+      "scrollWidth": 1024,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Subjects — MCQ Practice | QuestionWale"
+    },
+    {
+      "route": "/exams/ssc-cgl/subj-reasoning/rea-analogies",
+      "routeName": "exam-topic",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 1024,
+      "scrollWidth": 1024,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Analogies — SSC CGL Syllabus | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity",
+      "routeName": "catalog-subject",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 1024,
+      "scrollWidth": 1024,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Indian Polity — MCQ Topics | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "routeName": "revision",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 1024,
+      "scrollWidth": 1024,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Company Rule and Early Acts Revision Notes in Hindi | Indian Polity | QuestionWale"
+    },
+    {
+      "route": "/map-practice",
+      "routeName": "map-practice",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 1024,
+      "scrollWidth": 1024,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Map Practice | QuestionWale"
+    },
+    {
+      "route": "/contact",
+      "routeName": "contact",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 1024,
+      "scrollWidth": 1024,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Contact & Support | QuestionWale"
+    },
+    {
+      "route": "/",
+      "routeName": "home",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Government Exam MCQ Practice in Hindi & English"
+    },
+    {
+      "route": "/subjects",
+      "routeName": "subjects",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Subjects — MCQ Practice | QuestionWale"
+    },
+    {
+      "route": "/exams/ssc-cgl/subj-reasoning/rea-analogies",
+      "routeName": "exam-topic",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Analogies — SSC CGL Syllabus | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity",
+      "routeName": "catalog-subject",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Indian Polity — MCQ Topics | QuestionWale"
+    },
+    {
+      "route": "/subjects/indian-polity/constitutional-history-making/company-rule-acts-1773-1853/revision",
+      "routeName": "revision",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Company Rule and Early Acts Revision Notes in Hindi | Indian Polity | QuestionWale"
+    },
+    {
+      "route": "/map-practice",
+      "routeName": "map-practice",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Map Practice | QuestionWale"
+    },
+    {
+      "route": "/contact",
+      "routeName": "contact",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "httpStatus": 200,
+      "ok": true,
+      "innerWidth": 1440,
+      "scrollWidth": 1410,
+      "horizontalOverflowPx": 0,
+      "overflowElements": [],
+      "smallControls": [],
+      "h1Count": 1,
+      "viewportMeta": "width=device-width, initial-scale=1",
+      "title": "Contact & Support | QuestionWale"
+    }
+  ]
+}

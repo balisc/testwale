@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getSafeRedirectPath } from '@/lib/safeRedirect';
+import GoogleSignInButton from '@/app/components/GoogleSignInButton';
 
 type HomeGoogleCtaButtonProps = {
   /** Kept for call-site compatibility; OAuth uses server route /api/auth/google/start. */
@@ -41,11 +42,52 @@ function GoogleGLogo({ className }: { className?: string }) {
 }
 
 export default function HomeGoogleCtaButton({
+  clientId,
   disabled = false,
   redirectTo = '/profile',
   onError,
 }: HomeGoogleCtaButtonProps) {
   const [loading, setLoading] = useState(false);
+  const [useLocalCredentialFlow, setUseLocalCredentialFlow] = useState(false);
+
+  useEffect(() => {
+    setUseLocalCredentialFlow(
+      process.env.NODE_ENV !== 'production' &&
+        (window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1' ||
+          window.location.hostname === '[::1]'),
+    );
+  }, []);
+
+  const handleLocalCredential = (credential: string) => {
+    if (disabled || loading || !credential) return;
+
+    setLoading(true);
+    try {
+      const next = getSafeRedirectPath(redirectTo, '/dashboard');
+      const target = new URL('/api/auth/google/redirect', window.location.origin);
+      target.searchParams.set('next', next);
+
+      // A normal form navigation preserves the server's Set-Cookie response and
+      // follows its same-origin post-auth redirect without involving Supabase's
+      // hosted redirect allow-list. This path is used only on local development.
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = target.toString();
+      form.hidden = true;
+
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'credential';
+      input.value = credential;
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
+    } catch {
+      onError("We couldn't complete Google sign-in. Please try again.");
+      setLoading(false);
+    }
+  };
 
   const handleClick = () => {
     if (disabled || loading) return;
@@ -61,6 +103,20 @@ export default function HomeGoogleCtaButton({
       setLoading(false);
     }
   };
+
+  if (useLocalCredentialFlow) {
+    return (
+      <div className="h-10 w-full min-w-0 min-[360px]:h-11">
+        <GoogleSignInButton
+          clientId={clientId}
+          disabled={disabled || loading}
+          overlay
+          onCredential={handleLocalCredential}
+          onError={onError}
+        />
+      </div>
+    );
+  }
 
   return (
     <button

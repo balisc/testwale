@@ -6,6 +6,8 @@ export type AttemptOverview = {
   correct_count: number;
   wrong_count: number;
   accuracy_percent: number;
+  total_time_spent_seconds: number;
+  average_time_spent_seconds: number;
 };
 
 export type SubjectProgressRow = {
@@ -17,6 +19,8 @@ export type SubjectProgressRow = {
   correct_count: number;
   wrong_count: number;
   accuracy_percent: number;
+  total_time_spent_seconds: number;
+  average_time_spent_seconds: number;
 };
 
 export type TopicProgressRow = {
@@ -31,6 +35,8 @@ export type TopicProgressRow = {
   correct_count: number;
   wrong_count: number;
   accuracy_percent: number;
+  total_time_spent_seconds: number;
+  average_time_spent_seconds: number;
 };
 
 export type SubtopicProgressRow = {
@@ -48,6 +54,8 @@ export type SubtopicProgressRow = {
   correct_count: number;
   wrong_count: number;
   accuracy_percent: number;
+  total_time_spent_seconds: number;
+  average_time_spent_seconds: number;
 };
 
 export type RecentAttemptRow = {
@@ -64,6 +72,7 @@ export type RecentAttemptRow = {
   correct_option: string;
   is_correct: boolean;
   attempted_at: string;
+  time_spent_seconds: number | null;
 };
 
 export type UserProgressDashboard = {
@@ -97,6 +106,8 @@ function normalizeOverview(raw: Record<string, unknown> | null | undefined): Att
     correct_count: toNumber(raw?.correct_count),
     wrong_count: toNumber(raw?.wrong_count),
     accuracy_percent: toNumber(raw?.accuracy_percent),
+    total_time_spent_seconds: toNumber(raw?.total_time_spent_seconds),
+    average_time_spent_seconds: toNumber(raw?.average_time_spent_seconds),
   };
 }
 
@@ -110,6 +121,8 @@ function normalizeSubjectRow(raw: Record<string, unknown>): SubjectProgressRow {
     correct_count: toNumber(raw.correct_count),
     wrong_count: toNumber(raw.wrong_count),
     accuracy_percent: toNumber(raw.accuracy_percent),
+    total_time_spent_seconds: toNumber(raw.total_time_spent_seconds),
+    average_time_spent_seconds: toNumber(raw.average_time_spent_seconds),
   };
 }
 
@@ -126,6 +139,8 @@ function normalizeTopicRow(raw: Record<string, unknown>): TopicProgressRow {
     correct_count: toNumber(raw.correct_count),
     wrong_count: toNumber(raw.wrong_count),
     accuracy_percent: toNumber(raw.accuracy_percent),
+    total_time_spent_seconds: toNumber(raw.total_time_spent_seconds),
+    average_time_spent_seconds: toNumber(raw.average_time_spent_seconds),
   };
 }
 
@@ -145,6 +160,8 @@ function normalizeSubtopicRow(raw: Record<string, unknown>): SubtopicProgressRow
     correct_count: toNumber(raw.correct_count),
     wrong_count: toNumber(raw.wrong_count),
     accuracy_percent: toNumber(raw.accuracy_percent),
+    total_time_spent_seconds: toNumber(raw.total_time_spent_seconds),
+    average_time_spent_seconds: toNumber(raw.average_time_spent_seconds),
   };
 }
 
@@ -163,6 +180,7 @@ function normalizeRecentRow(raw: Record<string, unknown>): RecentAttemptRow {
     correct_option: String(raw.correct_option ?? ''),
     is_correct: Boolean(raw.is_correct),
     attempted_at: String(raw.attempted_at ?? ''),
+    time_spent_seconds: raw.time_spent_seconds == null ? null : toNumber(raw.time_spent_seconds),
   };
 }
 

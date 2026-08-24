@@ -54,7 +54,7 @@ export default function ProfileOverview({
   const hasPractice = metrics.questions > 0;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="w-full min-w-0 max-w-full space-y-4 sm:space-y-6">
       <ProfileSummaryPanel
         copy={copy}
         user={data.user}

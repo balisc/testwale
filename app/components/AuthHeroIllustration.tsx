@@ -13,7 +13,8 @@ export default function AuthHeroIllustration() {
         alt=""
         width={640}
         height={480}
-        priority
+        preload
+        fetchPriority="high"
         className="h-auto w-full max-w-[480px] object-contain sm:max-w-[520px] lg:max-w-[560px]"
         sizes="(max-width: 1024px) 90vw, 560px"
       />

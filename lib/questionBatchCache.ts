@@ -8,7 +8,8 @@ export const QUESTION_BATCH_TAG = 'question-batch';
  * Include source_metadata on public batches → v4.
  * Drop attempt_count/correct_count from anon selects after column grants → v5.
  */
-export const QUESTION_BATCH_CACHE_VERSION = 'v5';
+// v9: SSC CGL General Awareness is mapped to both Tier I and Tier II Paper I.
+export const QUESTION_BATCH_CACHE_VERSION = 'v9';
 
 /**
  * Server-side TTL fallback when tags are not revalidated.

@@ -36,6 +36,7 @@ const COPY = {
     comingSoon: 'Coming soon',
     subtopicsLabel: 'subtopics',
     questionsLabel: 'questions',
+    scope: 'Scope',
   },
   hi: {
     home: 'होम',
@@ -50,6 +51,7 @@ const COPY = {
     comingSoon: 'जल्द उपलब्ध',
     subtopicsLabel: 'उप-विषय',
     questionsLabel: 'प्रश्न',
+    scope: 'दायरा',
   },
 };
 
@@ -82,7 +84,7 @@ function SubtopicCard({
   c: (typeof COPY)['en'];
 }) {
   const title = useCatalogText(subtopic.title);
-  const description = useCatalogText(subtopic.description);
+  const scope = useCatalogText(subtopic.scope ?? subtopic.description);
   const importanceLabel = useCatalogText(resolveImportanceLabel(subtopic));
   const questionCount = Math.max(0, Number(subtopic.question_count ?? 0));
 
@@ -101,8 +103,11 @@ function SubtopicCard({
           {importanceLabel}
         </span>
       )}
-      {description && (
-        <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-500">{description}</p>
+      {scope && (
+        <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-500">
+          <span className="font-semibold text-slate-700">{c.scope}: </span>
+          {scope}
+        </p>
       )}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
         <span className="text-xs font-medium text-slate-500">
@@ -149,7 +154,7 @@ export default function TopicPageContent({
   const c = COPY[language];
   const subjectTitle = useCatalogText(subject.title);
   const topicTitle = useCatalogText(topic.title);
-  const topicDescription = useCatalogText(topic.description);
+  const topicScope = useCatalogText(topic.scope ?? topic.description);
   const isExamPath = Boolean(examParam && examParam.toUpperCase() !== 'ALL');
   const examDisplayName = isExamPath ? examParam!.toUpperCase() : null;
   const topicQuestionCount = Math.max(0, Number(topic.question_count ?? 0));
@@ -190,9 +195,10 @@ export default function TopicPageContent({
                 <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">{topicTitle}</h1>
               </div>
             </div>
-            {topicDescription && (
+            {topicScope && (
               <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
-                {topicDescription}
+                <span className="font-semibold text-slate-800">{c.scope}: </span>
+                {topicScope}
               </p>
             )}
             <div className="mt-5 flex flex-wrap gap-4 text-sm text-slate-600">

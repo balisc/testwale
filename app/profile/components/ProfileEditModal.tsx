@@ -2,7 +2,6 @@
 
 import { X } from 'lucide-react';
 import ModalPortal from '@/components/ModalPortal';
-import TargetExamPickerField from '@/components/profile/TargetExamPickerField';
 import type { ProfileCopy } from '../profileCopy';
 
 type ProfileEditModalProps = {
@@ -21,7 +20,6 @@ export default function ProfileEditModal({
   open,
   onClose,
   copy,
-  language,
   mode = 'full',
   form,
   onChange,
@@ -74,30 +72,9 @@ export default function ProfileEditModal({
             </label>
           </>
         ) : null}
-        <div className="block text-xs font-medium text-slate-700 min-[360px]:text-sm">
-          {copy.targetExam}
-          <TargetExamPickerField
-            value={form.target_exam}
-            onChange={(next) => onChange('target_exam', next)}
-            language={language}
-            chooseExamLabel={copy.chooseExam}
-            otherExamLabel={copy.otherExam}
-            otherPlaceholder={copy.otherExamPlaceholder}
-            loadErrorLabel={copy.examsLoadError}
-            searchPlaceholder={copy.searchExams}
-            noResultsLabel={copy.noExamsFound}
-            listClassName={isExamGoal ? 'max-h-52' : 'max-h-64 sm:max-h-80'}
-          />
-        </div>
-        <label className="block text-xs font-medium text-slate-700 min-[360px]:text-sm">
-          {copy.examDateLabel}
-          <input
-            type="date"
-            value={form.exam_date}
-            onChange={(e) => onChange('exam_date', e.target.value)}
-            className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 px-2.5 py-2 text-xs outline-none focus:border-brand min-[360px]:rounded-xl min-[360px]:px-3 min-[360px]:text-sm"
-          />
-        </label>
+        {isExamGoal ? (
+          <p className="text-sm text-slate-600">Use the target exam flow from your profile.</p>
+        ) : null}
       </div>
       <button
         type="button"

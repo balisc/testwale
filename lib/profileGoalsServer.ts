@@ -5,7 +5,6 @@ import {
 } from '@/lib/profileGoalsCore';
 import type { ProfileGoalsData } from '@/lib/profileGoalsTypes';
 import {
-  buildProfilePageForSession,
   getUserRecordFromDb,
   getUserProfileRow,
   profileUserFromSession,
@@ -34,25 +33,24 @@ async function fetchFirstAttempts(userId: string): Promise<GoalAttemptRow[]> {
 }
 
 export async function getUserProfileGoals(session: SessionUser): Promise<ProfileGoalsData> {
-  const [dbUser, dbProfile, attempts, profilePage] = await Promise.all([
+  const [dbUser, dbProfile, attempts] = await Promise.all([
     getUserRecordFromDb(session.id),
     getUserProfileRow(session.id),
     fetchFirstAttempts(session.id),
-    buildProfilePageForSession(session).catch(() => null),
   ]);
 
   const profileUser = profileUserFromSession(session, dbUser);
   const targets = {
-    daily_goal: dbProfile?.daily_goal ?? profilePage?.profile.daily_goal ?? 50,
-    weekly_goal: dbProfile?.weekly_goal ?? profilePage?.profile.weekly_goal ?? 300,
-    monthly_goal: dbProfile?.monthly_goal ?? profilePage?.profile.monthly_goal ?? 1500,
+    daily_goal: dbProfile?.daily_goal ?? 50,
+    weekly_goal: dbProfile?.weekly_goal ?? 300,
+    monthly_goal: dbProfile?.monthly_goal ?? 1500,
   };
 
   return buildProfileGoalsData({
     targets,
     attempts,
-    targetExam: dbProfile?.target_exam ?? profilePage?.profile.target_exam ?? null,
-    isPremium: dbProfile?.is_premium ?? profilePage?.profile.is_premium ?? false,
+    targetExam: dbProfile?.target_exam ?? null,
+    isPremium: dbProfile?.is_premium ?? false,
     membershipAvailable: dbProfile != null,
     displayName: profileUser.full_name,
     email: profileUser.email,

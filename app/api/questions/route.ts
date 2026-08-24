@@ -9,6 +9,9 @@ import {
   questionListJsonResponse,
   resolveQuestionListLimit,
 } from '@/lib/publicQuestionApiGuards';
+import { getSelectedExamLearning } from '@/lib/examLearningServer';
+import { entityIsIncluded } from '@/lib/examLearning';
+import { resolvePracticeExamQuestionTag } from '@/lib/polity/practiceExamFilter';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -79,6 +82,7 @@ async function resolveSubtopicId(subtopicSlug: string, topicId?: string): Promis
 async function fetchCatalogQuestions(
   filters: ReturnType<typeof parseQuestionListFilters>,
   responseLimit: number,
+  examCode?: string,
 ) {
   let query = supabase
     .from('questions')
@@ -86,6 +90,8 @@ async function fetchCatalogQuestions(
     .eq('is_active', true)
     .eq('is_verified', true)
     .order('id', { ascending: true });
+
+  if (examCode) query = query.contains('exam_tags', [examCode]);
 
   if (filters.subtopicId && UUID_PATTERN.test(filters.subtopicId)) {
     query = query.eq('subtopic_id', filters.subtopicId);
@@ -119,6 +125,22 @@ export async function GET(request: Request) {
       return missingQuestionListFilterResponse();
     }
 
+    const selected = await getSelectedExamLearning();
+    if (selected.status === 'incomplete') return NextResponse.json({ error: 'onboarding_incomplete' }, { status: 409 });
+    if (selected.status === 'inactive') return NextResponse.json({ error: 'selected_exam_inactive' }, { status: 409 });
+    if (selected.status === 'error') return NextResponse.json({ error: 'exam_scope_failed' }, { status: 503 });
+    if (selected.status === 'ready') {
+      if (filters.topicId && !entityIsIncluded(selected.snapshot, 'topic', filters.topicId)) {
+        return NextResponse.json({ error: 'not_in_selected_exam' }, { status: 404 });
+      }
+      if (filters.subtopicId && !entityIsIncluded(selected.snapshot, 'subtopic', filters.subtopicId)) {
+        return NextResponse.json({ error: 'not_in_selected_exam' }, { status: 404 });
+      }
+      if (!filters.topicId && !filters.subtopicId && !filters.subtopicSlug) {
+        return questionListJsonResponse([], responseLimit);
+      }
+    }
+
     if (filters.subject && !SUBJECT_TABLES[filters.subject]) {
       return NextResponse.json({ error: 'Invalid subject.' }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
     }
@@ -128,7 +150,18 @@ export async function GET(request: Request) {
     }
 
     if (filters.subtopicId || filters.subtopicSlug || filters.topicId) {
-      const catalogRows = await fetchCatalogQuestions(filters, responseLimit);
+      const selectedQuestionTag = selected.status === 'ready'
+        ? selected.snapshot.exam.question_tag
+          ?? await resolvePracticeExamQuestionTag(selected.snapshot.exam.code)
+        : undefined;
+      if (selected.status === 'ready' && !selectedQuestionTag) {
+        return NextResponse.json({ error: 'exam_question_tag_unmapped' }, { status: 503 });
+      }
+      const catalogRows = await fetchCatalogQuestions(
+        filters,
+        responseLimit,
+        selectedQuestionTag,
+      );
       return questionListJsonResponse(catalogRows, responseLimit);
     }
 

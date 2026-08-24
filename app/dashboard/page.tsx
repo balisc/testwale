@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { buildPageMetadata } from '@/lib/seo';
-import DashboardClient from './DashboardClient';
+import ExamDashboardClient from './ExamDashboardClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,7 @@ export const metadata: Metadata = buildPageMetadata({
 export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      <DashboardClient />
+      <ExamDashboardClient />
     </main>
   );
 }

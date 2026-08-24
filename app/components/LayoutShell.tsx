@@ -9,7 +9,7 @@ import SmoothHashScroll, { SCROLL_INTENT_KEY } from './SmoothHashScroll';
 import QualityUpgradeAnnouncement from '@/components/QualityUpgradeAnnouncement';
 import OAuthCodeQueryGuard from '@/components/OAuthCodeQueryGuard';
 
-const HIDDEN_CHROME_PATHS = ['/loading-test'];
+const HIDDEN_CHROME_PATHS = ['/loading-test', '/onboarding'];
 const PageChromeVisibilityContext = createContext<((visible: boolean) => void) | null>(null);
 
 export function usePageChromeVisibility() {

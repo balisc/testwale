@@ -11,6 +11,12 @@ import type { Metadata } from 'next';
 import { buildPracticeMetadata } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
 import { buildBreadcrumbListSchema } from '@/lib/breadcrumbSchema';
+import { getSelectedExamLearning } from '@/lib/examLearningServer';
+import ExamContentUnavailable from '@/components/ExamContentUnavailable';
+import { redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
+import { findPublishedSyllabusSubject, findPublishedSyllabusTopic } from '@/lib/examSyllabus';
+import { isSscCglExamCode } from '@/lib/sscCglSyllabus';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,13 +48,25 @@ export default async function MixedTopicPracticePage({ params, searchParams }: P
   const resolvedSearchParams = await searchParams;
   const examParam = resolveExamParam(resolvedSearchParams.exam);
 
+  const selected = await getSelectedExamLearning();
+  if (selected.status === 'incomplete') redirect(`/onboarding?returnTo=${encodeURIComponent(`/subjects/${routeSubject}/${topicSlug}/practice`)}`);
+  if (selected.status === 'inactive') return <ExamContentUnavailable reason="inactive_exam" />;
+  if (selected.status === 'error') return <ExamContentUnavailable reason="error" />;
+  if (selected.status === 'ready') {
+    if (isSscCglExamCode(selected.snapshot.exam.code)) redirect('/ssc-cgl');
+    const scopedSubject = findPublishedSyllabusSubject(selected.snapshot.subjects, routeSubject);
+    if (!scopedSubject) notFound();
+    const scopedTopic = findPublishedSyllabusTopic(selected.snapshot.topics, scopedSubject.id, topicSlug);
+    if (!scopedTopic) notFound();
+    return <ExamContentUnavailable reason="questions_coming" />;
+  }
   const { subject, subjectSlug, topic } = await requireTopicByRouteSlugs(routeSubject, topicSlug);
-
   const examCode = buildExamQuery(examParam);
   const practiceTag = examCode ? await resolvePracticeExamQuestionTag(examCode) : undefined;
   const questions = await getMixedQuestionsByTopic(topic.id, practiceTag);
-  const backHref = examParam
-    ? `/subjects/${subjectSlug}/${topicSlug}?exam=${encodeURIComponent(examParam)}`
+  const effectiveExam = examParam;
+  const backHref = effectiveExam
+    ? `/subjects/${subjectSlug}/${topicSlug}?exam=${encodeURIComponent(effectiveExam)}`
     : `/subjects/${subjectSlug}/${topicSlug}`;
 
   const breadcrumbSchema = buildBreadcrumbListSchema([
@@ -82,6 +100,7 @@ export default async function MixedTopicPracticePage({ params, searchParams }: P
         seoTopic={topic.slug || topic.title}
         subjectId={subject.id}
         topicId={topic.id}
+        examCode={practiceTag}
       />
     </div>
   );

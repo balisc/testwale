@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
-import type { ProfilePageData } from '@/lib/profileAnalytics';
-import { needsProfileOnboarding } from '@/lib/profileOnboarding';
+import { fetchClientJson } from '@/lib/clientRequestCache';
 
 type UseRequireOnboardingOptions = {
   enabled?: boolean;
@@ -32,21 +31,19 @@ export function useRequireOnboarding(options: UseRequireOnboardingOptions = {}) 
     }
 
     let cancelled = false;
+    // The content can paint immediately; this lightweight status check only
+    // redirects accounts whose onboarding is genuinely incomplete.
+    setReady(true);
 
     void (async () => {
       try {
-        const res = await fetch('/api/profile', { cache: 'no-store', credentials: 'include' });
+        const data = await fetchClientJson<{ required: boolean }>(
+          `onboarding-status:${user.id}`,
+          '/api/onboarding/status',
+          { maxAgeMs: 60_000 },
+        );
         if (cancelled) return;
-        if (res.status === 401) {
-          setReady(true);
-          return;
-        }
-        if (!res.ok) {
-          setReady(true);
-          return;
-        }
-        const data = (await res.json()) as ProfilePageData;
-        if (needsProfileOnboarding(data.profile)) {
+        if (data.required) {
           const next =
             typeof window !== 'undefined'
               ? `${redirectPath}?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`
@@ -54,7 +51,6 @@ export function useRequireOnboarding(options: UseRequireOnboardingOptions = {}) 
           router.replace(next);
           return;
         }
-        setReady(true);
       } catch {
         if (!cancelled) setReady(true);
       }
@@ -65,7 +61,7 @@ export function useRequireOnboarding(options: UseRequireOnboardingOptions = {}) 
     };
   }, [enabled, authLoading, user, router, redirectPath]);
 
-  return { ready: ready && !authLoading, authLoading };
+  return { ready, authLoading };
 }
 
 export function OnboardingGate({ children }: { children: React.ReactNode }) {

@@ -7,6 +7,7 @@ import { getProfileInsightsCopy } from './profileInsightsCopy';
 import ProfileShell from './ProfileShell';
 import ProfileOverview from './components/ProfileOverview';
 import ProfileOverviewSkeleton from './components/ProfileOverviewSkeleton';
+import ExamPreferenceCard from './components/ExamPreferenceCard';
 
 export default function ProfileOverviewPage() {
   const { language } = useLanguage();
@@ -18,13 +19,18 @@ export default function ProfileOverviewPage() {
         fetching && !profileData ? (
           <ProfileOverviewSkeleton />
         ) : profileData ? (
-          <ProfileOverview
-            copy={copy}
-            data={profileData}
-            language={language}
-            onEditProfile={openEdit}
-            onSetTargetExam={openTargetExam}
-          />
+          <>
+            <ProfileOverview
+              copy={copy}
+              data={profileData}
+              language={language}
+              onEditProfile={openEdit}
+              onSetTargetExam={openTargetExam}
+            />
+            {profileData.profile.target_exam_profile_id ? (
+              <ExamPreferenceCard />
+            ) : null}
+          </>
         ) : null
       }
     </ProfileShell>

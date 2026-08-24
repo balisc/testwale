@@ -1,8 +1,8 @@
 import { getAuthUserFromCookies } from '@/lib/authCookies';
 import { advanceSubtopicPracticeCycle } from '@/lib/practiceServer';
-import { resolvePracticeExamQuestionTag } from '@/lib/polity/practiceExamFilter';
 import { isUuid, privateNoStoreJsonResponse } from '@/lib/publicQuestionApiGuards';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { getSelectedExamContext } from '@/lib/examLearningServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,9 +43,22 @@ export async function POST(request: Request) {
     return errorResponse('invalid_scope_id', 400);
   }
 
-  const rawExamCode =
-    typeof row.examCode === 'string' && row.examCode.trim() ? row.examCode.trim() : null;
-  const examCode = rawExamCode ? (await resolvePracticeExamQuestionTag(rawExamCode)) ?? null : null;
+  const selected = await getSelectedExamContext();
+  if (selected.status === 'incomplete') return errorResponse('onboarding_incomplete', 409);
+  if (selected.status === 'inactive') return errorResponse('selected_exam_inactive', 409);
+  if (selected.status !== 'ready' || selected.userId !== user.id) return errorResponse('exam_scope_failed', 503);
+  const allowed = await admin
+    .from('questions')
+    .select('id, question_exam_profile_mappings!inner(exam_profile_id, is_active)')
+    .eq('subtopic_id', scopeId)
+    .eq('is_active', true)
+    .eq('is_verified', true)
+    .eq('question_exam_profile_mappings.exam_profile_id', selected.examProfileId)
+    .eq('question_exam_profile_mappings.is_active', true)
+    .limit(1);
+  if (allowed.error) return errorResponse('exam_scope_failed', 503);
+  if (!allowed.data?.length) return errorResponse('not_in_selected_exam', 404);
+  const examCode = selected.questionTag;
 
   const result = await advanceSubtopicPracticeCycle(admin, user.id, scopeId, examCode);
   if (!result.ok) {

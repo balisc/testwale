@@ -605,7 +605,8 @@ async function submitQuestionAnswerDirect(
     timeSpentSeconds: timeTakenSeconds,
   });
   if (!historySaved) {
-    console.warn('[practice/submitDirect] history insert failed; continuing with answer reveal');
+    console.error('[practice/submitDirect] history insert failed; rejecting submission');
+    return null;
   }
 
   const { data: inserted, error: insertError } = await admin
@@ -698,12 +699,6 @@ async function submitQuestionAnswerDirect(
     correctCount = Number(refreshed.correct_count ?? 0);
   }
 
-  const progressBundle = await fetchScopedProgressFromViews(admin, userId, {
-    subjectId: row.subject_id,
-    topicId: row.topic_id,
-    subtopicId: row.subtopic_id,
-  });
-
   return {
     is_correct: finalIsCorrect,
     correct_option: String(row.correct_option ?? ''),
@@ -715,10 +710,12 @@ async function submitQuestionAnswerDirect(
     already_attempted: !isNewAttempt,
     selected_option: returnedOption,
     is_mastered: isMastered,
-    progress: progressBundle?.progress ?? null,
-    subtopic_progress: progressBundle?.subtopic_progress ?? null,
-    topic_progress: progressBundle?.topic_progress ?? null,
-    subject_progress: progressBundle?.subject_progress ?? null,
+    // Progress refresh is deliberately decoupled from answer reveal. A slow
+    // analytics view must not delay the correct option or explanation.
+    progress: null,
+    subtopic_progress: null,
+    topic_progress: null,
+    subject_progress: null,
   };
 }
 
@@ -859,7 +856,7 @@ export async function recordQuestionAttempt(
 
   const timeSpentSeconds =
     typeof input.timeSpentSeconds === 'number' && input.timeSpentSeconds >= 0
-      ? Math.round(input.timeSpentSeconds)
+      ? Math.min(86_400, Math.round(input.timeSpentSeconds))
       : null;
 
   const { error } = await admin.from('user_question_attempts').insert({
@@ -888,7 +885,7 @@ async function fetchProgressDashboardDirect(
 ): Promise<UserProgressDashboard | null> {
   const { data: overviewRow, error: overviewError } = await admin
     .from('user_question_attempts')
-    .select('question_id, is_correct')
+    .select('question_id, is_correct, time_spent_seconds')
     .eq('user_id', userId);
 
   if (overviewError) {
@@ -903,6 +900,11 @@ async function fetchProgressDashboardDirect(
   const wrongCount = totalAttempts - correctCount;
   const accuracyPercent =
     totalAttempts > 0 ? Math.round((correctCount * 10000) / totalAttempts) / 100 : 0;
+  const timedRows = rows.filter((row) => row.time_spent_seconds != null);
+  const totalTimeSpentSeconds = timedRows.reduce(
+    (total, row) => total + Math.max(0, Number(row.time_spent_seconds ?? 0)),
+    0,
+  );
 
   return normalizeProgressDashboard({
     overview: {
@@ -911,6 +913,11 @@ async function fetchProgressDashboardDirect(
       correct_count: correctCount,
       wrong_count: wrongCount,
       accuracy_percent: accuracyPercent,
+      total_time_spent_seconds: totalTimeSpentSeconds,
+      average_time_spent_seconds:
+        timedRows.length > 0
+          ? Math.round((totalTimeSpentSeconds / timedRows.length) * 100) / 100
+          : 0,
     },
     by_subject: [],
     by_topic: [],
@@ -1208,6 +1215,80 @@ export async function getSubtopicBatchQuestionState(
 > {
   const normalizedExam = examCode?.trim() ? examCode.trim().toUpperCase() : 'ALL';
 
+  const buildFallbackState = async (): Promise<SubtopicQuestionBatchState> => {
+    if (questionIds.length === 0) {
+      return {
+        phase: 'unseen',
+        revisionRound: 0,
+        roundStartedAt: null,
+        catalogQuestionCount: null,
+        eligibleQuestionIds: [],
+        masteredQuestionIds: [],
+        unresolvedQuestionIds: [],
+        attemptedThisRoundQuestionIds: [],
+      };
+    }
+
+    let fallback = await admin
+      .from('user_question_attempts')
+      .select('question_id, is_correct')
+      .eq('user_id', userId)
+      .in('question_id', questionIds);
+    if (fallback.error) {
+      console.warn(
+        '[practice/getSubtopicBatchQuestionState:fallback] full attempt history unavailable; using first-attempt snapshot:',
+        fallback.error.message,
+      );
+      fallback = await admin
+        .from('user_attempts')
+        .select('question_id, is_correct')
+        .eq('user_id', userId)
+        .in('question_id', questionIds);
+    }
+    if (fallback.error) {
+      // Mastery is optional personalization. Never hide an otherwise valid public
+      // question because its progress tables/RPC are temporarily unavailable.
+      console.warn(
+        '[practice/getSubtopicBatchQuestionState:fallback] attempt snapshot unavailable; allowing the public batch:',
+        fallback.error.message,
+      );
+      return {
+        phase: 'unseen',
+        revisionRound: 0,
+        roundStartedAt: null,
+        catalogQuestionCount: null,
+        eligibleQuestionIds: [...questionIds],
+        masteredQuestionIds: [],
+        unresolvedQuestionIds: [],
+        attemptedThisRoundQuestionIds: [],
+      };
+    }
+
+    const attempted = new Set<string>();
+    const mastered = new Set<string>();
+    for (const row of fallback.data ?? []) {
+      const questionId = String(row.question_id);
+      attempted.add(questionId);
+      if (row.is_correct === true) mastered.add(questionId);
+    }
+    const unseen = questionIds.filter((questionId) => !attempted.has(questionId));
+    const unresolved = questionIds.filter(
+      (questionId) => attempted.has(questionId) && !mastered.has(questionId),
+    );
+    const phase = unseen.length > 0 ? 'unseen' : unresolved.length > 0 ? 'revision' : 'completed';
+
+    return {
+      phase,
+      revisionRound: phase === 'revision' ? 1 : 0,
+      roundStartedAt: null,
+      catalogQuestionCount: null,
+      eligibleQuestionIds: phase === 'unseen' ? unseen : phase === 'revision' ? unresolved : [],
+      masteredQuestionIds: [...mastered],
+      unresolvedQuestionIds: unresolved,
+      attemptedThisRoundQuestionIds: [],
+    };
+  };
+
   const { data, error } = await admin.rpc('get_subtopic_batch_question_state', {
     p_user_id: userId,
     p_subtopic_id: subtopicId,
@@ -1216,18 +1297,16 @@ export async function getSubtopicBatchQuestionState(
   });
 
   if (error) {
-    if (isMissingRpcError(error)) {
-      console.error('[practice/getSubtopicBatchQuestionState] RPC missing:', error.message);
-      return { ok: false, error: 'mastery_migration_pending' };
-    }
-    console.error('[practice/getSubtopicBatchQuestionState]', error.message);
-    return { ok: false, error: 'question_state_failed' };
+    console.warn('[practice/getSubtopicBatchQuestionState] RPC unavailable, using attempt fallback:', error.message);
+    const fallback = await buildFallbackState();
+    return { ok: true, state: fallback };
   }
 
   const parsed = parseSubtopicQuestionBatchState(data);
   if (!parsed.ok) {
-    console.error('[practice/getSubtopicBatchQuestionState] invalid RPC payload');
-    return { ok: false, error: 'invalid_rpc_response' };
+    console.warn('[practice/getSubtopicBatchQuestionState] invalid RPC payload, using attempt fallback');
+    const fallback = await buildFallbackState();
+    return { ok: true, state: fallback };
   }
 
   return { ok: true, state: parsed.state };

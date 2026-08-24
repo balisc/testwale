@@ -27,7 +27,7 @@ import { PHYSICS_PAGE_TITLE } from '@/lib/science/physicsData';
 import { CHEMISTRY_PAGE_TITLE } from '@/lib/science/chemistryData';
 import { BIOLOGY_PAGE_TITLE } from '@/lib/science/biologyData';
 import { GENERAL_SCIENCE_PAGE_TITLE } from '@/lib/science/generalScienceData';
-import { canonical } from '@/lib/seo';
+import { buildPageMetadata } from '@/lib/seo';
 import { LEGACY_SUBJECT_SLUG_MAP } from '@/lib/subjectRoutes';
 import { LEGACY_NOINDEX_SUBJECT_KEYS } from '@/lib/sitemapPolicy';
 
@@ -139,12 +139,12 @@ export async function generateMetadata({
   }
 
   if (LEGACY_NOINDEX_SUBJECT_KEYS.has(subjectKey)) {
-    return {
+    return buildPageMetadata({
       title: `${subjectConfig.label} Topics`,
       description: `${subjectConfig.label} topics are coming soon on QuestionWale.`,
-      robots: { index: false, follow: true },
-      ...canonical(`/${subjectKey}/topics`),
-    };
+      path: `/${subjectKey}/topics`,
+      noIndex: true,
+    });
   }
 
   const rawSubCategory = Array.isArray(resolvedSearchParams.sub_category)
@@ -211,24 +211,15 @@ export async function generateMetadata({
       ? `${subjectConfig.label} - ${subCategory.charAt(0).toUpperCase() + subCategory.slice(1)} Topics`
       : `${subjectConfig.label} Topics`;
 
-  return {
+  const description = subCategory
+    ? `Browse ${subCategory} ${subjectConfig.label} topics and practice questions.`
+    : `Browse ${subjectConfig.label} topics and practice questions.`;
+
+  return buildPageMetadata({
     title: pageTitle,
-    description: subCategory
-      ? `Browse ${subCategory} ${subjectConfig.label} topics and practice questions.`
-      : `Browse ${subjectConfig.label} topics and practice questions.`,
-    ...canonical(`/${subjectKey}/topics`),
-    openGraph: {
-      title: subCategory
-        ? `${subjectConfig.label} - ${subCategory.charAt(0).toUpperCase() + subCategory.slice(1)} Topics`
-        : `${subjectConfig.label} Topics`,
-      description: subCategory
-        ? `Browse ${subCategory} ${subjectConfig.label} topics and practice questions.`
-        : `Browse ${subjectConfig.label} topics and practice questions.`,
-      url: `/${subjectKey}/topics`,
-      type: 'website',
-      siteName: 'Questionwale',
-    },
-  };
+    description,
+    path: `/${subjectKey}/topics`,
+  });
 }
 
 export default async function TopicPage({

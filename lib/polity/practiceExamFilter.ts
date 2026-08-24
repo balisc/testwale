@@ -21,31 +21,28 @@ export async function resolvePracticeExam(
   const selectionCode = normalizeExamCode(examCode);
   if (!selectionCode || selectionCode === 'ALL') return null;
 
+  // Exact ranked selections can also have a legacy `exams` row (SSC_CGL is
+  // one example). Prefer their family mapping because questions are stored
+  // under the family tag (`SSC`), not the selection code (`SSC_CGL`).
+  const rankedExams = await listRankedExamOptions();
+  const rankedMatch = findRankedExamOption(rankedExams, selectionCode);
+  if (rankedMatch) {
+    const familyTag = rankedMatch.family_code
+      ? normalizeExamCode(rankedMatch.family_code)
+      : undefined;
+    return {
+      selectionCode,
+      questionTag: familyTag,
+      source: familyTag ? 'ranked_family' : 'ranked_unmapped',
+    };
+  }
+
   const legacyExams = await getAllExams();
   const legacyMatch = legacyExams.find(
     (exam) => normalizeExamCode(exam.code) === selectionCode,
   );
-  if (legacyMatch) {
-    return {
-      selectionCode,
-      questionTag: legacyMatch.code,
-      source: 'legacy',
-    };
-  }
-
-  const rankedExams = await listRankedExamOptions();
-  const rankedMatch = findRankedExamOption(rankedExams, selectionCode);
-  if (!rankedMatch) return null;
-
-  const familyTag = rankedMatch.family_code
-    ? normalizeExamCode(rankedMatch.family_code)
-    : undefined;
-
-  return {
-    selectionCode,
-    questionTag: familyTag,
-    source: familyTag ? 'ranked_family' : 'ranked_unmapped',
-  };
+  if (!legacyMatch) return null;
+  return { selectionCode, questionTag: legacyMatch.code, source: 'legacy' };
 }
 
 /** Whether value is a known legacy code or ranked family tag on questions.exam_tags. */

@@ -1,19 +1,15 @@
-export default function Loading() {
+export default function AppLoading() {
   return (
-    <div className="min-h-[60vh] bg-slate-50 px-4 py-24 text-slate-900" role="status" aria-live="polite">
-      <div className="mx-auto max-w-5xl space-y-8">
-        <div className="space-y-4">
-          <div className="h-4 w-40 animate-pulse rounded-full bg-slate-200" />
-          <div className="h-10 w-full max-w-xl animate-pulse rounded-2xl bg-slate-200" />
-          <div className="h-4 w-full max-w-2xl animate-pulse rounded-full bg-slate-200" />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="h-32 animate-pulse rounded-3xl border border-slate-200 bg-white" />
+    <main className="min-h-[70vh] bg-[#F8FAFC] px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-7xl animate-pulse" aria-label="Opening page">
+        <div className="h-8 w-52 rounded-lg bg-slate-200" />
+        <div className="mt-3 h-4 w-80 max-w-full rounded bg-slate-100" />
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }, (_, index) => (
+            <div key={index} className="h-36 rounded-2xl border border-slate-200 bg-white" />
           ))}
         </div>
-        <span className="sr-only">Loading page content</span>
       </div>
-    </div>
+    </main>
   );
 }

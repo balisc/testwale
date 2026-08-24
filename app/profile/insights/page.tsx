@@ -19,7 +19,7 @@ export default function ProfileInsightsRoute() {
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-white">
+    <main className="min-h-screen w-full min-w-0 max-w-full bg-white">
       <ProfileInsightsPage />
     </main>
   );

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { Exam } from '@/types/polity';
-import { normalizeExamCode } from '@/lib/polity';
+import { normalizeExamCode } from '@/lib/examCode';
 import { useCatalogText } from '@/lib/useCatalogText';
 
 type ExamFilterPillsProps = {

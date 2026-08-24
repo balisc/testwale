@@ -17,9 +17,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') as Language | null;
-    if (savedLanguage === 'en' || savedLanguage === 'hi') {
-      setLanguage(savedLanguage);
-    }
+    if (savedLanguage === 'en' || savedLanguage === 'hi') setLanguage(savedLanguage);
   }, []);
 
   useEffect(() => {
@@ -28,9 +26,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.cookie = `language=${language};path=/;max-age=31536000;SameSite=Lax`;
   }, [language]);
 
-  const toggleLanguage = () => {
-    setLanguage((current) => (current === 'en' ? 'hi' : 'en'));
-  };
+  const toggleLanguage = () => setLanguage((current) => (current === 'en' ? 'hi' : 'en'));
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage }}>

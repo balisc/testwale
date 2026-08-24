@@ -16,6 +16,12 @@ export type UserProfileSettings = {
   city: string | null;
   target_exam: string | null;
   exam_date: string | null;
+  target_exam_profile_id: string | null;
+  target_exam_profile_code: string | null;
+  target_exam_id: string | null;
+  target_exam_title: LocalizedText | null;
+  exam_onboarding_required: boolean;
+  exam_onboarding_completed_at: string | null;
   is_premium: boolean;
   daily_goal: number;
   weekly_goal: number;
@@ -184,6 +190,20 @@ export function normalizeProfilePage(raw: Record<string, unknown>): ProfilePageD
       city: profile.city != null ? String(profile.city) : null,
       target_exam: profile.target_exam != null ? String(profile.target_exam) : null,
       exam_date: profile.exam_date != null ? String(profile.exam_date).slice(0, 10) : null,
+      target_exam_profile_id:
+        profile.target_exam_profile_id != null ? String(profile.target_exam_profile_id) : null,
+      target_exam_profile_code:
+        profile.target_exam_profile_code != null ? String(profile.target_exam_profile_code) : null,
+      target_exam_id: profile.target_exam_id != null ? String(profile.target_exam_id) : null,
+      target_exam_title:
+        profile.target_exam_title && typeof profile.target_exam_title === 'object'
+          ? (profile.target_exam_title as LocalizedText)
+          : null,
+      exam_onboarding_required: Boolean(profile.exam_onboarding_required),
+      exam_onboarding_completed_at:
+        profile.exam_onboarding_completed_at != null
+          ? String(profile.exam_onboarding_completed_at)
+          : null,
       is_premium: Boolean(profile.is_premium),
       daily_goal: toNumber(profile.daily_goal, 50),
       weekly_goal: toNumber(profile.weekly_goal, 300),
@@ -255,6 +275,12 @@ export function createEmptyProfilePage(
       city: profile?.city ?? null,
       target_exam: profile?.target_exam ?? null,
       exam_date: profile?.exam_date ?? null,
+      target_exam_profile_id: profile?.target_exam_profile_id ?? null,
+      target_exam_profile_code: profile?.target_exam_profile_code ?? null,
+      target_exam_id: profile?.target_exam_id ?? null,
+      target_exam_title: profile?.target_exam_title ?? null,
+      exam_onboarding_required: profile?.exam_onboarding_required ?? false,
+      exam_onboarding_completed_at: profile?.exam_onboarding_completed_at ?? null,
       is_premium: profile?.is_premium ?? false,
       daily_goal: profile?.daily_goal ?? 50,
       weekly_goal: profile?.weekly_goal ?? 300,

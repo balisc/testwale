@@ -58,6 +58,16 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: '/pcb_page',
+        destination: '/science',
+        permanent: true,
+      },
+      {
+        source: '/pyq',
+        destination: '/subjects',
+        permanent: true,
+      },
+      {
         source: '/subjects/:subject/:topic/company-rule-and-early-acts/:path*',
         destination: '/subjects/:subject/:topic/company-rule-acts-1773-1853/:path*',
         permanent: true,
@@ -75,6 +85,16 @@ const nextConfig = {
       {
         source: '/polity/topics',
         destination: '/subjects/indian-polity',
+        permanent: true,
+      },
+      {
+        source: '/exams/ssc-combined-graduate-level-examination',
+        destination: '/ssc-cgl',
+        permanent: true,
+      },
+      {
+        source: '/exams/ssc-combined-graduate-level-examination/:path*',
+        destination: '/ssc-cgl',
         permanent: true,
       },
       {
@@ -162,33 +182,6 @@ const nextConfig = {
         headers: [
           { key: 'Cache-Control', value: 'private, no-store, must-revalidate' },
           { key: 'Referrer-Policy', value: 'no-referrer' },
-        ],
-      },
-      {
-        source: '/subjects/:subject/:topic/:subtopic/revision',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
-          },
-        ],
-      },
-      {
-        source: '/subjects/:subject/:topic',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
-          },
-        ],
-      },
-      {
-        source: '/subjects/:subject',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
-          },
         ],
       },
       {

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Search } from 'lucide-react';
-import { normalizeExamCode, sortExamsForDisplay } from '@/lib/polity';
+import { normalizeExamCode, sortExamsForDisplay } from '@/lib/examCode';
 import { JURISDICTION_GROUP_LABELS } from '@/lib/polity/examRankingLabels';
 import { pickCatalogText } from '@/lib/useCatalogText';
 import type { Exam } from '@/types/polity';

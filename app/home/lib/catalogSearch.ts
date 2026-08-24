@@ -73,7 +73,7 @@ export async function getHomeCatalogSearchItems(): Promise<HomeSearchItem[]> {
       type: 'subtopic',
       label,
       labelHi,
-      href: `/subjects/${subject.slug}/${topic.slug}/${subtopic.slug}/practice`,
+      href: `/subjects/${subject.slug}/${topic.slug}/practice/${subtopic.slug}`,
       path: `${subjectLabel} › ${topicLabel}`,
     });
   }

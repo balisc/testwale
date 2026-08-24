@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import MapPracticePage from './MapPracticePage';
-import { canonical } from '@/lib/seo';
+import { buildPageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: 'Map Practice',
   description: 'Practice India, World, and current affairs map-based questions with interactive click-to-answer mode.',
-  ...canonical('/map-practice'),
-};
+  path: '/map-practice',
+});
 
 export default function Page() {
   return <MapPracticePage />;

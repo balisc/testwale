@@ -28,6 +28,27 @@ const EMPTY_SNAPSHOT: CatalogSnapshot = {
   exams: [],
 };
 
+type CatalogPage = {
+  data: unknown[] | null;
+  error: { message: string } | null;
+};
+
+async function collectCatalogRows(
+  loadPage: (from: number, to: number) => PromiseLike<CatalogPage>,
+): Promise<Record<string, unknown>[]> {
+  const pageSize = 1000;
+  const rows: Record<string, unknown>[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const result = await loadPage(from, from + pageSize - 1);
+    if (result.error) throw new Error(result.error.message);
+    const page = (result.data ?? []).filter(
+      (row): row is Record<string, unknown> => Boolean(row && typeof row === 'object'),
+    );
+    rows.push(...page);
+    if (page.length < pageSize) return rows;
+  }
+}
+
 function parseLocalizedField(value: unknown): LocalizedText {
   if (!value) return {};
   if (typeof value === 'string') return { en: value, hi: value };
@@ -144,64 +165,92 @@ function sortExamsForDisplay(exams: Exam[]): Exam[] {
     );
 }
 
+async function loadCatalogSnapshotOnce(): Promise<CatalogSnapshot> {
+  const [subjectRows, topicRows, subtopicRows, examRows] = await Promise.all([
+    collectCatalogRows((from, to) =>
+      supabase
+        .from('subjects')
+        .select(
+          'id, title, slug, description, icon_key, hero_image_url, sort_order, topic_count, question_count, is_active',
+        )
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to),
+    ),
+    collectCatalogRows((from, to) =>
+      supabase
+        .from('topics')
+        .select(
+          'id, subject_id, title, slug, description, icon_key, sort_order, subtopic_count, question_count, is_active',
+        )
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to),
+    ),
+    collectCatalogRows((from, to) =>
+      supabase
+        .from('subtopics')
+        .select('id, topic_id, title, slug, description, sort_order, question_count, is_active')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to),
+    ),
+    collectCatalogRows((from, to) =>
+      supabase
+        .from('exams')
+        .select('id, code, title, description, sort_order, is_active')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to),
+    ),
+  ]);
+
+  const snapshot = {
+    subjects: subjectRows.map(normalizeSubject),
+    topics: topicRows.map(normalizeTopic),
+    subtopics: subtopicRows.map(normalizeSubtopic),
+    exams: sortExamsForDisplay(examRows.map(normalizeExam)),
+  };
+  if (
+    snapshot.subjects.length === 0 ||
+    snapshot.topics.length === 0 ||
+    snapshot.subtopics.length === 0 ||
+    snapshot.exams.length === 0
+  ) {
+    throw new Error(
+      `Incomplete catalog snapshot (${snapshot.subjects.length} subjects, ${snapshot.topics.length} topics, ${snapshot.subtopics.length} subtopics, ${snapshot.exams.length} exams)`,
+    );
+  }
+  return snapshot;
+}
+
 async function fetchCatalogSnapshot(): Promise<CatalogSnapshot> {
   if (!SUPABASE_AVAILABLE) return EMPTY_SNAPSHOT;
 
-  const [subjectsResult, topicsResult, subtopicsResult, examsResult] = await Promise.all([
-    supabase
-      .from('subjects')
-      .select(
-        'id, title, slug, description, icon_key, hero_image_url, sort_order, topic_count, question_count, is_active',
-      )
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true }),
-    supabase
-      .from('topics')
-      .select(
-        'id, subject_id, title, slug, description, icon_key, sort_order, subtopic_count, question_count, is_active',
-      )
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true }),
-    supabase
-      .from('subtopics')
-      .select('id, topic_id, title, slug, description, sort_order, question_count, is_active')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true }),
-    supabase
-      .from('exams')
-      .select('id, code, title, description, sort_order, is_active')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true }),
-  ]);
-
-  if (subjectsResult.error || topicsResult.error || subtopicsResult.error || examsResult.error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error('[catalogCache] snapshot fetch error', {
-        subjects: subjectsResult.error?.message,
-        topics: topicsResult.error?.message,
-        subtopics: subtopicsResult.error?.message,
-        exams: examsResult.error?.message,
-      });
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      return await loadCatalogSnapshotOnce();
+    } catch (error) {
+      lastError = error;
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[catalogCache] snapshot fetch attempt failed', {
+          attempt,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
-    return EMPTY_SNAPSHOT;
   }
 
-  return {
-    subjects: (subjectsResult.data ?? []).map((row: Record<string, unknown>) =>
-      normalizeSubject(row),
-    ),
-    topics: (topicsResult.data ?? []).map((row: Record<string, unknown>) => normalizeTopic(row)),
-    subtopics: (subtopicsResult.data ?? []).map((row: Record<string, unknown>) =>
-      normalizeSubtopic(row),
-    ),
-    exams: sortExamsForDisplay(
-      (examsResult.data ?? []).map((row: Record<string, unknown>) => normalizeExam(row)),
-    ),
-  };
+  throw lastError instanceof Error ? lastError : new Error('Catalog snapshot unavailable');
 }
 
 /** One small catalog round-trip set per five minutes (or explicit tag invalidation). */
-export const getCatalogSnapshot = unstable_cache(fetchCatalogSnapshot, ['catalog-snapshot-v3'], {
+export const getCatalogSnapshot = unstable_cache(fetchCatalogSnapshot, ['catalog-snapshot-v5'], {
   revalidate: CATALOG_REVALIDATE_SECONDS,
   tags: [CATALOG_CACHE_TAG],
 });

@@ -38,7 +38,21 @@ export default function ExamCountdownBadge({ examDate, copy, language }: ExamCou
           <p className="text-[11px] font-bold uppercase tracking-wide text-[#DC2626]">
             {copy.examCountdownLabel}
           </p>
-          <p className="text-lg font-bold leading-tight text-[#991B1B] sm:text-xl">{copy.examDayReached}</p>
+          <p className="text-lg font-bold leading-tight text-[#991B1B] sm:text-xl">{copy.examDatePassed}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (parts.today) {
+    return (
+      <div className="inline-flex w-full min-w-0 max-w-full items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 sm:w-auto sm:px-4 sm:py-3" aria-live="polite">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100">
+          <Calendar className="h-5 w-5 text-emerald-700" aria-hidden />
+        </div>
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">{copy.examCountdownLabel}</p>
+          <p className="break-words text-lg font-bold text-emerald-900">{copy.examDayReached}</p>
         </div>
       </div>
     );

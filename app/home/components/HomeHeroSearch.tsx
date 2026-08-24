@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, BookOpen, FolderOpen, Layers, Search, X } from 'lucide-react';
 import type { HomeSearchItem } from '../lib/catalogSearch';
@@ -190,9 +191,9 @@ export default function HomeHeroSearch() {
                           const { label, Icon } = TYPE_META[item.type];
                           return (
                             <li key={item.id}>
-                              <button
-                                type="button"
-                                onClick={() => goTo(item)}
+                              <Link
+                                href={item.href}
+                                onClick={() => setExpanded(false)}
                                 className="flex w-full min-w-0 items-center gap-2 px-2.5 py-3 text-left transition hover:bg-[#F5F3FF] active:bg-[#EDE9FE] min-[360px]:gap-3 min-[360px]:px-3.5 min-[360px]:py-3.5 sm:px-4"
                               >
                                 <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F5F3FF] text-[#6D28D9] min-[360px]:h-10 min-[360px]:w-10">
@@ -208,7 +209,7 @@ export default function HomeHeroSearch() {
                                   </span>
                                 </span>
                                 <Search className="hidden h-4 w-4 shrink-0 text-[#D0D5DD] min-[360px]:block" aria-hidden />
-                              </button>
+                              </Link>
                             </li>
                           );
                         })}

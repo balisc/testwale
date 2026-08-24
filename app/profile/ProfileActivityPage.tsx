@@ -3,6 +3,8 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useAuth } from '@/lib/AuthContext';
+import { fetchClientJson, isClientCacheFresh, readClientCache } from '@/lib/clientRequestCache';
 import { parseActivityPeriod } from '@/lib/profileActivityCore';
 import type { ActivityPeriodDays, ProfileActivityData } from '@/lib/profileActivityTypes';
 import ProfileShell from './ProfileShell';
@@ -18,6 +20,7 @@ function profileActivityPath(period: ActivityPeriodDays): string {
 
 function ProfileActivityContent() {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const copy = useMemo(() => getProfileActivityCopy(language), [language]);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -27,24 +30,32 @@ function ProfileActivityContent() {
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState(false);
 
-  const loadActivity = useCallback(async (selectedPeriod: ActivityPeriodDays) => {
-    setFetching(true);
+  const loadActivity = useCallback(async (selectedPeriod: ActivityPeriodDays, force = false) => {
+    if (!user) return;
+    const cacheKey = `profile-activity:${user.id}:${selectedPeriod}`;
+    const cached = readClientCache<ProfileActivityData>(cacheKey);
+    if (cached) {
+      setActivity(cached);
+      setFetching(false);
+      if (!force && isClientCacheFresh(cacheKey, 60_000)) return;
+    } else {
+      setFetching(true);
+    }
     setError(false);
     try {
       const query =
         selectedPeriod === 7 ? '' : `?period=${encodeURIComponent(periodQueryValue(selectedPeriod))}`;
-      const res = await fetch(`/api/profile/activity${query}`, {
-        cache: 'no-store',
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('failed');
-      setActivity((await res.json()) as ProfileActivityData);
+      setActivity(await fetchClientJson<ProfileActivityData>(
+        cacheKey,
+        `/api/profile/activity${query}`,
+        { maxAgeMs: 60_000, force },
+      ));
     } catch {
       setError(true);
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     void loadActivity(period);
@@ -67,7 +78,7 @@ function ProfileActivityContent() {
               <p className="text-sm text-red-600">{copy.loadError}</p>
               <button
                 type="button"
-                onClick={() => void loadActivity(period)}
+                onClick={() => void loadActivity(period, true)}
                 className="mt-4 inline-flex min-h-[44px] items-center text-sm text-brand underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
               >
                 {copy.retry}

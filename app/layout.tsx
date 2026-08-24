@@ -5,8 +5,7 @@ import './globals.css';
 import LayoutShell from './components/LayoutShell';
 import { LanguageProvider } from '../lib/LanguageContext';
 import { AuthProvider } from '../lib/AuthContext';
-import JsonLd from '@/components/JsonLd';
-import { BASE_URL, siteMetadata, SITE_NAME } from '@/lib/seo';
+import { siteMetadata } from '@/lib/seo';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-plus-jakarta-sans', display: 'swap' });
@@ -20,30 +19,10 @@ export const metadata: Metadata = {
   },
 };
 
-const organizationJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'EducationalOrganization',
-  name: SITE_NAME,
-  url: BASE_URL,
-  logo: `${BASE_URL}/logo/questionwale_logo.webp`,
-  description: siteMetadata.description,
-  areaServed: 'India',
-  knowsAbout: ['UPSC', 'State PSC', 'Competitive exams', 'MCQ practice', 'General studies'],
-};
-
-const websiteJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: SITE_NAME,
-  url: BASE_URL,
-};
-
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${plusJakarta.variable} scroll-smooth`}>
       <body suppressHydrationWarning className="min-h-screen bg-[#F8FAFC] text-slate-900 antialiased font-body m-0 p-0 overflow-x-hidden">
-        <JsonLd data={organizationJsonLd} />
-        <JsonLd data={websiteJsonLd} />
         <LanguageProvider>
           <AuthProvider>
             <LayoutShell>{children}</LayoutShell>

@@ -23,7 +23,7 @@ export default function ProfileMetricsRow({ copy, metrics }: ProfileMetricsRowPr
   return (
     <section
       aria-label="Key metrics"
-      className="grid grid-cols-2 rounded-2xl border border-[#E2E8F0] bg-white sm:grid-cols-4"
+      className="grid w-full min-w-0 max-w-full grid-cols-2 rounded-2xl border border-[#E2E8F0] bg-white sm:grid-cols-4"
     >
       {items.map((item, index) => (
         <div
@@ -32,8 +32,8 @@ export default function ProfileMetricsRow({ copy, metrics }: ProfileMetricsRowPr
             index > 0 ? 'border-[#E2E8F0] sm:border-l' : ''
           } ${index % 2 === 1 ? 'border-l sm:border-l' : ''} ${index >= 2 ? 'border-t sm:border-t-0' : ''}`}
         >
-          <p className="text-2xl font-bold text-[#0F172A] sm:text-3xl">{item.value}</p>
-          <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">{item.label}</p>
+          <p className="max-w-full break-words text-2xl font-bold text-[#0F172A] sm:text-3xl">{item.value}</p>
+          <p className="mt-1 max-w-full break-words text-xs font-medium text-slate-500 sm:text-sm">{item.label}</p>
         </div>
       ))}
     </section>

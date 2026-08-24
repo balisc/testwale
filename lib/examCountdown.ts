@@ -12,23 +12,35 @@ export type ExamCountdownParts = {
   hours: number;
   minutes: number;
   expired: boolean;
+  today: boolean;
 };
 
 export function getExamCountdownParts(examDate: string, nowMs = Date.now()): ExamCountdownParts | null {
   const target = getExamCountdownTargetMs(examDate);
   if (target == null) return null;
 
-  const remaining = target - nowMs;
-  if (remaining <= 0) {
-    return { days: 0, hours: 0, minutes: 0, expired: true };
+  const currentDate = new Date(nowMs).toLocaleDateString('en-CA', { timeZone: IST });
+  const toUtcDay = (value: string) => {
+    const [year, month, day] = value.split('-').map(Number);
+    return Date.UTC(year!, month! - 1, day!);
+  };
+  const calendarDays = Math.round((toUtcDay(examDate) - toUtcDay(currentDate)) / 86_400_000);
+  if (calendarDays < 0) {
+    return { days: 0, hours: 0, minutes: 0, expired: true, today: false };
   }
 
+  const remaining = Math.max(0, target - nowMs);
   const totalMinutes = Math.floor(remaining / 60_000);
-  const days = Math.floor(totalMinutes / (60 * 24));
   const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
   const minutes = totalMinutes % 60;
 
-  return { days, hours, minutes, expired: false };
+  return {
+    days: calendarDays,
+    hours,
+    minutes,
+    expired: false,
+    today: calendarDays === 0,
+  };
 }
 
 export function validateExamDateInput(value: string): boolean {

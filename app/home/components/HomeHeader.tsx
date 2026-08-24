@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import UserAvatar from '@/components/UserAvatar';
 import HomeLogo from './HomeLogo';
+import { getSscCglLoginHref } from '@/lib/sscCglPreference';
 
 const NAV = [
   { label: 'Home', href: '/' },
@@ -129,9 +130,8 @@ function LanguageDropdown() {
 
 export default function HomeHeader() {
   const { language, setLanguage } = useLanguage();
-  const { user, logout, loading, refreshUser } = useAuth();
+  const { user, logout, loading } = useAuth();
   const pathname = usePathname();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [readProgress, setReadProgress] = useState(0);
@@ -141,10 +141,6 @@ export default function HomeHeader() {
     language === 'hi'
       ? { signIn: 'साइन इन', profile: 'प्रोफ़ाइल', logout: 'लॉग आउट' }
       : { signIn: 'Sign In', profile: 'Profile', logout: 'Log out' };
-
-  useEffect(() => {
-    void refreshUser();
-  }, [pathname, refreshUser]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -182,11 +178,11 @@ export default function HomeHeader() {
   const handleLogout = async () => {
     setOpen(false);
     await logout();
-    router.refresh();
   };
 
   const showSignedIn = !loading && Boolean(user);
   const showSignIn = !loading && !user;
+  const signInHref = getSscCglLoginHref(pathname);
 
   return (
     <header
@@ -195,18 +191,24 @@ export default function HomeHeader() {
       }`}
     >
       <div className="home-container grid h-[72px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 max-[359px]:h-14 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:gap-4">
-        <HomeLogo className="min-w-0 shrink-0 justify-self-start" />
+        <HomeLogo
+          className="min-w-0 shrink-0 justify-self-start"
+          href={user ? '/dashboard' : '/'}
+        />
 
         <nav
           className="hidden min-w-0 items-center justify-center gap-1 justify-self-center lg:flex"
           aria-label="Primary"
         >
           {NAV.map((item) => {
-            const active = isActivePath(pathname, item.href);
+            const href = user && item.href === '/' ? '/dashboard' : item.href;
+            const active = user && item.href === '/'
+              ? pathname === '/dashboard'
+              : isActivePath(pathname, item.href);
             return (
               <Link
                 key={item.label}
-                href={item.href}
+                href={href}
                 className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-3 py-2 text-[15px] font-medium transition ${
                   active
                     ? 'text-[#5521BF]'
@@ -250,7 +252,7 @@ export default function HomeHeader() {
             ) : null}
             {showSignIn ? (
               <Link
-                href="/login"
+                href={signInHref}
                 className="inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-xl border border-[#E4E7EC] bg-white px-4 text-[15px] font-semibold text-[#18181B] transition hover:border-[#DDD6FE] hover:bg-[#F5F3FF]"
               >
                 {authLabels.signIn}
@@ -269,7 +271,7 @@ export default function HomeHeader() {
               href="/subjects/indian-polity"
               className="inline-flex h-10 shrink-0 items-center rounded-xl bg-[#6D28D9] px-3 text-[13px] font-semibold text-white max-[279px]:hidden"
             >
-              Start
+              Start <span className="sr-only">Indian Polity practice</span>
             </Link>
             <button
               type="button"
@@ -292,18 +294,21 @@ export default function HomeHeader() {
       {open ? (
         <div className="border-t border-[#E4E7EC] bg-white lg:hidden">
           <nav className="home-container flex flex-col gap-1 py-4" aria-label="Mobile">
-            {NAV.map((item) => (
-              <Link
+            {NAV.map((item) => {
+              const href = user && item.href === '/' ? '/dashboard' : item.href;
+              return <Link
                 key={item.label}
-                href={item.href}
+                href={href}
                 onClick={() => setOpen(false)}
                 className={`rounded-xl px-3 py-3 text-[15px] font-medium hover:bg-[#F5F3FF] ${
-                  isActivePath(pathname, item.href) ? 'text-[#5521BF]' : 'text-[#18181B]'
+                  (user && item.href === '/' ? pathname === '/dashboard' : isActivePath(pathname, item.href))
+                    ? 'text-[#5521BF]'
+                    : 'text-[#18181B]'
                 }`}
               >
                 {item.label}
-              </Link>
-            ))}
+              </Link>;
+            })}
 
             {showSignedIn && user ? (
               <>
@@ -348,7 +353,7 @@ export default function HomeHeader() {
             ) : null}
             {showSignIn ? (
               <Link
-                href="/login"
+                href={signInHref}
                 onClick={() => setOpen(false)}
                 className="mt-2 rounded-xl border border-[#E4E7EC] px-3 py-3 text-center text-[15px] font-semibold"
               >

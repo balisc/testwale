@@ -13,7 +13,7 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default function ProfilePage() {
   return (
-    <main className="min-h-screen overflow-x-hidden bg-white">
+    <main className="min-h-screen w-full min-w-0 max-w-full bg-white">
       <ProfileOverviewPage />
     </main>
   );
