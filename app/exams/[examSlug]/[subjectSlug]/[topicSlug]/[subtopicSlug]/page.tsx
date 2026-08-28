@@ -3,7 +3,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import QuestionPractice from '@/components/practice/QuestionPractice';
-import { getExactExamQuestionBatchBySubtopic } from '@/lib/exactExamQuestionsServer';
+import {
+  getExactExamQuestionBatchBySubtopic,
+  getFreshExactExamQuestionBatchBySubtopic,
+} from '@/lib/exactExamQuestionsServer';
 import {
   findPublishedSyllabusSubject,
   findPublishedSyllabusSubtopic,
@@ -71,7 +74,7 @@ export default async function PublicExamSubtopicPage({ params, searchParams }: P
   const subjectName = getLocalizedText(subject.title, 'en') || subject.slug;
   const topicName = getLocalizedText(topic.title, 'en') || topic.slug;
   const subtopicName = getLocalizedText(subtopic.title, 'en') || subtopic.slug;
-  const initialBatch = subtopic.content_id && snapshot.exam.profile_id
+  let initialBatch = subtopic.content_id && snapshot.exam.profile_id
     ? await getExactExamQuestionBatchBySubtopic({
         examProfileId: snapshot.exam.profile_id,
         contentSubtopicId: subtopic.content_id,
@@ -79,6 +82,14 @@ export default async function PublicExamSubtopicPage({ params, searchParams }: P
         batchSize: QUESTION_BATCH_PAGE_SIZE,
       })
     : null;
+  if (subtopic.content_id && snapshot.exam.profile_id && !initialBatch?.questions.length) {
+    initialBatch = await getFreshExactExamQuestionBatchBySubtopic({
+      examProfileId: snapshot.exam.profile_id,
+      contentSubtopicId: subtopic.content_id,
+      stageCodes: stageCode ? [stageCode] : undefined,
+      batchSize: QUESTION_BATCH_PAGE_SIZE,
+    });
+  }
 
   if (!subtopic.content_id || !subtopic.content_topic_id || !subtopic.content_subject_id || !initialBatch?.questions.length) {
     return (
@@ -135,7 +146,7 @@ export default async function PublicExamSubtopicPage({ params, searchParams }: P
         subjectSlug={subject.slug}
         topicSlug={topic.slug}
         subtopicSlug={subtopic.slug}
-        totalQuestionCount={null}
+        totalQuestionCount={subtopic.question_count}
       />
     </main>
   );

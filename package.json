@@ -17,6 +17,8 @@
     "test:seo": "node scripts/audit-seo.mjs",
     "test:verify-llms": "node scripts/verify-llms-links.mjs",
     "test:cache-privacy": "node scripts/verify-cache-privacy.mjs",
+    "test:request-security": "node --experimental-strip-types lib/requestSecurity.test.ts",
+    "test:security-regression": "node --experimental-strip-types lib/securityRegression.test.ts",
     "test:safe-redirect": "node --experimental-strip-types lib/safeRedirect.test.ts",
     "test:auth-security": "node --experimental-strip-types lib/authSecurity.test.ts",
     "test:oauth-code-redirect": "node --import ./scripts/test-register.mjs --experimental-strip-types lib/oauthCodeRedirect.test.ts",
@@ -29,6 +31,7 @@
     "test:exam-onboarding": "node --import ./scripts/test-register.mjs --experimental-strip-types lib/examOnboarding.test.ts && node --import ./scripts/test-register.mjs --experimental-strip-types lib/examPreference.test.ts",
     "test:exam-learning": "node --import ./scripts/test-register.mjs --experimental-strip-types lib/examLearning.test.ts",
     "test:ssc-cgl": "node --import ./scripts/test-register.mjs --experimental-strip-types lib/sscCglSyllabus.test.ts && node --import ./scripts/test-register.mjs --experimental-strip-types lib/sscCglPreference.test.ts && node --experimental-strip-types lib/publicExamExplorer.test.ts",
+    "test:ssc-chsl": "node --import ./scripts/test-register.mjs --experimental-strip-types lib/sscChsl.test.ts && node --import ./scripts/test-register.mjs --experimental-strip-types lib/examPreference.test.ts && node --experimental-strip-types lib/publicExamExplorer.test.ts",
     "test:quality-upgrade": "node --experimental-strip-types lib/qualityUpgradeAnnouncement.test.ts",
     "test:verify-auth": "node scripts/verify-auth-security.mjs"
   },
@@ -39,7 +42,7 @@
     "framer-motion": "^12.40.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.14.0",
-    "next": "^16.2.9",
+    "next": "16.3.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-leaflet": "^5.0.0"
@@ -52,7 +55,7 @@
     "critters": "^0.0.23",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.4",
-    "eslint-config-next": "^16.2.9",
+    "eslint-config-next": "16.3.3",
     "postcss": "^8.5.18",
     "tailwindcss": "3.4.4",
     "typescript": "5.5.4"

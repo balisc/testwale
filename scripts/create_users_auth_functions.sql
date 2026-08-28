@@ -1,4 +1,4 @@
--- Secure auth RPC functions for QuestionWale (works without service role key)
+-- Server-only auth RPC functions for QuestionWale.
 -- Run in Supabase SQL Editor after create_users_table.sql
 
 create extension if not exists pgcrypto;
@@ -133,7 +133,10 @@ $$;
 revoke all on function public.register_email_user(text, text, text) from public;
 revoke all on function public.login_email_user(text, text) from public;
 revoke all on function public.upsert_google_user(text, text, text, text) from public;
+revoke all on function public.register_email_user(text, text, text) from anon, authenticated;
+revoke all on function public.login_email_user(text, text) from anon, authenticated;
+revoke all on function public.upsert_google_user(text, text, text, text) from anon, authenticated;
 
-grant execute on function public.register_email_user(text, text, text) to anon, authenticated;
-grant execute on function public.login_email_user(text, text) to anon, authenticated;
-grant execute on function public.upsert_google_user(text, text, text, text) to anon, authenticated;
+grant execute on function public.register_email_user(text, text, text) to service_role;
+grant execute on function public.login_email_user(text, text) to service_role;
+grant execute on function public.upsert_google_user(text, text, text, text) to service_role;

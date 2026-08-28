@@ -1,7 +1,8 @@
 import { permanentRedirect, redirect } from 'next/navigation';
 import questionsData from '@/data/questions.json';
 import ClientQuiz from '@/app/subjects/[subject]/[topicSlug]/ClientQuiz';
-import supabase, { SUPABASE_AVAILABLE } from '@/lib/supabase';
+import { SUPABASE_AVAILABLE } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { subCategoryMatches, topicMatches } from '@/lib/topicMatching';
 import { BASE_URL, buildQuizMetadata } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
@@ -9,6 +10,7 @@ import { buildBreadcrumbListSchema } from '@/lib/breadcrumbSchema';
 import { slugifySubject } from '@/lib/slugGenerator';
 import { legacyColumnsForTable } from '@/lib/questionColumns';
 import { MAX_QUIZ_CANDIDATE_ROWS } from '@/lib/supabaseQueryLimits';
+import { stripLegacyAnswerFields } from '@/lib/legacyQuiz';
 
 const HISTORY_SUBCATEGORY_HI: Record<string, string> = {
   ancient: 'प्राचीन',
@@ -69,7 +71,7 @@ const normalizeText = (value: unknown) => {
 };
 
 function escapeForLike(value: string) {
-  return value.replace(/([%_\\])/g, '\\$1');
+  return value.replace(/([%_\\,()])/g, '\\$1');
 }
 
 function getTopicSearchTokens(topic: string) {
@@ -96,7 +98,9 @@ async function fetchCandidateQuestionsFromSupabase(tableName: string, subject: s
   }
 
   const columns = legacyColumnsForTable(tableName);
-  let query: any = supabase.from(tableName).select(columns).order('id', { ascending: true });
+  const admin = getSupabaseAdmin();
+  if (!admin) throw new Error('service_role_required');
+  let query: any = admin.from(tableName).select(columns).order('id', { ascending: true });
 
   const historySubCategoryKey = subject === 'history' ? getHistorySubCategoryKey(normalizedTopic) : '';
   if (historySubCategoryKey) {
@@ -328,7 +332,7 @@ export default async function TopicPage({ params }: { params: Promise<{ subject:
     <>
       <JsonLd data={breadcrumbJsonLd} />
       <ClientQuiz
-        questions={questions ?? []}
+        questions={(questions ?? []).map((row) => stripLegacyAnswerFields(row))}
         decodedTopic={decodedTopic}
         subject={subjectKey}
         fetchError={fetchError}

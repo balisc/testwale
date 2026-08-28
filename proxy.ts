@@ -6,18 +6,23 @@ import {
   buildOAuthCallbackForwardUrl,
   pathnameHasStrayOAuthParams,
 } from '@/lib/oauthCodeRedirect';
-import { checkRateLimit, getApiRateLimitKey, getClientIp } from '@/lib/rateLimit';
+import {
+  checkRateLimit,
+  getApiRateLimitKey,
+  getApiRateLimitPolicy,
+  getClientIp,
+} from '@/lib/rateLimit';
+import { checkMutationRequest } from '@/lib/requestSecurity';
 import { SUBJECT_KEYS } from '@/lib/subjects';
-import { AUTH_COOKIE_NAME, parseSessionToken } from '@/lib/appSession';
+import { AUTH_COOKIE_NAME, parseSessionToken, type SessionUser } from '@/lib/appSession';
 import { needsExamOnboarding } from '@/lib/examOnboarding';
-import { getExamOnboardingDetails } from '@/lib/examOnboardingServer';
+import { getExamOnboardingGateState } from '@/lib/examOnboardingServer';
 import { getSafeRedirectPath } from '@/lib/safeRedirect';
 
-const API_RATE_LIMIT = 120;
-const API_RATE_WINDOW_MS = 60_000;
 const LEGACY_TOP_LEVEL = new Set(SUBJECT_KEYS.map((key) => key.toLowerCase()));
 
 const PATH_CHECK_TTL_MS = 5 * 60_000;
+const PATH_CHECK_NEGATIVE_TTL_MS = 15_000;
 const pathCheckCache = new Map<string, { ok: boolean; expiresAt: number }>();
 
 function internalPathCheckToken(): string | null {
@@ -60,6 +65,7 @@ function isReservedTopLevelSegment(segment: string): boolean {
     'examples',
     'sitemaps',
     'ssc-cgl',
+    'ssc-chsl',
     'robots.txt',
     'sitemap.xml',
     'manifest.webmanifest',
@@ -73,6 +79,17 @@ function isReservedTopLevelSegment(segment: string): boolean {
 async function maybeRejectUnknownCatalogPath(
   request: NextRequest,
 ): Promise<NextResponse | null> {
+  // The destination pages perform the authoritative validation. The proxy
+  // probe exists to preserve a true 404 for document requests; repeating it
+  // for Link prefetches and RSC navigations only adds a serial network hop.
+  if (
+    request.headers.get('rsc') === '1' ||
+    request.headers.has('next-router-prefetch') ||
+    request.headers.get('purpose')?.toLowerCase() === 'prefetch'
+  ) {
+    return null;
+  }
+
   const { pathname } = request.nextUrl;
   const isCheckedPath =
     pathname.startsWith('/subjects/') ||
@@ -97,7 +114,7 @@ async function maybeRejectUnknownCatalogPath(
   try {
     const res = await fetch(checkUrl.toString(), {
       method: 'GET',
-      next: { revalidate: 300 },
+      cache: 'no-store',
       headers: token ? { 'x-questionwale-path-check': token } : undefined,
     });
     if (res.ok) {
@@ -105,7 +122,13 @@ async function maybeRejectUnknownCatalogPath(
       return null;
     }
     if (res.status === 404) {
-      pathCheckCache.set(cacheKey, { ok: false, expiresAt: Date.now() + PATH_CHECK_TTL_MS });
+      // Syllabus publishing and legacy-data fallbacks can make a path valid
+      // immediately. Keep abuse protection, but never pin a newly valid path
+      // behind a five-minute negative cache.
+      pathCheckCache.set(cacheKey, {
+        ok: false,
+        expiresAt: Date.now() + PATH_CHECK_NEGATIVE_TTL_MS,
+      });
       return notFoundResponse();
     }
   } catch {
@@ -136,18 +159,18 @@ function maybeForwardStrayOAuthCode(request: NextRequest): NextResponse | null {
   });
 }
 
-async function maybeEnforceExamOnboarding(request: NextRequest): Promise<NextResponse | null> {
+async function maybeEnforceExamOnboarding(
+  request: NextRequest,
+  session: SessionUser | null,
+): Promise<NextResponse | null> {
   const { pathname, search, searchParams, origin } = request.nextUrl;
   const isOnboarding = pathname === '/onboarding';
   const isProtected =
     pathname === '/dashboard' ||
     pathname === '/profile' ||
-    pathname.startsWith('/profile/') ||
-    pathname === '/subjects' ||
-    pathname.startsWith('/subjects/');
+    pathname.startsWith('/profile/');
   if (!isOnboarding && !isProtected) return null;
 
-  const session = parseSessionToken(request.cookies.get(AUTH_COOKIE_NAME)?.value);
   if (!session) {
     if (!isOnboarding) return null;
     const loginReturn = `/onboarding${search}`;
@@ -157,7 +180,7 @@ async function maybeEnforceExamOnboarding(request: NextRequest): Promise<NextRes
     );
   }
 
-  const state = await getExamOnboardingDetails(session.id);
+  const state = await getExamOnboardingGateState(session.id);
   if (isProtected && needsExamOnboarding(state)) {
     const returnTo = `${pathname}${search}`;
     return NextResponse.redirect(
@@ -188,13 +211,19 @@ export async function proxy(request: NextRequest) {
   const strayOAuth = maybeForwardStrayOAuthCode(request);
   if (strayOAuth) return strayOAuth;
 
-  const onboardingRedirect = await maybeEnforceExamOnboarding(request);
+  const session = parseSessionToken(request.cookies.get(AUTH_COOKIE_NAME)?.value);
+  if (request.nextUrl.pathname === '/' && session) {
+    return NextResponse.redirect(new URL('/dashboard', request.url), {
+      status: 307,
+      headers: AUTH_PRIVATE_HEADERS,
+    });
+  }
+
+  const onboardingRedirect = await maybeEnforceExamOnboarding(request, session);
   if (onboardingRedirect) return onboardingRedirect;
 
   const pathname = request.nextUrl.pathname;
-  const hasAuthenticatedSession = Boolean(
-    parseSessionToken(request.cookies.get(AUTH_COOKIE_NAME)?.value),
-  );
+  const hasAuthenticatedSession = Boolean(session);
   // Published exact-exam node slugs are intentionally not part of the legacy
   // global catalog. Authenticated pages validate them against the user's exact
   // profile/version, so the public catalog cache must not reject or cache them.
@@ -224,12 +253,23 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (!pathname.startsWith('/api/admin/')) {
+    const mutationCheck = checkMutationRequest(request);
+    if (!mutationCheck.ok) {
+      return NextResponse.json(
+        { error: mutationCheck.error },
+        {
+          status: mutationCheck.status,
+          headers: { 'Cache-Control': 'no-store' },
+        },
+      );
+    }
+  }
+
   const ip = getClientIp(request.headers);
   const rateLimitKey = getApiRateLimitKey(ip, request.nextUrl.pathname);
-  const result = checkRateLimit(rateLimitKey, {
-    limit: API_RATE_LIMIT,
-    windowMs: API_RATE_WINDOW_MS,
-  });
+  const policy = getApiRateLimitPolicy(pathname);
+  const result = checkRateLimit(rateLimitKey, policy);
 
   if (!result.allowed) {
     const retryAfterSeconds = Math.max(1, Math.ceil((result.resetAt - Date.now()) / 1000));
@@ -240,7 +280,7 @@ export async function proxy(request: NextRequest) {
         headers: {
           'Cache-Control': 'no-store',
           'Retry-After': String(retryAfterSeconds),
-          'X-RateLimit-Limit': String(API_RATE_LIMIT),
+          'X-RateLimit-Limit': String(policy.limit),
           'X-RateLimit-Remaining': '0',
         },
       },
@@ -248,15 +288,13 @@ export async function proxy(request: NextRequest) {
   }
 
   const response = NextResponse.next();
-  response.headers.set('X-RateLimit-Limit', String(API_RATE_LIMIT));
+  response.headers.set('X-RateLimit-Limit', String(policy.limit));
   response.headers.set('X-RateLimit-Remaining', String(result.remaining));
   return response;
 }
 
 export const config = {
   matcher: [
-    '/api/:path*',
-    '/subjects/:path*',
-    '/((?!_next/static|_next/image|favicon.ico|logo|images|home).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest|.*\\.(?:avif|css|gif|ico|jpe?g|js|map|png|svg|ttf|woff2?)$).*)',
   ],
 };

@@ -102,6 +102,11 @@ export function getExamPreferenceHref(preference: Pick<
     if (preference.stageCode === 'TIER_II_PAPER_III') return '/ssc-cgl/tier-2/paper-3/subjects';
     return '/ssc-cgl/tier-2/paper-1/subjects';
   }
+  if (preference.examCode === 'SSC_CHSL') {
+    return preference.stageCode === 'TIER_II'
+      ? '/ssc-chsl/tier-2/subjects'
+      : '/ssc-chsl/tier-1/subjects';
+  }
   const stage = encodeURIComponent(preference.stageCode);
   return `/exams/${encodeURIComponent(preference.examSlug)}?stage=${stage}`;
 }

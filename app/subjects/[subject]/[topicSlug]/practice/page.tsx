@@ -17,6 +17,7 @@ import { redirect } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { findPublishedSyllabusSubject, findPublishedSyllabusTopic } from '@/lib/examSyllabus';
 import { isSscCglExamCode } from '@/lib/sscCglSyllabus';
+import { isSscChslExamCode } from '@/lib/sscChsl';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,7 @@ export default async function MixedTopicPracticePage({ params, searchParams }: P
   if (selected.status === 'error') return <ExamContentUnavailable reason="error" />;
   if (selected.status === 'ready') {
     if (isSscCglExamCode(selected.snapshot.exam.code)) redirect('/ssc-cgl');
+    if (isSscChslExamCode(selected.snapshot.exam.code)) redirect('/ssc-chsl');
     const scopedSubject = findPublishedSyllabusSubject(selected.snapshot.subjects, routeSubject);
     if (!scopedSubject) notFound();
     const scopedTopic = findPublishedSyllabusTopic(selected.snapshot.topics, scopedSubject.id, topicSlug);

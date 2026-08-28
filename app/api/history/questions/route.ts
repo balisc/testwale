@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import supabase from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { subCategoryMatches, topicMatches } from '@/lib/topicMatching';
 import { legacyColumnsForTable } from '@/lib/questionColumns';
 import {
@@ -56,8 +56,10 @@ async function fetchQuestionsFromSupabase(tableName: string, subject: string, to
           ? 'ancient'
           : '';
 
-    const escapedTopic = topic.replace(/([%_\\])/g, '\\$1');
-    let fastQuery: any = supabase
+    const escapedTopic = topic.replace(/([%_\\,()])/g, '\\$1');
+    const admin = getSupabaseAdmin();
+    if (!admin) return [];
+    let fastQuery: any = admin
       .from(tableName)
       .select(legacyColumnsForTable(tableName))
       .order('id', { ascending: true });

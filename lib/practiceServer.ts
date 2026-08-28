@@ -71,7 +71,6 @@ function asPracticeSupabaseError(error: unknown): PracticeSupabaseErrorDetails |
 import type { RecordQuestionAttemptInput, UserProgressDashboard } from '@/lib/practiceAnalytics';
 import { normalizeProgressDashboard } from '@/lib/practiceAnalytics';
 import { getAuthUserFromCookies } from '@/lib/authCookies';
-import { createPracticeProof } from '@/lib/practiceProof';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 /** Service role client when configured; otherwise null (signed RPC + anon client is used). */
@@ -261,28 +260,9 @@ async function getPracticeProgressRowsSigned(
   userId: string,
   filters: { subjectId: string | null; topicId: string | null; subtopicId: string | null },
 ): Promise<Array<{ subject_id: string | null; topic_id: string | null; is_correct: boolean }> | null> {
-  const { proof, expiresAt } = createPracticeProof('progress', [userId]);
-
-  const { data, error: rpcError } = await supabase.rpc('get_practice_progress_rows_verified', {
-    p_user_id: userId,
-    p_subject_id: filters.subjectId,
-    p_topic_id: filters.topicId,
-    p_subtopic_id: filters.subtopicId,
-    p_expires_at: expiresAt,
-    p_proof: proof,
-  });
-
-  if (rpcError || !Array.isArray(data)) {
-    console.error('[practice/progressSigned] RPC failed:', rpcError);
-  } else {
-    return data as Array<{ subject_id: string | null; topic_id: string | null; is_correct: boolean }>;
-  }
-
-  // Fallback: full dashboard RPC then filter (requires fix_practice_save.sql grant)
-  const dashboard = await getUserProgressDashboardAnon(userId);
-  if (!dashboard) return null;
-
-  return progressRowsFromDashboard(dashboard, filters);
+  void userId;
+  void filters;
+  return null;
 }
 
 function progressRowsFromDashboard(
@@ -386,9 +366,9 @@ export async function getPracticeProgressForUser(
     return scopedProgressToPracticeProgress({ attempted: 0, correct: 0, wrong: 0, accuracy: 0 });
   }
 
-  const rows = await getPracticeProgressRowsSigned(userId, normalized);
-  if (!rows) return null;
-  return buildPracticeProgress(rows);
+  // Never let a browser-callable RPC act with a caller-supplied user id.
+  // Production practice data requires the server-only service role.
+  return null;
 }
 
 function computeCorrectPercentage(attemptCount: number, correctCount: number): number | null {
@@ -767,61 +747,18 @@ export async function submitQuestionAnswer(
   return submitQuestionAnswerDirect(admin, userId, questionId, selectedOption, timeTakenSeconds);
 }
 
-/** Signed RPC path — works with SUPABASE_ANON_KEY (no service role). */
+/** Disabled legacy path: browser-callable identity-bearing RPCs are not trusted. */
 async function submitQuestionAnswerSigned(
   userId: string,
   questionId: string,
   selectedOption: string,
   timeTakenSeconds: number | null,
 ): Promise<SubmitAnswerResponse | null> {
-  const option = selectedOption.trim().toUpperCase();
-  const { proof, expiresAt } = createPracticeProof('submit', [userId, questionId, option]);
-
-  const { data, error: rpcError } = await supabase.rpc('submit_question_answer_verified', {
-    p_user_id: userId,
-    p_question_id: questionId,
-    p_selected_option: option,
-    p_time_taken_seconds: timeTakenSeconds,
-    p_expires_at: expiresAt,
-    p_proof: proof,
-  });
-
-  if (!rpcError && data) {
-    return normalizeSubmitResponse(data as Record<string, unknown>);
-  }
-
-  if (rpcError) {
-    logPracticeSupabaseError('[practice/submitSigned] RPC failed', asPracticeSupabaseError(rpcError));
-  }
-
-  // Fallback: direct RPC (requires grant — run scripts/fix_practice_save.sql)
-  const { data: directData, error: directError } = await supabase.rpc('submit_question_answer', {
-    p_user_id: userId,
-    p_question_id: questionId,
-    p_selected_option: option,
-    p_time_taken_seconds: timeTakenSeconds,
-  });
-
-  if (!directError && directData) {
-    return normalizeSubmitResponse(directData as Record<string, unknown>);
-  }
-
-  if (directError) {
-    logPracticeSupabaseError('[practice/submit] direct RPC failed', asPracticeSupabaseError(directError));
-
-    const missingDirect =
-      isMissingRpcError(directError) ||
-      directError.message?.includes('permission denied') === true;
-
-    if (missingDirect) {
-      console.error(
-        '[practice/submit] Cannot save attempt — run scripts/fix_practice_save.sql in Supabase, or add SUPABASE_SERVICE_ROLE_KEY to .env.local',
-      );
-    }
-  }
-
-  // Last resort: reveal answer only (no DB save)
-  return checkAnswerOnServer(questionId, option);
+  void userId;
+  void questionId;
+  void selectedOption;
+  void timeTakenSeconds;
+  return null;
 }
 
 /**
@@ -835,11 +772,8 @@ export async function submitQuestionAnswerForUser(
   timeTakenSeconds: number | null,
 ): Promise<SubmitAnswerResponse | null> {
   const admin = getSupabaseAdmin();
-  if (admin) {
-    return submitQuestionAnswer(admin, userId, questionId, selectedOption, timeTakenSeconds);
-  }
-
-  return submitQuestionAnswerSigned(userId, questionId, selectedOption, timeTakenSeconds);
+  if (!admin) return null;
+  return submitQuestionAnswer(admin, userId, questionId, selectedOption, timeTakenSeconds);
 }
 
 /** Inserts one row into user_question_attempts (full attempt history). */
@@ -951,32 +885,15 @@ export async function getUserProgressDashboard(
 }
 
 async function getUserProgressDashboardSigned(userId: string): Promise<UserProgressDashboard | null> {
-  const { proof, expiresAt } = createPracticeProof('dashboard', [userId]);
-
-  const { data, error: rpcError } = await supabase.rpc('get_user_progress_dashboard_verified', {
-    p_user_id: userId,
-    p_expires_at: expiresAt,
-    p_proof: proof,
-  });
-
-  if (!rpcError && data) {
-    return normalizeProgressDashboard(data as Record<string, unknown>);
-  }
-
-  if (rpcError) {
-    console.error('[practice/dashboardSigned] RPC failed:', rpcError);
-  }
-
-  return getUserProgressDashboardAnon(userId);
+  void userId;
+  return null;
 }
 
 /** Dashboard stats for logged-in user (service role or signed RPC). */
 export async function getUserProgressDashboardForUser(userId: string): Promise<UserProgressDashboard | null> {
   const admin = getSupabaseAdmin();
-  if (admin) {
-    return getUserProgressDashboard(admin, userId);
-  }
-  return getUserProgressDashboardSigned(userId);
+  if (!admin) return null;
+  return getUserProgressDashboard(admin, userId);
 }
 
 async function reportQuestionDirect(
@@ -1172,35 +1089,9 @@ export async function resetSubtopicProgress(
 
   logPracticeSupabaseError('[practice/resetSubtopicProgress] RPC failed', asPracticeSupabaseError(rpcError));
 
-  if (!isMissingRpcError(rpcError)) {
-    return false;
-  }
-
-  const { error: attemptsError } = await admin
-    .from('user_attempts')
-    .delete()
-    .eq('user_id', userId)
-    .eq('subtopic_id', subtopicId);
-
-  if (attemptsError) {
-    console.error('[practice/resetSubtopicProgress]', attemptsError);
-    return false;
-  }
-
-  await admin
-    .from('user_question_attempts')
-    .delete()
-    .eq('user_id', userId)
-    .eq('subtopic_id', subtopicId);
-
-  await admin
-    .from('user_practice_scope_state')
-    .delete()
-    .eq('user_id', userId)
-    .eq('scope_type', 'subtopic')
-    .eq('scope_id', subtopicId);
-
-  return true;
+  // A broad direct-delete fallback could erase another exam's progress.
+  // Require the exam-scoped RPC migration instead of weakening the scope.
+  return false;
 }
 
 export async function getSubtopicBatchQuestionState(

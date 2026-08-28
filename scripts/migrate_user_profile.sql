@@ -361,4 +361,5 @@ end;
 $$;
 
 revoke all on function public.get_user_profile_page(uuid) from public;
-grant execute on function public.get_user_profile_page(uuid) to anon, authenticated, service_role;
+revoke execute on function public.get_user_profile_page(uuid) from public, anon, authenticated;
+grant execute on function public.get_user_profile_page(uuid) to service_role;

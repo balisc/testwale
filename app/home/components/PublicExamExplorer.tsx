@@ -1,12 +1,22 @@
 import Link from 'next/link';
 import { ArrowRight, BookOpen, LockKeyhole } from 'lucide-react';
 
-const UPCOMING_EXAMS = [
+const AVAILABLE_EXAMS = [
+  {
+    code: 'SSC_CGL',
+    label: 'SSC CGL',
+    href: '/exams/ssc-cgl',
+    description: 'Explore all seven subjects, then continue through topics, subtopics and practice questions.',
+  },
   {
     code: 'SSC_CHSL',
     label: 'SSC CHSL',
-    description: 'Tier-wise preparation for the 10+2 level exam, with verified bilingual MCQs.',
+    href: '/exams/ssc-combined-higher-secondary-level-examination',
+    description: 'Explore the complete syllabus and start Reasoning practice with verified bilingual MCQs.',
   },
+] as const;
+
+const UPCOMING_EXAMS = [
   {
     code: 'SSC_MTS',
     label: 'SSC MTS',
@@ -38,32 +48,35 @@ export default function PublicExamExplorer() {
             Choose Your SSC Exam
           </h2>
           <p className="mt-3 break-words text-base leading-7 text-[#667085] max-[479px]:text-sm max-[479px]:leading-6">
-            Open SSC CGL to explore all subjects. More SSC exam libraries are being prepared and will unlock soon.
+            Open SSC CGL or SSC CHSL to explore the published syllabus and available practice questions.
           </p>
         </div>
 
         <div className="mt-8 grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Link
-            href="/exams/ssc-cgl"
-            className="group flex min-h-52 w-full min-w-0 max-w-full flex-col rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-violet-400 hover:shadow-[0_12px_32px_rgba(76,29,149,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 focus-visible:ring-offset-2 sm:p-6"
-          >
-            <span className="flex items-start justify-between gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-700 text-white shadow-sm">
-                <BookOpen className="h-5 w-5" aria-hidden="true" />
+          {AVAILABLE_EXAMS.map((exam) => (
+            <Link
+              key={exam.code}
+              href={exam.href}
+              className="group flex min-h-52 w-full min-w-0 max-w-full flex-col rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-violet-400 hover:shadow-[0_12px_32px_rgba(76,29,149,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 focus-visible:ring-offset-2 sm:p-6"
+            >
+              <span className="flex items-start justify-between gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-700 text-white shadow-sm">
+                  <BookOpen className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+                  Available
+                </span>
               </span>
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
-                Available
+              <h3 className="mt-5 break-words text-lg font-bold text-slate-900">{exam.label}</h3>
+              <p className="mt-1.5 break-words text-sm leading-6 text-slate-600">
+                {exam.description}
+              </p>
+              <span className="mt-auto inline-flex min-h-10 items-center gap-2 pt-5 text-sm font-bold text-violet-700">
+                View subjects
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
               </span>
-            </span>
-            <h3 className="mt-5 break-words text-lg font-bold text-slate-900">SSC CGL</h3>
-            <p className="mt-1.5 break-words text-sm leading-6 text-slate-600">
-              Explore all seven subjects, then continue through topics, subtopics and practice questions.
-            </p>
-            <span className="mt-auto inline-flex min-h-10 items-center gap-2 pt-5 text-sm font-bold text-violet-700">
-              View subjects
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-            </span>
-          </Link>
+            </Link>
+          ))}
 
           {UPCOMING_EXAMS.map((exam) => (
             <div

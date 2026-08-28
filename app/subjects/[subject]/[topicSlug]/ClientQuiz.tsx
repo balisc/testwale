@@ -58,72 +58,6 @@ function getOptionTexts(rawOptions: any, lang: 'en' | 'hi'): string[] {
   return [];
 }
 
-function resolveCorrectAnswerIndex(
-  correctAnswerField: any,
-  lang: 'en' | 'hi',
-  finalOptions: string[],
-  rawOptions: any
-): number {
-  if (correctAnswerField === null || correctAnswerField === undefined || finalOptions.length === 0) {
-    return -1;
-  }
-
-  const extracted = extractText(correctAnswerField, lang).trim();
-  if (!extracted) {
-    return -1;
-  }
-
-  if (/^[a-eA-E]$/.test(extracted)) {
-    const letterIndex = extracted.toUpperCase().charCodeAt(0) - 65;
-    if (letterIndex >= 0 && letterIndex < finalOptions.length) {
-      return letterIndex;
-    }
-  }
-
-  if (/^\d+$/.test(extracted)) {
-    const numericValue = Number.parseInt(extracted, 10);
-    if (numericValue >= 1 && numericValue <= finalOptions.length) {
-      return numericValue - 1;
-    }
-    if (numericValue >= 0 && numericValue < finalOptions.length) {
-      return numericValue;
-    }
-  }
-
-  if (rawOptions && typeof rawOptions === 'object' && !Array.isArray(rawOptions)) {
-    const optionKeys = Object.keys(rawOptions)
-      .filter((key) => !['en', 'hi'].includes(key))
-      .sort((keyA, keyB) => keyA.localeCompare(keyB, undefined, { numeric: true }));
-
-    const keyIndex = optionKeys.findIndex((key) => key.toUpperCase() === extracted.toUpperCase());
-    if (keyIndex >= 0 && keyIndex < finalOptions.length) {
-      return keyIndex;
-    }
-  }
-
-  const exactIndex = finalOptions.findIndex((option) => option.trim() === extracted);
-  if (exactIndex >= 0) {
-    return exactIndex;
-  }
-
-  const normalizedExtracted = extracted.toLowerCase();
-  return finalOptions.findIndex((option) => option.trim().toLowerCase() === normalizedExtracted);
-}
-
-function resolveCorrectAnswerText(
-  correctAnswerField: any,
-  lang: 'en' | 'hi',
-  finalOptions: string[],
-  rawOptions: any
-): string {
-  const correctIndex = resolveCorrectAnswerIndex(correctAnswerField, lang, finalOptions, rawOptions);
-  if (correctIndex >= 0) {
-    return finalOptions[correctIndex]?.trim() ?? '';
-  }
-
-  return extractText(correctAnswerField, lang).trim();
-}
-
 function getQuestionId(row: any, fallbackIndex: number) {
   return String(row.id ?? row._id ?? row.pk ?? row.question_id ?? `question-${fallbackIndex + 1}`);
 }
@@ -281,6 +215,10 @@ export default function ClientQuiz({
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState(false);
+  const [revealedCorrectIndex, setRevealedCorrectIndex] = useState(-1);
+  const [revealedExplanation, setRevealedExplanation] = useState('');
+  const [submittingAnswer, setSubmittingAnswer] = useState(false);
+  const [answerError, setAnswerError] = useState<string | null>(null);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(30);
   const [score, setScore] = useState(0);
@@ -421,6 +359,10 @@ export default function ClientQuiz({
     setSelectedOptionIndex(null);
     setIsAnswered(false);
     setIsAnswerCorrect(false);
+    setRevealedCorrectIndex(-1);
+    setRevealedExplanation('');
+    setSubmittingAnswer(false);
+    setAnswerError(null);
     setTimeLeft(30);
     setQuizCompleted(false);
   };
@@ -473,21 +415,8 @@ export default function ClientQuiz({
 
   const askedInText = extractText(currentQuestion.asked_in ?? currentQuestion.askedIn ?? currentQuestion.askedInText, lang);
 
-  const correctAnswerField = currentQuestion.correct_answer ?? currentQuestion.answer;
-  const correctAnswerIndex = resolveCorrectAnswerIndex(
-    correctAnswerField,
-    lang,
-    finalOptions,
-    rawOptions
-  );
-  const correctAnswerText =
-    correctAnswerIndex >= 0
-      ? finalOptions[correctAnswerIndex]?.trim() ?? ''
-      : resolveCorrectAnswerText(correctAnswerField, lang, finalOptions, rawOptions);
-  const explanationText = extractText(currentQuestion.explanation ?? currentQuestion.explanation_text, lang);
-
-  const handleOptionClick = (clickedIndex: number) => {
-    if (isAnswered) return;
+  const handleOptionClick = async (clickedIndex: number) => {
+    if (isAnswered || submittingAnswer) return;
 
     if (timerRef.current !== null) {
       window.clearInterval(timerRef.current);
@@ -498,24 +427,47 @@ export default function ClientQuiz({
       autoAdvanceTimeoutRef.current = null;
     }
 
-    const clickedOptionText = finalOptions[clickedIndex] ?? '';
-    const isMatch = clickedOptionText.trim() === correctAnswerText.trim();
-
     setSelectedOptionIndex(clickedIndex);
-    setIsAnswered(true);
-    setIsAnswerCorrect(isMatch);
+    setSubmittingAnswer(true);
+    setAnswerError(null);
+    try {
+      const response = await fetch('/api/legacy-practice/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject,
+          questionId,
+          selectedOptionIndex: clickedIndex,
+          language: lang,
+        }),
+      });
+      if (!response.ok) throw new Error('Unable to validate this answer. Please try again.');
+      const result = (await response.json()) as {
+        isCorrect: boolean;
+        correctOptionIndex: number;
+        explanation: string;
+      };
+      setRevealedCorrectIndex(result.correctOptionIndex);
+      setRevealedExplanation(result.explanation);
+      setIsAnswered(true);
+      setIsAnswerCorrect(result.isCorrect);
 
-    if (isMatch) {
-      setScore((prev) => prev + 1);
-      autoAdvanceTimeoutRef.current = window.setTimeout(() => {
-        autoAdvanceTimeoutRef.current = null;
-        if (currentQuestionIndex + 1 < shuffledQuestions.length) {
-          setCurrentQuestionIndex((prev) => prev + 1);
-          resetForNextQuestion();
-        } else {
-          setQuizCompleted(true);
-        }
-      }, 1000);
+      if (result.isCorrect) {
+        setScore((prev) => prev + 1);
+        autoAdvanceTimeoutRef.current = window.setTimeout(() => {
+          autoAdvanceTimeoutRef.current = null;
+          if (currentQuestionIndex + 1 < shuffledQuestions.length) {
+            setCurrentQuestionIndex((prev) => prev + 1);
+            resetForNextQuestion();
+          } else {
+            setQuizCompleted(true);
+          }
+        }, 1000);
+      }
+    } catch (error) {
+      setAnswerError(error instanceof Error ? error.message : 'Unable to validate this answer.');
+    } finally {
+      setSubmittingAnswer(false);
     }
   };
 
@@ -583,7 +535,7 @@ export default function ClientQuiz({
               {finalOptions.length ? (
                 finalOptions.map((option, optionIndex) => {
                   const isSelected = selectedOptionIndex === optionIndex;
-                  const isCorrectOption = optionIndex === correctAnswerIndex;
+                  const isCorrectOption = optionIndex === revealedCorrectIndex;
                   const isSelectedCorrect = isAnswered && isSelected && isAnswerCorrect;
                   const isSelectedIncorrect = isAnswered && isSelected && !isAnswerCorrect;
                   const shouldRevealCorrect = isAnswered && !isAnswerCorrect && isCorrectOption;
@@ -604,7 +556,7 @@ export default function ClientQuiz({
                       key={`${option}-${optionIndex}`}
                       type="button"
                       onClick={() => handleOptionClick(optionIndex)}
-                      disabled={isAnswered}
+                      disabled={isAnswered || submittingAnswer}
                       className={`${buttonClass} transition duration-200 ease-out transform hover:-translate-y-0.5 active:scale-95`}
                     >
                       <span className="font-semibold mr-2">{String.fromCharCode(65 + optionIndex)}.</span>
@@ -617,11 +569,13 @@ export default function ClientQuiz({
               )}
             </div>
 
-            {isAnswered && !isAnswerCorrect && explanationText && selectedOptionIndex !== null && (
+            {answerError && <p className="mb-4 text-sm text-red-600">{answerError}</p>}
+
+            {isAnswered && !isAnswerCorrect && revealedExplanation && selectedOptionIndex !== null && (
               <div className="mt-6 space-y-3">
                 <div className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
                   <p className="text-sm font-semibold text-blue-900 mb-2">Explanation:</p>
-                  <p className="text-blue-800">{explanationText}</p>
+                  <p className="text-blue-800">{revealedExplanation}</p>
                 </div>
                 <VerifiedSources
                   source={

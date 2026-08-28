@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import supabase, { SUPABASE_AVAILABLE } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { validateContactForm } from '@/lib/contactValidation';
 
 export const dynamic = 'force-dynamic';
@@ -28,14 +28,15 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!SUPABASE_AVAILABLE) {
+    const admin = getSupabaseAdmin();
+    if (!admin) {
       return NextResponse.json(
         { success: false, code: 'saveError', message: 'Database is not configured.' },
         { status: 503 },
       );
     }
 
-    const { error } = await supabase.from('contact_us').insert({
+    const { error } = await admin.from('contact_us').insert({
       name: validation.data.name,
       email: validation.data.email,
       mobile: validation.data.mobile,

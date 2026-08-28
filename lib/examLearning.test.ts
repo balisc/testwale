@@ -199,7 +199,7 @@ const questionRoute = readFileSync('app/api/questions/route.ts', 'utf8');
 assert.match(questionRoute, /contains\('exam_tags', \[examCode\]\)/, 'question lists filter in PostgreSQL');
 
 const homePage = readFileSync('app/page.tsx', 'utf8');
-assert.match(homePage, /if \(session\) redirect\('\/dashboard'\)/, 'authenticated home opens the exam dashboard');
+assert.doesNotMatch(homePage, /getAuthUserFromCookies|cookies\(/, 'guest homepage remains ISR-cacheable');
 
 const dashboardClient = readFileSync('app/dashboard/ExamDashboardClient.tsx', 'utf8');
 assert.match(
@@ -306,6 +306,8 @@ assert.doesNotMatch(
 
 const proxySource = readFileSync('proxy.ts', 'utf8');
 assert.match(proxySource, /if \(!hasAuthenticatedSession\)[\s\S]*maybeRejectUnknownCatalogPath/, 'public path cache never rejects exact user syllabus slugs');
+assert.match(proxySource, /pathname === '\/' && session[\s\S]*\/dashboard/, 'authenticated home opens the exam dashboard at the request boundary');
+assert.match(proxySource, /headers\.get\('rsc'\) === '1'[\s\S]*return null/, 'RSC navigations do not wait for the document-only true-404 probe');
 
 const publicSubjects = readFileSync('app/subjects/page.tsx', 'utf8');
 assert.match(publicSubjects, /selected\.status === 'ready'/);

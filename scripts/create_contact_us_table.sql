@@ -33,14 +33,8 @@ create index if not exists idx_contact_us_status
 
 alter table public.contact_us enable row level security;
 
-grant usage on schema public to anon, authenticated;
-grant insert on table public.contact_us to anon, authenticated;
+revoke all privileges on table public.contact_us from anon, authenticated;
+grant select, insert, update, delete on table public.contact_us to service_role;
 
 drop policy if exists "Public insert contact_us" on public.contact_us;
 drop policy if exists "Allow anon insert contact_us" on public.contact_us;
-
-create policy "Allow anon insert contact_us"
-  on public.contact_us
-  for insert
-  to anon, authenticated
-  with check (true);

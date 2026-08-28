@@ -2,6 +2,7 @@ import { getAuthUserFromCookies } from '@/lib/authCookies';
 import { getSubtopicBatchQuestionState } from '@/lib/practiceServer';
 import {
   isTextBodyTooLarge,
+  isUuid,
   parseBatchQuestionIdsPayload,
   privateNoStoreJsonResponse,
 } from '@/lib/publicQuestionApiGuards';
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
   }
 
   const scopeId = typeof row.scopeId === 'string' ? row.scopeId.trim() : '';
-  if (!scopeId) {
+  if (!isUuid(scopeId)) {
     return errorResponse('missing_scope_id', 400);
   }
 

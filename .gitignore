@@ -9,6 +9,7 @@ out/
 *.tsbuildinfo
 .eslintcache
 coverage/
+test-results/
 scripts/_seo_html/
 temp_*
 asset_response.txt

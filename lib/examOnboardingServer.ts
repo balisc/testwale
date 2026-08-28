@@ -46,6 +46,14 @@ const COMPLETED_LEGACY_STATE: ExamOnboardingDetails = {
   targetExamProfile: null,
 };
 
+const COMPLETED_LEGACY_GATE_STATE = {
+  required: false,
+  completedAt: null,
+  targetExamProfileId: null,
+  targetExamId: null,
+  targetExamDate: null,
+} as const;
+
 function isMissingOnboardingSchema(message: string | undefined): boolean {
   return /target_exam_profile_id|target_exam_id|exam_onboarding_required|exam_onboarding_completed_at|schema cache/i.test(
     message ?? '',
@@ -57,6 +65,38 @@ export async function listExamSelectorOptions(): Promise<ExamSelectorOption[]> {
 }
 
 export { ExamCatalogueDatabaseError } from '@/lib/examCatalogueServer';
+
+/**
+ * Minimal request-boundary read. Proxy redirects only need these two fields;
+ * loading exam and selector rows here would be repeated by the destination.
+ */
+export async function getExamOnboardingGateState(
+  userId: string,
+): Promise<ExamOnboardingState> {
+  const admin = getSupabaseAdmin();
+  if (!admin) return COMPLETED_LEGACY_GATE_STATE;
+
+  const { data, error } = await admin
+    .from('user_profiles')
+    .select('exam_onboarding_required, exam_onboarding_completed_at')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    if (!isMissingOnboardingSchema(error.message)) {
+      console.warn(`[exam-onboarding/gate] code=${error.code || 'database_error'} message=${error.message}`);
+    }
+    return COMPLETED_LEGACY_GATE_STATE;
+  }
+
+  return {
+    required: data?.exam_onboarding_required === true,
+    completedAt: data?.exam_onboarding_completed_at ?? null,
+    targetExamProfileId: null,
+    targetExamId: null,
+    targetExamDate: null,
+  };
+}
 
 async function getSelectorOption(examProfileId: string): Promise<{
   option: ExamSelectorOption | null;

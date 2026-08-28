@@ -74,5 +74,6 @@ export async function PUT(request: Request) {
   revalidatePath('/profile');
   revalidatePath('/onboarding');
   revalidatePath('/ssc-cgl');
+  revalidatePath('/ssc-chsl');
   return NextResponse.json({ preference: result.preference }, { headers: PRIVATE_NO_STORE });
 }

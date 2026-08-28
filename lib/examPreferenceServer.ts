@@ -13,6 +13,7 @@ import {
   getSscCglScopeSummaries,
 } from '@/lib/sscCglSyllabusServer';
 import { SSC_CGL_STAGES } from '@/lib/sscCglSyllabus';
+import { SSC_CHSL_EXAM_CODE, SSC_CHSL_STAGES } from '@/lib/sscChsl';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -128,6 +129,83 @@ async function getLegacySscCglTracks(examProfileId: string): Promise<TrackLookup
   }
 }
 
+async function getLegacySscChslTracks(examProfileId: string): Promise<TrackLookup> {
+  const admin = getSupabaseAdmin();
+  if (!admin) return { status: 'error', code: 'not_configured', tracks: [] };
+
+  try {
+    const identity = await getActiveExamProfileIdentity({
+      examProfileId,
+      examCode: SSC_CHSL_EXAM_CODE,
+    });
+    if (!identity) return { status: 'invalid_exam_profile', tracks: [] };
+
+    const [stages, ...stageCounts] = await Promise.all([
+      admin
+        .from('exam_profile_stages')
+        .select('stage_code, stage_title, paper_or_section, is_objective, is_scope_stage, sort_order')
+        .eq('exam_profile_id', examProfileId)
+        .eq('is_scope_stage', true)
+        .in('stage_code', SSC_CHSL_STAGES.map((stage) => stage.code))
+        .order('sort_order', { ascending: true }),
+      ...SSC_CHSL_STAGES.map((stage) => admin
+        .from('questions')
+        .select('id, question_exam_profile_mappings!inner(exam_profile_id, stage_codes, is_active)', {
+          count: 'exact',
+          head: true,
+        })
+        .eq('is_active', true)
+        .eq('is_verified', true)
+        .eq('question_exam_profile_mappings.exam_profile_id', examProfileId)
+        .eq('question_exam_profile_mappings.is_active', true)
+        .overlaps('question_exam_profile_mappings.stage_codes', [stage.code])),
+    ]);
+
+    if (stages.error) {
+      logDatabaseError('[exam-preference/chsl-fallback-stages]', stages.error);
+      return { status: 'error', code: stages.error.code || 'database_error', tracks: [] };
+    }
+    const stageByCode = new Map((stages.data ?? []).map((stage) => [stage.stage_code, stage]));
+    const tracks = SSC_CHSL_STAGES.flatMap((stage, index): ExamPreparationTrack[] => {
+      const stageRow = stageByCode.get(stage.code);
+      const countResult = stageCounts[index];
+      if (!countResult || countResult.error) {
+        if (countResult?.error) {
+          logDatabaseError(`[exam-preference/chsl-fallback-count:${stage.code}]`, countResult.error);
+        }
+        return [];
+      }
+      const verifiedQuestionCount = countResult.count ?? 0;
+      if (!stageRow || verifiedQuestionCount <= 0) return [];
+
+      const track = normalizeExamPreparationTrack({
+        exam_profile_id: identity.examProfileId,
+        content_exam_id: identity.contentExamId,
+        exam_code: identity.examCode,
+        exam_slug: identity.examSlug,
+        short_name: identity.shortName,
+        display_title: identity.examTitle,
+        official_title: identity.officialTitle,
+        tier_code: null,
+        stage_code: stage.code,
+        stage_title: stageRow.stage_title ?? stage.label,
+        paper_or_section: stageRow.paper_or_section,
+        preparation_mode: 'MCQ',
+        is_objective: stageRow.is_objective === true,
+        sort_order: stageRow.sort_order ?? index + 1,
+        verified_question_count: verifiedQuestionCount,
+        qualifying_skill_test_count: 0,
+        is_available: true,
+      });
+      return track ? [track] : [];
+    });
+    return { status: 'ready', tracks };
+  } catch (error) {
+    console.warn(`[exam-preference/chsl-fallback] ${error instanceof Error ? error.message : String(error)}`);
+    return { status: 'error', code: 'database_error', tracks: [] };
+  }
+}
+
 export async function getExamPreparationTracks(examProfileId: string): Promise<TrackLookup> {
   if (!UUID_PATTERN.test(examProfileId)) {
     return { status: 'invalid_exam_profile', tracks: [] };
@@ -154,7 +232,9 @@ export async function getExamPreparationTracks(examProfileId: string): Promise<T
     .order('sort_order', { ascending: true });
   if (result.error) {
     if (result.error.code === 'PGRST205') {
-      return getLegacySscCglTracks(examProfileId);
+      return identity.examCode === SSC_CHSL_EXAM_CODE
+        ? getLegacySscChslTracks(examProfileId)
+        : getLegacySscCglTracks(examProfileId);
     }
     logDatabaseError('[exam-preference/tracks]', result.error);
     return { status: 'error', code: result.error.code || 'database_error', tracks: [] };
@@ -233,10 +313,21 @@ async function getLegacySscCglPreference(
   if (tracks.status !== 'ready') {
     return { status: 'error', code: tracks.status === 'error' ? tracks.code : 'invalid_exam_profile' };
   }
+  const isChsl = tracks.tracks.some((candidate) => candidate.examCode === SSC_CHSL_EXAM_CODE);
+  const normalizedStageCode = isChsl
+    ? tierCode === 'TIER_I' ? 'TIER_I' : 'TIER_II'
+    : stageCode;
+  if (
+    isChsl
+    && !(
+      (tierCode === 'TIER_I' && stageCode === 'TIER_I')
+      || (tierCode === 'TIER_II' && stageCode === 'TIER_II_PAPER_I')
+    )
+  ) return { status: 'invalid' };
   const track = tracks.tracks.find((candidate) => (
-    candidate.examCode === 'SSC_CGL'
-    && candidate.tierCode === tierCode
-    && candidate.stageCode === stageCode
+    candidate.examCode === (isChsl ? SSC_CHSL_EXAM_CODE : 'SSC_CGL')
+    && candidate.tierCode === (isChsl ? null : tierCode)
+    && candidate.stageCode === normalizedStageCode
     && candidate.preparationMode === 'MCQ'
     && candidate.isAvailable
   ));
@@ -387,6 +478,56 @@ async function saveLegacySscCglPreference(
   return { ok: true, preference: preferenceFromTrack(submitted, updatedAt) };
 }
 
+async function saveLegacySscChslPreference(
+  userId: string,
+  input: SavePreferenceInput,
+  submitted: ExamPreparationTrack,
+): Promise<SavePreferenceResult> {
+  const admin = getSupabaseAdmin();
+  if (!admin) return { ok: false, code: 'not_configured' };
+  if (
+    submitted.examCode !== SSC_CHSL_EXAM_CODE
+    || input.preparationMode !== 'MCQ'
+    || input.tierCode !== null
+    || (input.stageCode !== 'TIER_I' && input.stageCode !== 'TIER_II')
+  ) {
+    return { ok: false, code: 'generic_preference_schema_missing' };
+  }
+
+  if (input.completeOnboarding) {
+    if (!input.examDate) return { ok: false, code: 'invalid_date' };
+    const onboarding = await admin.rpc('complete_exam_onboarding_with_tier', {
+      p_user_id: userId,
+      p_exam_profile_id: input.examProfileId,
+      p_exam_date: input.examDate,
+      p_preferred_tier_code: null,
+    });
+    if (onboarding.error) {
+      logDatabaseError('[exam-preference/save-chsl-onboarding-fallback]', onboarding.error);
+      return { ok: false, code: preferenceWriteErrorCode(onboarding.error) };
+    }
+  }
+
+  // Before the generic preference migration, the legacy CGL-only table has a
+  // non-null Tier constraint. TIER_II_PAPER_I is used only as a compatible
+  // storage marker for CHSL Tier II; reads translate it back to TIER_II.
+  const updatedAt = new Date().toISOString();
+  const preference = await admin
+    .from('user_exam_preferences')
+    .upsert({
+      user_id: userId,
+      exam_profile_id: input.examProfileId,
+      preferred_tier_code: input.stageCode,
+      preferred_stage_code: input.stageCode === 'TIER_I' ? 'TIER_I' : 'TIER_II_PAPER_I',
+      updated_at: updatedAt,
+    }, { onConflict: 'user_id,exam_profile_id' });
+  if (preference.error) {
+    logDatabaseError('[exam-preference/save-chsl-fallback]', preference.error);
+    return { ok: false, code: preferenceWriteErrorCode(preference.error) };
+  }
+  return { ok: true, preference: preferenceFromTrack(submitted, updatedAt) };
+}
+
 export async function saveExamPreparationPreference(
   userId: string,
   input: SavePreferenceInput,
@@ -431,6 +572,9 @@ export async function saveExamPreparationPreference(
   const write = await admin.rpc(rpcName, rpcArguments);
   if (write.error) {
     if (isMissingGenericPreferenceRpc(write.error, rpcName)) {
+      if (submitted.examCode === SSC_CHSL_EXAM_CODE) {
+        return saveLegacySscChslPreference(userId, input, submitted);
+      }
       return saveLegacySscCglPreference(userId, input, submitted);
     }
     logDatabaseError('[exam-preference/save]', write.error);

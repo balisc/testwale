@@ -294,10 +294,11 @@ assert.match(publicSubtopicPage, /stageCode=\{stageCode \?\? undefined\}/, 'subs
 
 // Guard/auth safety: OAuth recovery runs first, logout is reachable, public routes are not gated.
 assert.ok(
-  proxy.indexOf('maybeForwardStrayOAuthCode(request)') < proxy.indexOf('maybeEnforceExamOnboarding(request)'),
+  proxy.indexOf('maybeForwardStrayOAuthCode(request)') < proxy.indexOf('maybeEnforceExamOnboarding(request, session)'),
   'OAuth recovery runs before onboarding enforcement',
 );
 assert.match(proxy, /if \(!isOnboarding && !isProtected\) return null/);
+assert.match(proxy, /getExamOnboardingGateState\(session\.id\)/, 'proxy uses the two-column onboarding gate read');
 assert.match(logout, /export async function DELETE\(\)/);
 assert.match(callback, /attachAuthCookie/);
 assert.doesNotMatch(authContext, /registerTabCloseLogout|pagehide/, 'refresh must never trigger logout');

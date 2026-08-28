@@ -6,6 +6,9 @@ import { getPublicOrigin } from '@/lib/publicOrigin';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV === 'production') {
+    return new Response(null, { status: 404 });
+  }
   try {
     const url = new URL(request.url);
     const redirectTo = url.searchParams.get('next');

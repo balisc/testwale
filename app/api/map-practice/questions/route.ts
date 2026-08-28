@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
-import supabase, { SUPABASE_AVAILABLE } from '@/lib/supabase';
-import { normalizeDifficulty, normalizeMapScope, shuffleArray, type MapQuestion } from '@/lib/mapPractice';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import {
+  getBroadMapRegionHint,
+  normalizeDifficulty,
+  normalizeMapScope,
+  shuffleArray,
+  type MapQuestion,
+} from '@/lib/mapPractice';
 import { enrichMapQuestionCopy } from '@/lib/mapPracticeI18n';
 import { resolveQuestionListLimit } from '@/lib/publicQuestionApiGuards';
 import { MAX_QUESTION_LIMIT } from '@/lib/supabaseQueryLimits';
@@ -31,28 +37,35 @@ type SupabaseQuestionRow = {
 
 export const revalidate = 0;
 
+const FILTER_PATTERN = /^[\p{L}\p{N}\s&()'.,/-]{0,80}$/u;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const scope = normalizeMapScope(searchParams.get('scope'));
   const difficulty = normalizeDifficulty(searchParams.get('difficulty'));
   const topic = (searchParams.get('topic') ?? '').trim();
   const subtopic = (searchParams.get('subtopic') ?? '').trim();
+  const admin = getSupabaseAdmin();
 
-  if (!SUPABASE_AVAILABLE) {
+  if (!FILTER_PATTERN.test(topic) || !FILTER_PATTERN.test(subtopic)) {
+    return NextResponse.json({ error: 'invalid_filter' }, { status: 400 });
+  }
+
+  if (!admin) {
     return NextResponse.json(
       {
         questions: [],
         topics: [],
         subtopics: [],
-        error: 'Supabase is not configured.',
+        error: 'Map practice is temporarily unavailable.',
       },
-      { status: 200 }
+      { status: 503, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 
   const mapLimit = Math.min(resolveQuestionListLimit(searchParams.get('limit')), MAX_QUESTION_LIMIT);
 
-  let query = supabase
+  let query = admin
     .from('map_questions')
     .select(
       `
@@ -98,7 +111,7 @@ export async function GET(request: Request) {
   const { data, error } = await query;
 
   if (error) {
-    const message = error.message ?? 'Unable to fetch map questions.';
+    const message = error.message ?? '';
     const normalizedMessage = message.toLowerCase();
     const isMissingTable =
       (normalizedMessage.includes('relation') && normalizedMessage.includes('does not exist')) ||
@@ -111,13 +124,13 @@ export async function GET(request: Request) {
         subtopics: [],
         error: isMissingTable
           ? 'Map practice tables are not created yet. Run scripts/create_map_practice_tables.sql in Supabase SQL editor.'
-          : message,
+          : 'Unable to fetch map questions.',
       },
-      { status: isMissingTable ? 200 : 500 }
+      { status: isMissingTable ? 200 : 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 
-  const rows = (data ?? []) as SupabaseQuestionRow[];
+  const rows = (data ?? []) as unknown as SupabaseQuestionRow[];
   const validQuestions: MapQuestion[] = [];
   const topicSet = new Set<string>();
   const subtopicSet = new Set<string>();
@@ -145,30 +158,26 @@ export async function GET(request: Request) {
         main_topic: row.main_topic,
         subtopic: row.subtopic,
         map_scope: row.map_scope as MapQuestion['map_scope'],
-        tolerance_km: Number(row.tolerance_km ?? 30),
-        explanation: null,
+        region_hint: getBroadMapRegionHint(
+          Number(row.correct_location.latitude),
+          Number(row.correct_location.longitude),
+          row.map_scope as MapQuestion['map_scope'],
+        ),
         difficulty: row.difficulty,
         exam_tags: row.exam_tags,
         is_current_affairs: Boolean(row.is_current_affairs),
         current_affairs_month: row.current_affairs_month,
-        correct_location: {
-          id: row.correct_location.id,
-          name: row.correct_location.name,
-          category: row.correct_location.category,
-          map_scope: row.correct_location.map_scope as MapQuestion['map_scope'],
-          latitude: Number(row.correct_location.latitude),
-          longitude: Number(row.correct_location.longitude),
-          difficulty: row.correct_location.difficulty,
-          is_current_affairs: row.correct_location.is_current_affairs,
-        },
       }),
     );
   }
 
-  return NextResponse.json({
-    questions: shuffleArray(validQuestions),
-    topics: Array.from(topicSet).sort((a, b) => a.localeCompare(b)),
-    subtopics: Array.from(subtopicSet).sort((a, b) => a.localeCompare(b)),
-    error: null,
-  });
+  return NextResponse.json(
+    {
+      questions: shuffleArray(validQuestions),
+      topics: Array.from(topicSet).sort((a, b) => a.localeCompare(b)),
+      subtopics: Array.from(subtopicSet).sort((a, b) => a.localeCompare(b)),
+      error: null,
+    },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
 }

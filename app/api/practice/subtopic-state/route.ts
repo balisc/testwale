@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
 import { getSubtopicAttemptState, practiceErrorResponse, requirePracticeUser } from '@/lib/practiceServer';
 import { getSelectedExamContext } from '@/lib/examLearningServer';
+import { isUuid, privateNoStoreJsonResponse } from '@/lib/publicQuestionApiGuards';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,9 +11,9 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const subtopicId = searchParams.get('subtopicId')?.trim() ?? '';
-  const questionIds = searchParams.getAll('questionId').map(String).filter(Boolean);
+  const questionIds = [...new Set(searchParams.getAll('questionId').map((value) => value.trim()).filter(Boolean))];
 
-  if (!subtopicId) {
+  if (!isUuid(subtopicId) || questionIds.length > 50 || questionIds.some((id) => !isUuid(id))) {
     return practiceErrorResponse('invalid_payload', 400);
   }
 
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
   const allowedQuestions = await allowedQuery;
   if (allowedQuestions.error) return practiceErrorResponse('subtopic_state_failed', 500);
   const allowedIds = (allowedQuestions.data ?? []).map((row: { id: string }) => String(row.id));
-  if (allowedIds.length === 0) return NextResponse.json({ correctQuestionIds: [], attempts: [] });
+  if (allowedIds.length === 0) return privateNoStoreJsonResponse({ correctQuestionIds: [], attempts: [] });
 
   const state = await getSubtopicAttemptState(
     admin,
@@ -45,5 +45,5 @@ export async function GET(request: Request) {
     return practiceErrorResponse('subtopic_state_failed', 500);
   }
 
-  return NextResponse.json(state);
+  return privateNoStoreJsonResponse(state);
 }

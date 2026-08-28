@@ -113,9 +113,10 @@ export default async function SscCglPathPage({ params }: PageProps) {
 
   const nodes = findSscCglRouteNodes(taxonomy, route);
   if (!nodes) notFound();
-  const [mapped, examProfileId] = await Promise.all([
+  const [mapped, examProfileId, questionCounts] = await Promise.all([
     getSscCglMappedLearningHierarchy(taxonomy),
     resolveReadyExamProfileId({ examCode: 'SSC_CGL' }),
+    getSscCglScopedQuestionCounts(route.stage, nodes.subject.id, nodes.topic.id),
   ]);
   const mappedSubtopic = mapped.subtopics.find((row) => row.id === nodes.subtopic.id);
   const subtopicsHref = getSscCglSubtopicsHref(route.stage, nodes.subject.slug, nodes.topic.slug);
@@ -183,7 +184,7 @@ export default async function SscCglPathPage({ params }: PageProps) {
         subjectSlug={nodes.subject.slug}
         topicSlug={nodes.topic.slug}
         subtopicSlug={nodes.subtopic.slug}
-        totalQuestionCount={null}
+        totalQuestionCount={questionCounts[nodes.subtopic.id] ?? 0}
       />
     </main>
   );

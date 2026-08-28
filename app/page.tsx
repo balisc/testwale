@@ -13,8 +13,6 @@ import {
   DEFAULT_OG_IMAGE,
   SITE_NAME,
 } from '@/lib/seo';
-import { getAuthUserFromCookies } from '@/lib/authCookies';
-import { redirect } from 'next/navigation';
 
 const title = 'Government Exam MCQ Practice in Hindi & English';
 const description =
@@ -64,10 +62,7 @@ const HomeBelowFold = dynamic(() => import('@/app/home/components/HomeBelowFold'
   loading: () => null,
 });
 
-export default async function HomePage() {
-  const session = await getAuthUserFromCookies();
-  if (session) redirect('/dashboard');
-
+export default function HomePage() {
   return (
     <div className="home-page w-full min-w-0 overflow-x-clip bg-[#FAFAFC] text-[#18181B] antialiased">
       <JsonLd data={homepageStructuredData} />

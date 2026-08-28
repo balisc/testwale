@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 import UserAvatar from '@/components/UserAvatar';
 import HomeLogo from './HomeLogo';
 import { getSscCglLoginHref } from '@/lib/sscCglPreference';
+import { getSscChslLoginHref } from '@/lib/sscChsl';
 
 const NAV = [
   { label: 'Home', href: '/' },
@@ -182,7 +183,9 @@ export default function HomeHeader() {
 
   const showSignedIn = !loading && Boolean(user);
   const showSignIn = !loading && !user;
-  const signInHref = getSscCglLoginHref(pathname);
+  const signInHref = pathname?.startsWith('/ssc-chsl')
+    ? getSscChslLoginHref(pathname)
+    : getSscCglLoginHref(pathname);
 
   return (
     <header

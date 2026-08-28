@@ -26,9 +26,10 @@ type SscExamHeroProps = {
   examName: string;
   language: 'en' | 'hi';
   strictSscCgl?: boolean;
+  strictSscChsl?: boolean;
 };
 
-export default function SscExamHero({ snapshot, examName, language, strictSscCgl = false }: SscExamHeroProps) {
+export default function SscExamHero({ snapshot, examName, language, strictSscCgl = false, strictSscChsl = false }: SscExamHeroProps) {
   const copy = language === 'hi'
     ? {
         selected: 'चयनित परीक्षा',
@@ -64,14 +65,21 @@ export default function SscExamHero({ snapshot, examName, language, strictSscCgl
         { value: 4, label: language === 'hi' ? 'अलग स्टेज' : 'Separate stages', icon: LayoutGrid },
         { value: coverageValue(snapshot.exam.code, language), label: copy.coverage, icon: Trophy },
       ]
-    : [
+    : strictSscChsl
+      ? [
+          { value: 2, label: language === 'hi' ? 'टियर' : 'Tiers', icon: BookOpen },
+          { value: snapshot.subjects.length, label: copy.subjects, icon: ListTree },
+          { value: snapshot.topics.length, label: copy.topics, icon: LayoutGrid },
+          { value: coverageValue(snapshot.exam.code, language), label: copy.coverage, icon: Trophy },
+        ]
+      : [
         { value: snapshot.subjects.length, label: copy.subjects, icon: BookOpen },
         { value: snapshot.topics.length, label: copy.topics, icon: ListTree },
         { value: snapshot.subtopics.length, label: copy.subtopics, icon: LayoutGrid },
         { value: coverageValue(snapshot.exam.code, language), label: copy.coverage, icon: Trophy },
       ];
-  const syllabusHref = strictSscCgl ? '/ssc-cgl' : '/subjects';
-  const exploreHref = strictSscCgl ? '#ssc-cgl-stages' : '#exam-subjects';
+  const syllabusHref = strictSscCgl ? '/ssc-cgl' : strictSscChsl ? '/ssc-chsl' : '/subjects';
+  const exploreHref = strictSscCgl ? '#ssc-cgl-stages' : strictSscChsl ? '#ssc-chsl-stages' : '#exam-subjects';
 
   return (
     <section className="relative overflow-hidden rounded-[2rem] border border-violet-100 bg-[#FCFBFF] shadow-[0_24px_70px_rgba(76,29,149,0.10)]">

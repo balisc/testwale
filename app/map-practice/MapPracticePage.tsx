@@ -7,10 +7,9 @@ import MapQuizMap from '@/app/components/map-practice/MapQuizMap';
 import MapReviewPanel from '@/app/components/map-practice/MapReviewPanel';
 import MapScorePanel from '@/app/components/map-practice/MapScorePanel';
 import {
-  getEffectiveToleranceKm,
-  haversineDistanceKm,
   normalizeDifficulty,
   normalizeMapScope,
+  type MapAnswerResult,
   type MapDifficulty,
   type MapQuestion,
   type MapScope,
@@ -31,20 +30,10 @@ type AnswerFeedback = {
   distanceKm: number;
   timedOut: boolean;
   toleranceKm: number;
+  correctPoint: Point;
+  correctLocationName: string;
+  explanation: string | null;
 };
-
-function getBroadRegionHint(point: Point, scope: MapScope) {
-  if (scope === 'india') {
-    if (point.lat >= 26) return 'Hint: Location is in northern India belt.';
-    if (point.lat <= 14) return 'Hint: Location is in southern India belt.';
-    if (point.lng <= 76) return 'Hint: Location is towards western/central India.';
-    return 'Hint: Location is towards eastern/central India.';
-  }
-
-  const northSouth = point.lat >= 0 ? 'Northern Hemisphere' : 'Southern Hemisphere';
-  const eastWest = point.lng >= 0 ? 'Eastern Hemisphere' : 'Western Hemisphere';
-  return `Hint: Location lies in ${northSouth}, ${eastWest}.`;
-}
 
 export default function MapPracticePage() {
   const [scope, setScope] = useState<MapScope>('india');
@@ -62,6 +51,7 @@ export default function MapPracticePage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedPoint, setSelectedPoint] = useState<Point | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<AnswerFeedback | null>(null);
   const [hintLevel, setHintLevel] = useState(0);
   const [hintText, setHintText] = useState<string | null>(null);
@@ -74,14 +64,8 @@ export default function MapPracticePage() {
   const [correct, setCorrect] = useState(0);
 
   const currentQuestion = questions[currentIndex] ?? null;
-  const currentCorrectPoint = useMemo(
-    () =>
-      currentQuestion
-        ? { lat: currentQuestion.correct_location.latitude, lng: currentQuestion.correct_location.longitude }
-        : null,
-    [currentQuestion],
-  );
-  const effectiveToleranceKm = currentQuestion ? getEffectiveToleranceKm(currentQuestion) : 30;
+  const currentCorrectPoint = feedback?.correctPoint ?? null;
+  const effectiveToleranceKm = feedback?.toleranceKm ?? 30;
 
   const hasNext = currentIndex < questions.length - 1;
 
@@ -97,6 +81,7 @@ export default function MapPracticePage() {
     setCurrentIndex(0);
     setSelectedPoint(null);
     setSubmitted(false);
+    setSubmitting(false);
     setFeedback(null);
     setHintLevel(0);
     setHintText(null);
@@ -147,54 +132,53 @@ export default function MapPracticePage() {
   }, [fetchQuestions]);
 
   const submitCurrentAnswer = useCallback(
-    (options?: { timedOut?: boolean }) => {
-      if (!currentQuestion || submitted) {
+    async (options?: { timedOut?: boolean }) => {
+      if (!currentQuestion || submitted || submitting) {
         return;
       }
 
       const timedOut = Boolean(options?.timedOut);
       const answerPoint = selectedPoint;
-      const distanceKm = answerPoint
-        ? haversineDistanceKm(
-            answerPoint.lat,
-            answerPoint.lng,
-            currentQuestion.correct_location.latitude,
-            currentQuestion.correct_location.longitude
-          )
-        : Number.POSITIVE_INFINITY;
+      setSubmitting(true);
+      try {
+        const response = await fetch('/api/map-practice/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            questionId: currentQuestion.id,
+            latitude: answerPoint?.lat ?? null,
+            longitude: answerPoint?.lng ?? null,
+            timedOut,
+          }),
+        });
+        if (!response.ok) throw new Error('Unable to validate this answer. Please try again.');
 
-      const isCorrect = Boolean(answerPoint) && distanceKm <= effectiveToleranceKm;
-      const safeDistance = Number.isFinite(distanceKm) ? distanceKm : 99999;
+        const result = (await response.json()) as MapAnswerResult & { timedOut: boolean };
+        const answerFeedback: AnswerFeedback = { ...result, timedOut };
+        setSubmitted(true);
+        setFeedback(answerFeedback);
+        setAttempted((value) => value + 1);
+        if (result.isCorrect) setCorrect((value) => value + 1);
 
-      setSubmitted(true);
-      setFeedback({
-        isCorrect,
-        distanceKm: safeDistance,
-        timedOut,
-        toleranceKm: effectiveToleranceKm,
-      });
-      setAttempted((value) => value + 1);
-      if (isCorrect) {
-        setCorrect((value) => value + 1);
+        const attempt: ReviewAttempt = {
+          questionId: currentQuestion.id,
+          questionText: currentQuestion.question_text,
+          selectedPoint: answerPoint,
+          correctPoint: result.correctPoint,
+          distanceKm: result.distanceKm,
+          toleranceKm: result.toleranceKm,
+          isCorrect: result.isCorrect,
+          timedOut,
+          explanation: result.explanation,
+        };
+        setReviewAttempts((items) => [...items, attempt]);
+      } catch (submitError) {
+        setError(submitError instanceof Error ? submitError.message : 'Unable to validate this answer.');
+      } finally {
+        setSubmitting(false);
       }
-
-      const attempt: ReviewAttempt = {
-        questionId: currentQuestion.id,
-        questionText: currentQuestion.question_text,
-        selectedPoint: answerPoint,
-        correctPoint: {
-          lat: currentQuestion.correct_location.latitude,
-          lng: currentQuestion.correct_location.longitude,
-        },
-        distanceKm: safeDistance,
-        toleranceKm: effectiveToleranceKm,
-        isCorrect,
-        timedOut,
-        explanation: currentQuestion.explanation,
-      };
-      setReviewAttempts((items) => [...items, attempt]);
     },
-    [currentQuestion, submitted, selectedPoint, effectiveToleranceKm]
+    [currentQuestion, submitted, submitting, selectedPoint]
   );
 
   const onSubmit = useCallback(() => {
@@ -228,6 +212,7 @@ export default function MapPracticePage() {
     setCurrentIndex((value) => value + 1);
     setSelectedPoint(null);
     setSubmitted(false);
+    setSubmitting(false);
     setFeedback(null);
     setHintLevel(0);
     setHintText(null);
@@ -260,17 +245,17 @@ export default function MapPracticePage() {
   }, []);
 
   const onHint = useCallback(() => {
-    if (!currentCorrectPoint || submitted) return;
+    if (!currentQuestion || submitted) return;
     if (hintLevel >= 2) return;
     const nextHintLevel = hintLevel + 1;
     setHintLevel(nextHintLevel);
     setHintsUsed((value) => value + 1);
     if (nextHintLevel === 1) {
-      setHintText(getBroadRegionHint(currentCorrectPoint, scope));
+      setHintText(currentQuestion.region_hint);
     } else {
-      setHintText('Hint: Map zoomed closer to the target region.');
+      setHintText('Hint: Use coastlines, borders, and major geographic reference points.');
     }
-  }, [currentCorrectPoint, submitted, hintLevel, scope]);
+  }, [currentQuestion, submitted, hintLevel]);
 
   const onTimerToggle = useCallback((enabled: boolean) => {
     setTimerEnabled(enabled);
@@ -309,6 +294,7 @@ export default function MapPracticePage() {
               selectedPoint={selectedPoint}
               feedback={feedback}
               submitted={submitted}
+              submitting={submitting}
               hasNext={hasNext}
               timerEnabled={timerEnabled}
               timeLeft={timeLeft}

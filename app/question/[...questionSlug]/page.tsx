@@ -1,5 +1,6 @@
 import { notFound, permanentRedirect, redirect } from 'next/navigation';
 import supabase from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import ClientQuiz from '@/app/subjects/[subject]/[topicSlug]/ClientQuiz';
 import QuestionDetailsClient from '@/app/question/QuestionDetailsClient';
 import QuestionPractice from '@/components/practice/QuestionPractice';
@@ -34,6 +35,7 @@ import { getSelectedExamLearning } from '@/lib/examLearningServer';
 import ExamContentUnavailable from '@/components/ExamContentUnavailable';
 import { resolvePracticeExamQuestionTag } from '@/lib/polity/practiceExamFilter';
 import { entityIsIncluded } from '@/lib/examLearning';
+import { stripLegacyAnswerFields } from '@/lib/legacyQuiz';
 import { getSscCglStageByCode, getSscCglSubtopicsHref, isSscCglExamCode } from '@/lib/sscCglSyllabus';
 import {
   getSscCglMappedLearningHierarchy,
@@ -306,9 +308,11 @@ export default async function QuestionPage({
         batchSize: QUESTION_BATCH_PAGE_SIZE,
       });
       const linkedQuestion = toPublicQuestion(question);
-      const initialQuestions = initialBatch.questions.some((item) => item.id === linkedQuestion.id)
-        ? initialBatch.questions
-        : [linkedQuestion, ...initialBatch.questions];
+      const initialQuestions = (
+        initialBatch.questions.some((item) => item.id === linkedQuestion.id)
+          ? initialBatch.questions
+          : [linkedQuestion, ...initialBatch.questions]
+      ).slice(0, QUESTION_BATCH_PAGE_SIZE);
 
       const backHref = stageContext?.href
         ?? `/subjects/${subject.slug}/${topic.slug}${selectedExamCode ? `?exam=${encodeURIComponent(selectedExamCode)}` : ''}`;
@@ -407,7 +411,9 @@ export default async function QuestionPage({
     const finalQuestions = questions.length ? questions : [question];
     return (
       <ClientQuiz
-        questions={finalQuestions}
+        questions={finalQuestions.map((row) =>
+          stripLegacyAnswerFields(row as Record<string, unknown>),
+        )}
         decodedTopic={quizTopic}
         subject={subjectKey}
         fetchError={questions.length ? fetchError : null}
@@ -512,7 +518,7 @@ const HISTORY_SUBCATEGORY_HI: Record<string, string> = {
 };
 
 function escapeForLike(value: string) {
-  return value.replace(/([%_\\])/g, '\\$1');
+  return value.replace(/([%_\\,()])/g, '\\$1');
 }
 
 function getHistorySubCategoryKey(topic: string) {
@@ -553,7 +559,9 @@ async function fetchTopicQuestions(
 
   try {
     const columns = legacyColumnsForTable(tableName);
-    let query = supabase.from(tableName).select(columns).order('id', { ascending: true });
+    const admin = getSupabaseAdmin();
+    if (!admin) return { questions: [], fetchError: 'Quiz is temporarily unavailable.' };
+    let query = admin.from(tableName).select(columns).order('id', { ascending: true });
 
     if (historySubCategoryKey && tableName === 'history_questions') {
       const hiValue = HISTORY_SUBCATEGORY_HI[historySubCategoryKey];

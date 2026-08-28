@@ -142,6 +142,7 @@ const nextConfig = {
           "base-uri 'self'",
           "form-action 'self'",
           "object-src 'none'",
+          "upgrade-insecure-requests",
         ].join('; '),
       },
       { key: 'X-Frame-Options', value: 'DENY' },
@@ -155,7 +156,7 @@ const nextConfig = {
 
     return [
       {
-        source: '/profile',
+        source: '/profile/:path*',
         headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
       },
       {
@@ -168,6 +169,18 @@ const nextConfig = {
       },
       {
         source: '/signup',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/onboarding/:path*',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/ssc-cgl/:path*',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/ssc-chsl/:path*',
         headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
       },
       {

@@ -35,6 +35,7 @@ import {
   SSC_CGL_EXAM_CODE,
   type SscCglPreferenceTier,
 } from '@/lib/sscCglPreference';
+import { SSC_CHSL_EXAM_CODE } from '@/lib/sscChsl';
 import {
   getExamPreferenceHref,
   isTrackSelectable,
@@ -97,11 +98,13 @@ const COPY = {
     family: 'Content family',
     current: 'Current exam / वर्तमान परीक्षा',
     tierTitle: 'Choose your SSC CGL Tier',
+    chslTierTitle: 'Choose your SSC CHSL Tier',
     tierSubtitle: 'This preference will be saved to your profile and can be changed later.',
     tier1: 'Tier 1',
     tier1Hint: 'First-stage objective exam',
     tier2: 'Tier 2',
     tier2Hint: 'Advanced stage, starting with Paper 1',
+    chslTier2Hint: 'Objective sections, computer knowledge and skill/typing scope',
     invalidTier: 'Choose Tier 1 or Tier 2 to continue.',
     unavailableTier: 'No verified questions are available for this Tier yet.',
     trackTitle: 'Choose your preparation scope',
@@ -158,11 +161,13 @@ const COPY = {
     family: 'सामग्री समूह',
     current: 'वर्तमान परीक्षा / Current exam',
     tierTitle: 'अपना SSC CGL Tier चुनें',
+    chslTierTitle: 'अपना SSC CHSL Tier चुनें',
     tierSubtitle: 'यह पसंद आपकी प्रोफ़ाइल में सेव होगी और बाद में बदली जा सकती है।',
     tier1: 'Tier 1',
     tier1Hint: 'प्रथम चरण की वस्तुनिष्ठ परीक्षा',
     tier2: 'Tier 2',
     tier2Hint: 'Paper 1 से शुरू होने वाला उन्नत चरण',
+    chslTier2Hint: 'वस्तुनिष्ठ खंड, कंप्यूटर ज्ञान और कौशल/टाइपिंग दायरा',
     invalidTier: 'आगे बढ़ने के लिए Tier 1 या Tier 2 चुनें।',
     unavailableTier: 'इस Tier के सत्यापित प्रश्न अभी उपलब्ध नहीं हैं।',
     trackTitle: 'अपना तैयारी चरण चुनें',
@@ -284,6 +289,8 @@ export default function OnboardingClient() {
     options.find((option) => option.exam_profile_id === selectedProfileId) ?? null;
   const selectableCount = options.filter(isExamOptionSelectable).length;
   const requiresCglTier = selectedOption?.exam_code === SSC_CGL_EXAM_CODE;
+  const requiresChslTier = selectedOption?.exam_code === SSC_CHSL_EXAM_CODE;
+  const requiresTier = requiresCglTier || requiresChslTier;
   const canContinue = selectedOption ? isExamOptionSelectable(selectedOption) : false;
   const totalSteps = 3;
   const displayStep = step;
@@ -358,12 +365,14 @@ export default function OnboardingClient() {
   };
 
   const chooseTier = (tier: SscCglPreferenceTier) => {
-    const tierTracks = availableTracks.filter((item) => item.tierCode === tier);
+    const tierTracks = availableTracks.filter((item) => (
+      requiresChslTier ? item.stageCode === tier : item.tierCode === tier
+    ));
     if (tierTracks.length === 0) {
       setError(c.unavailableTier);
       return;
     }
-    setSelectedTier(tier);
+    setSelectedTier(tierTracks[0]?.tierCode ?? null);
     const preferred = tier === 'TIER_I'
       ? tierTracks.find((track) => track.stageCode === 'TIER_I')
       : tierTracks.find((track) => track.stageCode === 'TIER_II_PAPER_I') ?? tierTracks[0];
@@ -384,7 +393,7 @@ export default function OnboardingClient() {
       return;
     }
     if (!selectedTrack) {
-      setError(requiresCglTier ? c.invalidTier : c.noTracks);
+      setError(requiresTier ? c.invalidTier : c.noTracks);
       return;
     }
 
@@ -656,7 +665,7 @@ export default function OnboardingClient() {
                   <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-100 text-[#7C3AED]">
                     <Target className="h-7 w-7" aria-hidden />
                   </span>
-                  <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">{requiresCglTier ? c.tierTitle : c.trackTitle}</h1>
+                  <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">{requiresTier ? (requiresChslTier ? c.chslTierTitle : c.tierTitle) : c.trackTitle}</h1>
                   <p className="mt-3 text-sm leading-6 text-slate-600">{c.trackSubtitle}</p>
                 </div>
 
@@ -667,16 +676,22 @@ export default function OnboardingClient() {
                   </div>
                 ) : availableTracks.length === 0 ? (
                   <p className="mt-7 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-center font-medium text-amber-900" role="status">{c.noTracks}</p>
-                ) : requiresCglTier ? (
+                ) : requiresTier ? (
                   <>
                     <fieldset className="mt-7 grid min-w-0 gap-4 sm:grid-cols-2">
-                      <legend className="sr-only">{c.tierTitle}</legend>
+                      <legend className="sr-only">{requiresChslTier ? c.chslTierTitle : c.tierTitle}</legend>
                       {([
                         { tier: 'TIER_I', title: c.tier1, hint: c.tier1Hint },
-                        { tier: 'TIER_II', title: c.tier2, hint: c.tier2Hint },
+                        { tier: 'TIER_II', title: c.tier2, hint: requiresChslTier ? c.chslTier2Hint : c.tier2Hint },
                       ] as const).map((tierOption) => {
-                        const checked = selectedTier === tierOption.tier;
-                        const available = availableTracks.some((item) => item.tierCode === tierOption.tier);
+                        const checked = requiresChslTier
+                          ? selectedStageCode === tierOption.tier
+                          : selectedTier === tierOption.tier;
+                        const available = availableTracks.some((item) => (
+                          requiresChslTier
+                            ? item.stageCode === tierOption.tier
+                            : item.tierCode === tierOption.tier
+                        ));
                         return (
                           <button key={tierOption.tier} type="button" role="radio" aria-checked={checked} aria-disabled={!available} disabled={!available} onClick={() => chooseTier(tierOption.tier)} className={`flex min-h-32 w-full min-w-0 max-w-full items-center gap-3 rounded-2xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 ${checked ? 'border-[#7C3AED] bg-purple-50 shadow-sm' : 'border-purple-200 bg-white hover:border-purple-400'}`}>
                             <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${checked ? 'border-[#7C3AED] bg-[#7C3AED] text-white' : 'border-slate-300 text-transparent'}`}><Check className="h-4 w-4" aria-hidden /></span>
@@ -685,7 +700,7 @@ export default function OnboardingClient() {
                         );
                       })}
                     </fieldset>
-                    {selectedTier === 'TIER_II' ? (
+                    {requiresCglTier && selectedTier === 'TIER_II' ? (
                       <fieldset className="mt-6 grid min-w-0 gap-3 sm:grid-cols-3">
                         <legend className="mb-3 text-base font-bold text-slate-900">{c.paperTitle}</legend>
                         {availableTracks.filter((track) => track.tierCode === 'TIER_II').map((track) => {

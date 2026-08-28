@@ -52,37 +52,12 @@ create index if not exists idx_map_questions_difficulty
 alter table public.map_locations enable row level security;
 alter table public.map_questions enable row level security;
 
-do $$
-begin
-  if not exists (
-    select 1
-    from pg_policies
-    where schemaname = 'public'
-      and tablename = 'map_locations'
-      and policyname = 'Public read map_locations'
-  ) then
-    create policy "Public read map_locations"
-      on public.map_locations
-      for select
-      using (true);
-  end if;
-end $$;
-
-do $$
-begin
-  if not exists (
-    select 1
-    from pg_policies
-    where schemaname = 'public'
-      and tablename = 'map_questions'
-      and policyname = 'Public read map_questions'
-  ) then
-    create policy "Public read map_questions"
-      on public.map_questions
-      for select
-      using (true);
-  end if;
-end $$;
+drop policy if exists "Public read map_locations" on public.map_locations;
+drop policy if exists "Public read map_questions" on public.map_questions;
+revoke all privileges on table public.map_locations from anon, authenticated;
+revoke all privileges on table public.map_questions from anon, authenticated;
+grant select, insert, update, delete on table public.map_locations to service_role;
+grant select, insert, update, delete on table public.map_questions to service_role;
 
 insert into public.map_locations (name, category, map_scope, latitude, longitude, difficulty, is_current_affairs, source_note)
 values

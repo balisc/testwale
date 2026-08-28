@@ -4,6 +4,9 @@ import { authenticateGoogleCredential } from '@/lib/googleAuthSession';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ success: false, code: 'notFound' }, { status: 404 });
+  }
   try {
     const body = await request.json();
     const credential = String(body?.credential ?? '');

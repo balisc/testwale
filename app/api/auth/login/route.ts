@@ -28,10 +28,6 @@ export async function POST(request: Request) {
     const result = await loginEmailUser({ email, password });
 
     if (!result.ok) {
-      if (result.reason === 'use_google') {
-        return NextResponse.json({ success: false, code: 'useGoogle' }, { status: 400 });
-      }
-
       if (result.reason === 'missing_setup') {
         return NextResponse.json(
           {

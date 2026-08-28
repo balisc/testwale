@@ -11,8 +11,10 @@
 -- (Same pattern as register_email_user / login_email_user in this project)
 -- ===========================================================================
 
-grant execute on function public.submit_question_answer(uuid, uuid, text, integer) to anon, authenticated, service_role;
-grant execute on function public.get_user_progress_dashboard(uuid) to anon, authenticated, service_role;
+revoke execute on function public.submit_question_answer(uuid, uuid, text, integer) from public, anon, authenticated;
+revoke execute on function public.get_user_progress_dashboard(uuid) from public, anon, authenticated;
+grant execute on function public.submit_question_answer(uuid, uuid, text, integer) to service_role;
+grant execute on function public.get_user_progress_dashboard(uuid) to service_role;
 
 -- ===========================================================================
 -- OPTION B: signed RPCs (run full file — skip if you only ran QUICK GRANTS above)
@@ -22,11 +24,11 @@ create extension if not exists pgcrypto;
 
 create table if not exists public.practice_server_secrets (
   id int primary key default 1 check (id = 1),
-  signing_secret text not null default 'questionwale-practice-dev-v1'
+  signing_secret text not null default encode(gen_random_bytes(32), 'hex')
 );
 
 insert into public.practice_server_secrets (id, signing_secret)
-values (1, 'questionwale-practice-dev-v1')
+values (1, encode(gen_random_bytes(32), 'hex'))
 on conflict (id) do nothing;
 
 alter table public.practice_server_secrets enable row level security;
@@ -135,6 +137,9 @@ begin
 end;
 $$;
 
-grant execute on function public.submit_question_answer_verified(uuid, uuid, text, integer, bigint, text) to anon, authenticated, service_role;
-grant execute on function public.get_user_progress_dashboard_verified(uuid, bigint, text) to anon, authenticated, service_role;
-grant execute on function public.get_practice_progress_rows_verified(uuid, uuid, uuid, uuid, bigint, text) to anon, authenticated, service_role;
+revoke execute on function public.submit_question_answer_verified(uuid, uuid, text, integer, bigint, text) from public, anon, authenticated;
+revoke execute on function public.get_user_progress_dashboard_verified(uuid, bigint, text) from public, anon, authenticated;
+revoke execute on function public.get_practice_progress_rows_verified(uuid, uuid, uuid, uuid, bigint, text) from public, anon, authenticated;
+grant execute on function public.submit_question_answer_verified(uuid, uuid, text, integer, bigint, text) to service_role;
+grant execute on function public.get_user_progress_dashboard_verified(uuid, bigint, text) to service_role;
+grant execute on function public.get_practice_progress_rows_verified(uuid, uuid, uuid, uuid, bigint, text) to service_role;

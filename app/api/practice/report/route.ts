@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { REPORT_REASONS, type ReportQuestionResponse } from '@/lib/practice';
 import { practiceErrorResponse, reportQuestion, requirePracticeUser } from '@/lib/practiceServer';
+import { isUuid, privateNoStoreJsonResponse } from '@/lib/publicQuestionApiGuards';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,8 +25,13 @@ export async function POST(request: Request) {
 
   const questionId = String(body.questionId ?? '').trim();
   const reason = String(body.reason ?? '').trim();
+  const details = body.details == null ? null : String(body.details).trim();
 
-  if (!questionId || !REPORT_REASONS.includes(reason as (typeof REPORT_REASONS)[number])) {
+  if (
+    !isUuid(questionId) ||
+    !REPORT_REASONS.includes(reason as (typeof REPORT_REASONS)[number]) ||
+    (details?.length ?? 0) > 1000
+  ) {
     return practiceErrorResponse('invalid_payload', 400);
   }
 
@@ -34,12 +40,12 @@ export async function POST(request: Request) {
     user!.id,
     questionId,
     reason,
-    body.details ?? null,
+    details,
   );
 
   if (!result) {
     return practiceErrorResponse('report_failed', 500);
   }
 
-  return NextResponse.json(result as ReportQuestionResponse);
+  return privateNoStoreJsonResponse(result as ReportQuestionResponse);
 }

@@ -294,6 +294,25 @@ alter table public.user_exam_preferences
   alter column preparation_mode set default 'MCQ',
   alter column preparation_mode set not null;
 
+-- Releases may temporarily persist SSC CHSL in the older CGL-constrained
+-- table by using TIER_II_PAPER_I as a Tier II storage marker. Canonicalize
+-- those exact-profile rows before installing the generic stage constraint.
+update public.user_exam_preferences p
+set preferred_tier_code = null,
+    preferred_stage_code = case p.preferred_tier_code
+      when 'TIER_I' then 'TIER_I'
+      else 'TIER_II'
+    end,
+    updated_at = now()
+from public.exam_profiles ep
+where ep.id = p.exam_profile_id
+  and ep.code = 'SSC_CHSL'
+  and (
+    (p.preferred_tier_code = 'TIER_I' and p.preferred_stage_code = 'TIER_I')
+    or
+    (p.preferred_tier_code = 'TIER_II' and p.preferred_stage_code = 'TIER_II_PAPER_I')
+  );
+
 -- Replace only the two known earlier CGL-only checks. Unknown definitions
 -- abort instead of being silently weakened.
 do $$

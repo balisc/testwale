@@ -113,7 +113,7 @@ export async function POST(request: Request) {
         liveQuestionIds: [],
         staleQuestionIds: parsed.questionIds,
         allLive: false,
-        supabaseError,
+        ...(process.env.NODE_ENV !== 'production' ? { supabaseError } : {}),
         error: 'INTERNAL_ERROR',
         code: 'INTERNAL_ERROR',
       },

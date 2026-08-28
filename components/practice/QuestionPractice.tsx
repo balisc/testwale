@@ -117,6 +117,12 @@ function ignoreAbort(promise: Promise<unknown>): void {
 
 type QuestionResult = SubmitAnswerResponse;
 
+type PrefetchedQuestionBatch = {
+  cursor: string;
+  offset: number;
+  page: QuestionBatchPage;
+};
+
 const COPY = {
   en: {
     practice: 'Practice',
@@ -341,11 +347,15 @@ export default function QuestionPractice({
   const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [currentPageIds, setCurrentPageIds] = useState<string[]>(() =>
-    resolvedInitialQuestions.map((question) => question.id),
+    resolvedInitialQuestions
+      .slice(0, QUESTION_BATCH_PAGE_SIZE)
+      .map((question) => question.id),
   );
   /** Display numbering offset so page 2 shows as 11–20 after page 1 is replaced. */
   const [pageNumberOffset, setPageNumberOffset] = useState(0);
   const [batchGateOpen, setBatchGateOpen] = useState(false);
+  const [prefetchedNextBatch, setPrefetchedNextBatch] = useState<PrefetchedQuestionBatch | null>(null);
+  const [prefetchingNextBatch, setPrefetchingNextBatch] = useState(false);
   const [verifiedQuestionIds, setVerifiedQuestionIds] = useState<Set<string>>(new Set());
   const [verifyingBatchIds, setVerifyingBatchIds] = useState<Set<string>>(new Set());
   const [index, setIndex] = useState(() => {
@@ -361,6 +371,7 @@ export default function QuestionPractice({
   const [submitNotice, setSubmitNotice] = useState<string | null>(null);
   const [resultsByQuestion, setResultsByQuestion] = useState<Record<string, QuestionResult>>({});
   const [attemptedIds, setAttemptedIds] = useState<Set<string>>(new Set());
+  const [sessionSubmittedIds, setSessionSubmittedIds] = useState<Set<string>>(new Set());
   const [correctQuestionIds, setCorrectQuestionIds] = useState<Set<string>>(new Set());
   const [sessionHiddenIds, setSessionHiddenIds] = useState<Set<string>>(new Set());
   const [resettingSubtopic, setResettingSubtopic] = useState(false);
@@ -401,6 +412,7 @@ export default function QuestionPractice({
   const advanceCycleInFlightRef = useRef(false);
   const phaseEpochRef = useRef('unseen:0');
   const batchAbortRef = useRef<AbortController | null>(null);
+  const prefetchAbortRef = useRef<AbortController | null>(null);
   const personalizeAbortRef = useRef<AbortController | null>(null);
   const personalizedForUserRef = useRef<string | null>(null);
   const requestGenerationRef = useRef(0);
@@ -413,13 +425,21 @@ export default function QuestionPractice({
   const nextCursorRef = useRef<string | null>(initialNextCursor);
   const hasMoreRef = useRef(initialHasMore);
   const loadedQuestionsRef = useRef<PublicQuestion[]>(resolvedInitialQuestions);
-  const currentPageIdsRef = useRef<string[]>(resolvedInitialQuestions.map((q) => q.id));
+  const currentPageIdsRef = useRef<string[]>(
+    resolvedInitialQuestions
+      .slice(0, QUESTION_BATCH_PAGE_SIZE)
+      .map((question) => question.id),
+  );
   const sessionHiddenIdsRef = useRef<Set<string>>(new Set());
   const correctQuestionIdsRef = useRef<Set<string>>(new Set());
   const sessionPassRemovedIdsRef = useRef<Set<string>>(new Set());
   const masteredQuestionIdsRef = useRef<Set<string>>(new Set());
   const backfillScheduledRef = useRef<Set<string>>(new Set());
   const backfillChainRef = useRef(Promise.resolve());
+  const activeNavigatorButtonRef = useRef<HTMLButtonElement | null>(null);
+  const navigatorLookaheadButtonRef = useRef<HTMLButtonElement | null>(null);
+  const prefetchedNextBatchRef = useRef<PrefetchedQuestionBatch | null>(null);
+  const nextBatchPrefetchPromiseRef = useRef<Promise<boolean> | null>(null);
 
   useEffect(() => {
     nextCursorRef.current = nextCursor;
@@ -477,6 +497,7 @@ export default function QuestionPractice({
     if (isSubtopicBatchMode && currentPageIds.length > 0) {
       const byId = new Map(questionPool.map((question) => [question.id, question]));
       return dedupeIdsPreserveOrder(currentPageIds)
+        .slice(0, QUESTION_BATCH_PAGE_SIZE)
         .map((id) => byId.get(id))
         .filter((question): question is PublicQuestion => {
           if (!question) return false;
@@ -484,28 +505,38 @@ export default function QuestionPractice({
           if (!verifiedQuestionIds.has(question.id)) {
             return personalizationPending || verifyingBatchIds.has(question.id);
           }
-          if (sessionPassRemovedIds.has(question.id)) return false;
-          if (hiddenQuestionIds.has(question.id)) return false;
+          if (
+            !sessionSubmittedIds.has(question.id)
+            && (sessionPassRemovedIds.has(question.id) || hiddenQuestionIds.has(question.id))
+          ) {
+            return false;
+          }
           return true;
         });
     }
 
     if (!isSubtopicBatchMode || !user?.id) {
-      return questionPool;
+      return isSubtopicBatchMode
+        ? questionPool.slice(0, QUESTION_BATCH_PAGE_SIZE)
+        : questionPool;
     }
 
     if (isSubtopicMasteryMode) {
-      return questionPool.filter(
-        (question) =>
-          verifiedQuestionIds.has(question.id) &&
-          eligibleQuestionIds.has(question.id) &&
-          !sessionPassRemovedIds.has(question.id),
-      );
+      return questionPool
+        .filter(
+          (question) =>
+            verifiedQuestionIds.has(question.id) &&
+            eligibleQuestionIds.has(question.id) &&
+            !sessionPassRemovedIds.has(question.id),
+        )
+        .slice(0, QUESTION_BATCH_PAGE_SIZE);
     }
 
-    return questionPool.filter(
-      (question) => verifiedQuestionIds.has(question.id) && !hiddenQuestionIds.has(question.id),
-    );
+    return questionPool
+      .filter(
+        (question) => verifiedQuestionIds.has(question.id) && !hiddenQuestionIds.has(question.id),
+      )
+      .slice(0, QUESTION_BATCH_PAGE_SIZE);
   }, [
     questionPool,
     isSubtopicBatchMode,
@@ -518,6 +549,7 @@ export default function QuestionPractice({
     eligibleQuestionIds,
     sessionPassRemovedIds,
     currentPageIds,
+    sessionSubmittedIds,
   ]);
 
   const isVerifyingNewBatch = verifyingBatchIds.size > 0;
@@ -536,7 +568,40 @@ export default function QuestionPractice({
     knownSubtopicTotal != null && knownSubtopicTotal > 0
       ? knownSubtopicTotal
       : Math.max(pageNumberOffset + total, total, current ? 1 : 0);
+  const navigatorQuestionTotal = Math.max(
+    total,
+    Number.isFinite(displayQuestionTotal) ? Math.trunc(displayQuestionTotal) : 0,
+  );
+  const firstUnansweredQuestionIndex = activeQuestions.findIndex(
+    (question) => !attemptedIds.has(question.id) && !resultsByQuestion[question.id],
+  );
+  const maxUnlockedQuestionIndex = firstUnansweredQuestionIndex === -1
+    ? Math.max(0, activeQuestions.length - 1)
+    : firstUnansweredQuestionIndex;
+  const currentBatchSequentiallyComplete = activeQuestions.length > 0
+    && firstUnansweredQuestionIndex === -1;
+  const navigatorLookaheadNumber = Math.min(
+    navigatorQuestionTotal,
+    displayQuestionNumber + QUESTION_BATCH_PAGE_SIZE,
+  );
   const currentResult = current ? resultsByQuestion[current.id] : undefined;
+
+  useEffect(() => {
+    activeNavigatorButtonRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'nearest',
+    });
+  }, [displayQuestionNumber]);
+
+  useEffect(() => {
+    if (!current || !sessionSubmittedIds.has(current.id)) return;
+    navigatorLookaheadButtonRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'end',
+    });
+  }, [current, navigatorLookaheadNumber, sessionSubmittedIds]);
 
   const displayTitle = titleLocalized
     ? getQuestionLocalizedText(titleLocalized, language)
@@ -563,9 +628,17 @@ export default function QuestionPractice({
       setHasMore(more);
       nextCursorRef.current = cursor;
       hasMoreRef.current = more;
-      setCurrentPageIds(initialBatch.map((question) => question.id));
+      setCurrentPageIds(
+        initialBatch
+          .slice(0, QUESTION_BATCH_PAGE_SIZE)
+          .map((question) => question.id),
+      );
       setPageNumberOffset(0);
       setBatchGateOpen(false);
+      setPrefetchedNextBatch(null);
+      setPrefetchingNextBatch(false);
+      prefetchedNextBatchRef.current = null;
+      nextBatchPrefetchPromiseRef.current = null;
       setVerifiedQuestionIds(new Set());
       setVerifyingBatchIds(new Set());
       setEligibleQuestionIds(new Set());
@@ -582,6 +655,7 @@ export default function QuestionPractice({
       setIndex(0);
       setResultsByQuestion({});
       setAttemptedIds(new Set());
+      setSessionSubmittedIds(new Set());
       setCorrectQuestionIds(new Set());
       setSessionHiddenIds(new Set());
       setCorrectIdsError(null);
@@ -607,6 +681,7 @@ export default function QuestionPractice({
     return () => {
       invalidateInflightWork(requestGenerationRef);
       releaseAbortRef(batchAbortRef);
+      releaseAbortRef(prefetchAbortRef);
       releaseAbortRef(personalizeAbortRef);
     };
   }, []);
@@ -660,6 +735,7 @@ export default function QuestionPractice({
         setSessionPassRemovedIds(new Set());
         setResultsByQuestion({});
         setAttemptedIds(new Set());
+        setSessionSubmittedIds(new Set());
       }
 
       setPracticePhase(state.phase);
@@ -938,6 +1014,10 @@ export default function QuestionPractice({
     async (generation: number, scopeKey: string) => {
       fetchedCursorsRef.current.clear();
       checkedQuestionStateRef.current.clear();
+      prefetchedNextBatchRef.current = null;
+      nextBatchPrefetchPromiseRef.current = null;
+      setPrefetchedNextBatch(null);
+      setPrefetchingNextBatch(false);
       setVerifiedQuestionIds(new Set());
       setEligibleQuestionIds(new Set());
       setSessionPassRemovedIds(new Set());
@@ -958,7 +1038,11 @@ export default function QuestionPractice({
         hasMoreRef.current = page.hasMore;
         setNextCursor(page.nextCursor);
         setHasMore(page.hasMore);
-        setCurrentPageIds(page.questions.map((question) => question.id));
+        setCurrentPageIds(
+          page.questions
+            .slice(0, QUESTION_BATCH_PAGE_SIZE)
+            .map((question) => question.id),
+        );
 
         if (isSubtopicMasteryMode) {
           await fetchQuestionStateForBatch(
@@ -1464,9 +1548,8 @@ export default function QuestionPractice({
         setMasteredQuestionIds((prev) => new Set(prev).add(questionId));
       }
 
-      await backfillBatchAfterPass(questionId);
     },
-    [isSubtopicBatchMode, user, isSubtopicMasteryMode, backfillBatchAfterPass],
+    [isSubtopicBatchMode, user, isSubtopicMasteryMode],
   );
 
   const loadNextBatch = useCallback(
@@ -1501,7 +1584,11 @@ export default function QuestionPractice({
         setHasMore(page.hasMore);
         setLoadedQuestions((prev) => mergeQuestionsById(prev, page.questions));
         if (page.questions.length > 0) {
-          setCurrentPageIds(page.questions.map((question) => question.id));
+          setCurrentPageIds(
+            page.questions
+              .slice(0, QUESTION_BATCH_PAGE_SIZE)
+              .map((question) => question.id),
+          );
         }
 
         await processNewBatchQuestions(page.questions, controller.signal, generation, scopeKey);
@@ -1526,6 +1613,122 @@ export default function QuestionPractice({
       processNewBatchQuestions,
       practiceScopeKey,
     ],
+  );
+
+  /** Fetch and validate the next page without replacing the current explanation. */
+  const prefetchNextQuestionPage = useCallback(
+    (completedQuestionIds: string[]): Promise<boolean> => {
+      if (!isSubtopicBatchMode || completedQuestionIds.length === 0) {
+        return Promise.resolve(false);
+      }
+      if (prefetchedNextBatchRef.current) return Promise.resolve(true);
+      if (nextBatchPrefetchPromiseRef.current) return nextBatchPrefetchPromiseRef.current;
+
+      const fallbackCursor = completedQuestionIds[completedQuestionIds.length - 1] ?? null;
+      const cursor = nextCursorRef.current || fallbackCursor;
+      const likelyHasMore =
+        hasMoreRef.current
+        || Boolean(nextCursorRef.current)
+        || completedQuestionIds.length >= QUESTION_BATCH_PAGE_SIZE;
+      if (!cursor || !likelyHasMore) return Promise.resolve(false);
+
+      const generation = requestGenerationRef.current;
+      const scopeKey = activeScopeKeyRef.current ?? practiceScopeKey;
+      const controller = new AbortController();
+      prefetchAbortRef.current = controller;
+      setPrefetchingNextBatch(true);
+
+      const request = (async () => {
+        try {
+          const page = await loadQuestionBatchPage(
+            cursor,
+            controller.signal,
+            generation,
+            scopeKey,
+          );
+          if (!page || isStaleGeneration(generation, scopeKey)) return false;
+
+          const questions = page.questions.slice(0, QUESTION_BATCH_PAGE_SIZE);
+          if (questions.length === 0) return false;
+          await processNewBatchQuestions(questions, controller.signal, generation, scopeKey);
+          if (isStaleGeneration(generation, scopeKey)) return false;
+
+          const prefetched: PrefetchedQuestionBatch = {
+            cursor,
+            offset: pageNumberOffset + QUESTION_BATCH_PAGE_SIZE,
+            page: { ...page, questions },
+          };
+          prefetchedNextBatchRef.current = prefetched;
+          setPrefetchedNextBatch(prefetched);
+          setLoadedQuestions((prev) => {
+            const merged = mergeQuestionsById(prev, questions);
+            loadedQuestionsRef.current = merged;
+            return merged;
+          });
+          return true;
+        } catch (error) {
+          if (!isAbortError(error) && !isStaleGeneration(generation, scopeKey)) {
+            setBatchLoadError(c.loadMoreFailed);
+          }
+          return false;
+        } finally {
+          if (!isStaleGeneration(generation, scopeKey)) setPrefetchingNextBatch(false);
+          prefetchAbortRef.current = null;
+          nextBatchPrefetchPromiseRef.current = null;
+        }
+      })();
+
+      nextBatchPrefetchPromiseRef.current = request;
+      return request;
+    },
+    [
+      isSubtopicBatchMode,
+      practiceScopeKey,
+      loadQuestionBatchPage,
+      processNewBatchQuestions,
+      isStaleGeneration,
+      pageNumberOffset,
+      c.loadMoreFailed,
+    ],
+  );
+
+  const activatePrefetchedNextBatch = useCallback(
+    (targetIndex = 0): boolean => {
+      const prefetched = prefetchedNextBatchRef.current;
+      if (!prefetched || prefetched.page.questions.length === 0) return false;
+
+      const completedPageIds = currentPageIdsRef.current;
+      if (isSubtopicMasteryMode && completedPageIds.length > 0) {
+        setSessionPassRemovedIds((prev) => {
+          const next = new Set(prev);
+          for (const id of completedPageIds) next.add(id);
+          return next;
+        });
+        setEligibleQuestionIds((prev) => {
+          const next = new Set(prev);
+          for (const id of completedPageIds) next.delete(id);
+          return next;
+        });
+      }
+
+      const pageIds = prefetched.page.questions.map((question) => question.id);
+      fetchedCursorsRef.current.add(prefetched.cursor);
+      nextCursorRef.current = prefetched.page.nextCursor;
+      hasMoreRef.current = prefetched.page.hasMore;
+      setNextCursor(prefetched.page.nextCursor);
+      setHasMore(prefetched.page.hasMore);
+      setCurrentPageIds(pageIds);
+      currentPageIdsRef.current = pageIds;
+      setPageNumberOffset(prefetched.offset);
+      setIndex(Math.min(Math.max(0, targetIndex), pageIds.length - 1));
+      setBatchGateOpen(false);
+      setBatchLoadError(null);
+      prefetchedNextBatchRef.current = null;
+      setPrefetchedNextBatch(null);
+      resetQuestionState();
+      return true;
+    },
+    [isSubtopicMasteryMode, resetQuestionState],
   );
 
   /** Load the next public page of 10 and show it after the current page is fully attempted. */
@@ -1573,6 +1776,11 @@ export default function QuestionPractice({
       const scopeKey = activeScopeKeyRef.current ?? practiceScopeKey;
 
       try {
+        if (nextBatchPrefetchPromiseRef.current) {
+          await nextBatchPrefetchPromiseRef.current;
+        }
+        if (activatePrefetchedNextBatch(0)) return;
+
         let loadedNew = false;
 
         if (canFetchMore && cursor) {
@@ -1589,7 +1797,7 @@ export default function QuestionPractice({
         }
 
         if (loadedNew) {
-          setPageNumberOffset((prev) => prev + completedQuestionIds.length);
+          setPageNumberOffset((prev) => prev + QUESTION_BATCH_PAGE_SIZE);
           setIndex(0);
           setBatchGateOpen(false);
           resetQuestionState();
@@ -1607,6 +1815,7 @@ export default function QuestionPractice({
       practicePhase,
       loadNextBatch,
       advancePracticeCycle,
+      activatePrefetchedNextBatch,
       practiceScopeKey,
       resetQuestionState,
     ],
@@ -1779,7 +1988,11 @@ export default function QuestionPractice({
     if (checkingCorrectIds || checkingQuestionState) return;
 
     const toBackfill = currentPageIds.filter(
-      (id) => hiddenQuestionIds.has(id) && !backfillScheduledRef.current.has(id),
+      (id) => (
+        hiddenQuestionIds.has(id)
+        && !sessionSubmittedIds.has(id)
+        && !backfillScheduledRef.current.has(id)
+      ),
     );
     if (toBackfill.length === 0) return;
 
@@ -1795,6 +2008,7 @@ export default function QuestionPractice({
     user,
     currentPageIds,
     hiddenQuestionIds,
+    sessionSubmittedIds,
     checkingCorrectIds,
     checkingQuestionState,
     backfillBatchAfterPass,
@@ -1848,6 +2062,7 @@ export default function QuestionPractice({
       setIndex(0);
       setResultsByQuestion({});
       setAttemptedIds(new Set());
+      setSessionSubmittedIds(new Set());
       setCorrectQuestionIds(new Set());
       setSessionHiddenIds(new Set());
       isFirstGuestSubmit.current = true;
@@ -2213,6 +2428,7 @@ export default function QuestionPractice({
         setSubmitted(false);
         setResultsByQuestion({});
         setAttemptedIds(new Set());
+        setSessionSubmittedIds(new Set());
         setSessionHiddenIds(new Set());
         setCorrectQuestionIds(new Set());
         setMasteredQuestionIds(new Set());
@@ -2263,7 +2479,23 @@ export default function QuestionPractice({
       setQuestionStateError(null);
       setResultsByQuestion((prev) => ({ ...prev, [current.id]: result }));
       setAttemptedIds((prev) => new Set(prev).add(current.id));
+      setSessionSubmittedIds((prev) => new Set(prev).add(current.id));
       setSubmitted(true);
+
+      if (isSubtopicBatchMode) {
+        const pageIds = currentPageIds.length > 0
+          ? currentPageIds
+          : activeQuestions.map((question) => question.id);
+        const batchCompleteAfterSubmit = pageIds.length > 0 && pageIds.every((id) => (
+          id === displayedQuestionId
+          || attemptedIds.has(id)
+          || Boolean(resultsByQuestion[id])
+        ));
+        if (batchCompleteAfterSubmit) {
+          ignoreAbort(prefetchNextQuestionPage(pageIds));
+        }
+      }
+
       if (result.already_attempted || result.is_new_attempt === false) {
         setSubmitNotice(c.alreadyAttempted);
       }
@@ -2336,6 +2568,10 @@ export default function QuestionPractice({
     practiceScopeKey,
     restartPublicScan,
     questions,
+    currentPageIds,
+    activeQuestions,
+    attemptedIds,
+    prefetchNextQuestionPage,
     passFirstAttemptCorrectQuestion,
   ]);
 
@@ -2391,6 +2627,7 @@ export default function QuestionPractice({
 
   const handleNextQuestion = () => {
     if (!current) return;
+    if (!submitted && !isQuestionAttempted(current.id)) return;
 
     if (reviewQuestion) {
       if (
@@ -2408,8 +2645,6 @@ export default function QuestionPractice({
         return;
       }
       setReviewQuestion(null);
-      resetQuestionState();
-      return;
     }
 
     if (isSubtopicMasteryMode) {
@@ -2448,6 +2683,7 @@ export default function QuestionPractice({
   };
 
   const handleSelectQuestion = (qIndex: number) => {
+    if (qIndex > maxUnlockedQuestionIndex) return;
     if (qIndex === index) {
       if (reviewQuestion) {
         setReviewQuestion(null);
@@ -2511,12 +2747,17 @@ export default function QuestionPractice({
       checkedCorrectIdsRef.current.clear();
       phaseEpochRef.current = 'unseen:0';
       setAttemptedIds(new Set());
+      setSessionSubmittedIds(new Set());
       checkedCorrectIdsRef.current.clear();
       consecutiveEmptyBatchesRef.current = 0;
       setBatchSafetyLimitReached(false);
       setBatchLoadError(null);
       setPageNumberOffset(0);
       setBatchGateOpen(false);
+      prefetchedNextBatchRef.current = null;
+      nextBatchPrefetchPromiseRef.current = null;
+      setPrefetchedNextBatch(null);
+      setPrefetchingNextBatch(false);
       setIndex(0);
       resetQuestionState();
       setPracticeProgress(null);
@@ -2618,6 +2859,17 @@ export default function QuestionPractice({
     !user &&
     !hasMore &&
     index >= total - 1;
+
+  const canAdvanceFromCurrentBatch =
+    isSubtopicBatchMode &&
+    (
+      Boolean(user) ||
+      hasMore ||
+      Boolean(nextCursor) ||
+      navigatorQuestionTotal > pageNumberOffset + total ||
+      Boolean(prefetchedNextBatch) ||
+      prefetchingNextBatch
+    );
 
   if (total === 0 && !reviewQuestion) {
     if (
@@ -2881,28 +3133,79 @@ export default function QuestionPractice({
           </div>
         </div>
 
-        <div className="mb-2 flex flex-wrap gap-1.5">
-          {activeQuestions.map((question, qIndex) => {
-            const isActive = qIndex === index;
-            const isAttempted = attemptedIds.has(question.id);
-            const result = resultsByQuestion[question.id];
-            const numberLabel = pageNumberOffset + qIndex + 1;
+        <div
+          className="mb-2 flex w-full min-w-0 max-w-full flex-nowrap items-center gap-1 overflow-x-auto overscroll-x-contain py-1 [scrollbar-width:none] sm:gap-1.5 [&::-webkit-scrollbar]:hidden"
+          role="navigation"
+          aria-label="Question navigation"
+        >
+          {Array.from({ length: navigatorQuestionTotal }, (_, slotIndex) => {
+            const numberLabel = slotIndex + 1;
+            const qIndex = slotIndex - pageNumberOffset;
+            const currentPageQuestion = qIndex >= 0 && qIndex < activeQuestions.length
+              ? activeQuestions[qIndex]
+              : null;
+            const prefetchedIndex = prefetchedNextBatch
+              ? slotIndex - prefetchedNextBatch.offset
+              : -1;
+            const prefetchedQuestion = prefetchedNextBatch
+              && prefetchedIndex >= 0
+              && prefetchedIndex < prefetchedNextBatch.page.questions.length
+                ? prefetchedNextBatch.page.questions[prefetchedIndex]
+                : null;
+            const question = currentPageQuestion ?? prefetchedQuestion;
+            const isPrefetched = Boolean(prefetchedQuestion && !currentPageQuestion);
+            const isActive = Boolean(currentPageQuestion) && qIndex === index;
+            const isUnlocked = currentPageQuestion
+              ? qIndex <= maxUnlockedQuestionIndex
+              : Boolean(
+                prefetchedQuestion
+                && prefetchedIndex === 0
+                && currentBatchSequentiallyComplete
+              );
+            const isAttempted = question ? attemptedIds.has(question.id) : false;
+            const result = question ? resultsByQuestion[question.id] : undefined;
+            const isCompletedBatchSlot = slotIndex < pageNumberOffset;
+            const isLookahead = numberLabel === navigatorLookaheadNumber
+              && Boolean(current && sessionSubmittedIds.has(current.id));
             return (
               <button
-                key={`${question.id}-${qIndex}`}
+                key={numberLabel}
+                ref={isActive
+                  ? activeNavigatorButtonRef
+                  : isLookahead
+                    ? navigatorLookaheadButtonRef
+                    : undefined}
                 type="button"
-                onClick={() => handleSelectQuestion(qIndex)}
-                className={`h-8 min-w-8 rounded-lg px-2 text-xs font-bold transition ${
+                disabled={!question || !isUnlocked}
+                onClick={() => {
+                  if (!isUnlocked) return;
+                  if (currentPageQuestion) {
+                    handleSelectQuestion(qIndex);
+                  } else if (prefetchedQuestion) {
+                    activatePrefetchedNextBatch(prefetchedIndex);
+                  }
+                }}
+                className={`h-7 min-w-[calc(10%_-_0.225rem)] basis-[calc(10%_-_0.225rem)] flex-none rounded-md p-0 text-[11px] font-bold transition sm:h-8 sm:min-w-[calc(10%_-_0.3375rem)] sm:basis-[calc(10%_-_0.3375rem)] sm:rounded-lg sm:text-xs ${
                   isActive
                     ? 'bg-brand text-white'
+                    : !isUnlocked
+                      ? 'cursor-not-allowed bg-slate-100 text-slate-400 opacity-70'
                     : isAttempted
                       ? result?.is_correct
                         ? 'bg-emerald-100 text-emerald-700'
                         : 'bg-red-100 text-red-700'
-                      : 'bg-slate-100 text-slate-600 hover:bg-[#EDE9FE] hover:text-brand'
+                      : isPrefetched
+                        ? 'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200 hover:bg-violet-100'
+                      : question
+                        ? 'bg-slate-100 text-slate-600 hover:bg-[#EDE9FE] hover:text-brand'
+                        : isCompletedBatchSlot
+                          ? 'bg-slate-200 text-slate-500'
+                          : 'bg-slate-100 text-slate-400'
                 }`}
                 title={
-                  isAttempted
+                  !question
+                    ? c.questionOf(numberLabel, navigatorQuestionTotal)
+                    : isAttempted
                     ? result?.is_correct
                       ? c.correct
                       : c.wrong
@@ -3130,14 +3433,24 @@ export default function QuestionPractice({
                     {c.nextQuestion}
                     <ArrowRight className="h-4 w-4" />
                   </button>
-                ) : isSubtopicBatchMode && user ? (
+                ) : canAdvanceFromCurrentBatch ? (
                   <button
                     type="button"
                     onClick={handleNextQuestion}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#6D28D9] min-[520px]:w-auto"
+                    disabled={loadingMoreBatches || advancingCycle}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#6D28D9] disabled:cursor-wait disabled:opacity-70 min-[520px]:w-auto"
                   >
-                    {c.continuePractice}
-                    <ArrowRight className="h-4 w-4" />
+                    {loadingMoreBatches || advancingCycle ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {c.loadingMore}
+                      </>
+                    ) : (
+                      <>
+                        {c.nextQuestion}
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
                   </button>
                 ) : showGuestEndOfQuestions ? (
                   <p className="text-sm text-slate-500">
@@ -3208,7 +3521,13 @@ export default function QuestionPractice({
             <button
               type="button"
               onClick={handleNextQuestion}
-              disabled={index >= total - 1}
+              disabled={
+                !current
+                || (!submitted && !isQuestionAttempted(current.id))
+                || loadingMoreBatches
+                || advancingCycle
+                || (index >= total - 1 && !canAdvanceFromCurrentBatch)
+              }
               className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#6D28D9] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {c.next}

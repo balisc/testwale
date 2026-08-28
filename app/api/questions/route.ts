@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import questionsData from '@/data/questions.json';
 import supabase from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { CATALOG_PRE_SUBMIT_COLUMNS, legacyColumnsForTable } from '@/lib/questionColumns';
 import {
   hasRequiredQuestionListFilter,
@@ -175,7 +176,11 @@ export async function GET(request: Request) {
       return questionListJsonResponse([], responseLimit);
     }
 
-    let query: any = supabase
+    const admin = getSupabaseAdmin();
+    if (!admin) {
+      return NextResponse.json({ error: 'Service unavailable.' }, { status: 503 });
+    }
+    let query: any = admin
       .from(tableName)
       .select(legacyColumnsForTable(tableName))
       .order('id', { ascending: true });

@@ -1,4 +1,4 @@
-import supabase from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 export type DbUser = {
   id: string;
@@ -56,7 +56,9 @@ export async function createEmailUser(input: {
   email: string;
   password: string;
 }) {
-  const { data, error } = await supabase.rpc('register_email_user', {
+  const admin = getSupabaseAdmin();
+  if (!admin) return { ok: false as const, reason: 'missing_setup' as const, message: 'service_role_required' };
+  const { data, error } = await admin.rpc('register_email_user', {
     p_full_name: input.full_name,
     p_email: input.email,
     p_password: input.password,
@@ -75,7 +77,9 @@ export async function createEmailUser(input: {
 }
 
 export async function loginEmailUser(input: { email: string; password: string }) {
-  const { data, error } = await supabase.rpc('login_email_user', {
+  const admin = getSupabaseAdmin();
+  if (!admin) return { ok: false as const, reason: 'missing_setup' as const, message: 'service_role_required' };
+  const { data, error } = await admin.rpc('login_email_user', {
     p_email: input.email,
     p_password: input.password,
   });
@@ -98,7 +102,9 @@ export async function upsertGoogleUser(input: {
   google_id: string;
   avatar_url?: string | null;
 }) {
-  const { data, error } = await supabase.rpc('upsert_google_user', {
+  const admin = getSupabaseAdmin();
+  if (!admin) return { ok: false as const, reason: 'missing_setup' as const, message: 'service_role_required' };
+  const { data, error } = await admin.rpc('upsert_google_user', {
     p_full_name: input.full_name,
     p_email: input.email,
     p_google_id: input.google_id,

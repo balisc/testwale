@@ -7,5 +7,5 @@ interface TemplateProps {
 }
 
 export default function Template({ children }: TemplateProps) {
-  return <div className="min-h-screen animate-fade-up-in">{children}</div>;
+  return <div className="min-h-screen">{children}</div>;
 }

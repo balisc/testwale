@@ -5,6 +5,7 @@ import ExamSubjectsGrid from './ExamSubjectsGrid';
 import ExamContentUnavailable from '@/components/ExamContentUnavailable';
 import { redirect } from 'next/navigation';
 import { isSscCglExamCode } from '@/lib/sscCglSyllabus';
+import { isSscChslExamCode } from '@/lib/sscChsl';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,7 @@ export default async function SubjectsPage() {
   const selected = await getSelectedExamLearning();
   if (selected.status === 'ready') {
     if (isSscCglExamCode(selected.snapshot.exam.code)) redirect('/ssc-cgl');
+    if (isSscChslExamCode(selected.snapshot.exam.code)) redirect('/ssc-chsl');
     return (
       <main className="min-h-screen bg-slate-50 text-slate-900">
         {selected.snapshot.subjects.length > 0

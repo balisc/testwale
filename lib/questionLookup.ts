@@ -5,6 +5,7 @@ import {
   getTopicByIdFromCache,
 } from '@/lib/catalogCache';
 import supabase from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import {
   CATALOG_PRE_SUBMIT_COLUMNS,
   legacyColumnsForTable,
@@ -49,7 +50,9 @@ async function queryQuestionTable(
   tableName: string,
   questionId: string,
 ): Promise<QuestionRecord | null> {
-  const { data, error } = await supabase
+  const client = tableName === GENERIC_QUESTIONS_TABLE ? supabase : getSupabaseAdmin();
+  if (!client) return null;
+  const { data, error } = await client
     .from(tableName)
     .select(columnsForTable(tableName))
     .eq('id', questionId)

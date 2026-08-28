@@ -7,13 +7,10 @@ import {
   buildPublishedSyllabusHierarchy,
 } from '@/lib/examSyllabus';
 import {
-  normalizeExamSelectorOption,
-} from '@/lib/examSelector';
-import {
   getReadyExamSelectorOptions,
-  READY_EXAM_SELECTOR_COLUMNS,
 } from '@/lib/examCatalogueServer';
 import { getExactExamQuestionCounts } from '@/lib/exactExamQuestionsServer';
+import { getExamPreparationTracks } from '@/lib/examPreferenceServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import type { ExamLearningSnapshot } from '@/lib/examLearning';
 import type { ExamSyllabusNodeRow, ExamSyllabusVersionRow } from '@/types/supabase';
@@ -285,65 +282,42 @@ export async function getPublicExamSelectorOptions(): Promise<PublicExamExplorer
   }
 }
 
-export async function getPublicExamSyllabus(
-  examSlug: string,
-  stageCode?: string | null,
+async function loadPublicExamSyllabus(
+  normalizedSlug: string,
+  normalizedStageCode: string | null,
 ): Promise<ExamLearningSnapshot | null> {
-  const normalizedSlug = examSlug.trim().toLowerCase();
-  if (!normalizedSlug) return null;
-  if (normalizedSlug === PUBLIC_CGL_SLUG) {
-    const data = await getPublicExamExplorerData();
-    return data?.snapshot ?? null;
-  }
-
   const admin = getSupabaseAdmin();
   if (!admin) return null;
-  const selectorResult = await admin
-    .from('exam_selector_options')
-    .select(READY_EXAM_SELECTOR_COLUMNS)
-    .eq('exam_slug', normalizedSlug)
-    .eq('can_select', true)
-    .eq('is_coming_soon', false)
-    .gt('active_subject_count', 0)
-    .gt('active_topic_count', 0)
-    .gt('active_subtopic_count', 0)
-    .gt('verified_question_count', 0)
-    .maybeSingle();
-  if (selectorResult.error) return null;
-  const option = normalizeExamSelectorOption(selectorResult.data);
+  const option = (await getReadyExamSelectorOptions())
+    .find((candidate) => candidate.exam_slug === normalizedSlug) ?? null;
   if (!option || !option.content_exam_id) return null;
 
-  const versionResult = await admin
-    .from('exam_syllabus_versions')
-    .select('id, exam_profile_id, version_code, publication_status, is_current, title')
-    .eq('exam_profile_id', option.exam_profile_id)
-    .eq('publication_status', 'published')
-    .eq('is_current', true)
-    .maybeSingle();
-  if (versionResult.error || !versionResult.data) return null;
+  const [versionResult, catalog] = await Promise.all([
+    admin
+      .from('exam_syllabus_versions')
+      .select('id, exam_profile_id, version_code, publication_status, is_current, title')
+      .eq('exam_profile_id', option.exam_profile_id)
+      .eq('publication_status', 'published')
+      .eq('is_current', true)
+      .maybeSingle(),
+    getCatalogSnapshot(),
+  ]);
+  if (versionResult.error) throw new Error(versionResult.error.message);
+  if (!versionResult.data) return null;
   const version = versionResult.data as ExamSyllabusVersionRow;
 
   const nodesResult = await admin
     .from('exam_syllabus_nodes')
-    .select('id, syllabus_version_id, parent_node_id, node_code, node_type, title, description, sort_order, is_active, metadata')
+    .select('id, syllabus_version_id, parent_node_id, node_code, node_type, title, description, sort_order, is_active, is_qualifying, metadata')
     .eq('syllabus_version_id', version.id)
     .eq('is_active', true)
     .order('sort_order', { ascending: true })
     .order('node_code', { ascending: true });
-  if (nodesResult.error) return null;
-  let nodes = (nodesResult.data ?? []) as ExamSyllabusNodeRow[];
-  const normalizedStageCode = stageCode?.trim() || null;
+  if (nodesResult.error) throw new Error(nodesResult.error.message);
+  let nodes = (nodesResult.data ?? []) as Array<ExamSyllabusNodeRow & { is_qualifying?: boolean }>;
   if (normalizedStageCode) {
     const [trackResult, mappingsResult] = await Promise.all([
-      admin
-        .from('exam_preparation_track_options')
-        .select('stage_code')
-        .eq('exam_profile_id', option.exam_profile_id)
-        .eq('stage_code', normalizedStageCode)
-        .eq('preparation_mode', 'MCQ')
-        .eq('is_available', true)
-        .gt('verified_question_count', 0)
-        .maybeSingle(),
+      getExamPreparationTracks(option.exam_profile_id),
       admin
         .from('exam_syllabus_node_stage_mappings')
         .select('node_id')
@@ -352,31 +326,53 @@ export async function getPublicExamSyllabus(
         .eq('stage_code', normalizedStageCode)
         .eq('is_active', true),
     ]);
-    if (trackResult.error || !trackResult.data || mappingsResult.error) return null;
+    if (trackResult.status === 'error') {
+      throw new Error('exam_preparation_tracks_unavailable');
+    }
+    if (mappingsResult.error) throw new Error(mappingsResult.error.message);
+    const stageIsAvailable = trackResult.status === 'ready' && trackResult.tracks.some((track) => (
+      track.stageCode === normalizedStageCode
+      && track.preparationMode === 'MCQ'
+      && track.isAvailable
+    ));
+    if (!stageIsAvailable) return null;
 
     const includedNodeIds = new Set(
       (mappingsResult.data ?? [])
         .map((row) => typeof row.node_id === 'string' ? row.node_id : '')
         .filter(Boolean),
     );
-    if (includedNodeIds.size === 0) return null;
-
-    // Some imports map only leaf nodes. Include their active ancestors so the
-    // hierarchy can still be built without admitting sibling stage content.
-    const nodesById = new Map(nodes.map((node) => [node.id, node]));
-    for (const nodeId of [...includedNodeIds]) {
-      let parentId = nodesById.get(nodeId)?.parent_node_id ?? null;
-      while (parentId) {
-        includedNodeIds.add(parentId);
-        parentId = nodesById.get(parentId)?.parent_node_id ?? null;
+    if (includedNodeIds.size > 0) {
+      // Some imports map only leaf nodes. Include their active ancestors so the
+      // hierarchy can still be built without admitting sibling stage content.
+      const nodesById = new Map(nodes.map((node) => [node.id, node]));
+      for (const nodeId of [...includedNodeIds]) {
+        let parentId = nodesById.get(nodeId)?.parent_node_id ?? null;
+        while (parentId) {
+          includedNodeIds.add(parentId);
+          parentId = nodesById.get(parentId)?.parent_node_id ?? null;
+        }
       }
+      nodes = nodes.filter((node) => includedNodeIds.has(node.id));
+    } else if (
+      option.exam_code === 'SSC_CHSL'
+      && (normalizedStageCode === 'TIER_I' || normalizedStageCode === 'TIER_II')
+    ) {
+      // Compatibility for databases deployed before CHSL node-stage mappings.
+      // Tier I owns the four non-qualifying subject trees; Tier II owns the
+      // complete objective hierarchy, including Computer Knowledge. The exact
+      // track check above and stage-scoped question counts still fail closed.
+      nodes = normalizedStageCode === 'TIER_I'
+        ? nodes.filter((node) => node.is_qualifying !== true)
+        : nodes;
+    } else {
+      return null;
     }
-    nodes = nodes.filter((node) => includedNodeIds.has(node.id));
   }
   const hierarchy = await applyExactQuestionCounts(
     attachCatalogContentMappings(
       buildPublishedSyllabusHierarchy(nodes),
-      await getCatalogSnapshot(),
+      catalog,
     ),
     option.exam_profile_id,
     normalizedStageCode ? [normalizedStageCode] : undefined,
@@ -408,4 +404,33 @@ export async function getPublicExamSyllabus(
     subtopics: hierarchy.subtopics,
     recent_activity: [],
   };
+}
+
+export async function getPublicExamSyllabus(
+  examSlug: string,
+  stageCode?: string | null,
+): Promise<ExamLearningSnapshot | null> {
+  const normalizedSlug = examSlug.trim().toLowerCase();
+  if (!normalizedSlug) return null;
+  if (normalizedSlug === PUBLIC_CGL_SLUG) {
+    const data = await getPublicExamExplorerData();
+    return data?.snapshot ?? null;
+  }
+
+  const normalizedStageCode = stageCode?.trim() || null;
+  try {
+    return await unstable_cache(
+      () => loadPublicExamSyllabus(normalizedSlug, normalizedStageCode),
+      [
+        'public-exam-syllabus-v1',
+        normalizedSlug,
+        normalizedStageCode ?? 'all-stages',
+      ],
+      { revalidate: 300, tags: ['public-exam-syllabus', 'catalog'] },
+    )();
+  } catch (error) {
+    // Keep transient infrastructure failures outside the shared cache.
+    reportPublicExplorerFailure('[public-exam-syllabus]', error);
+    return null;
+  }
 }

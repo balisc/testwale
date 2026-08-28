@@ -71,6 +71,19 @@ assert.equal(preferredTrackMatches(genericTrack, {
   preparationMode: 'MCQ',
 }), true);
 
+assert.equal(getExamPreferenceHref({
+  examCode: 'SSC_CHSL',
+  examSlug: 'ssc-combined-higher-secondary-level-examination',
+  tierCode: null,
+  stageCode: 'TIER_I',
+}), '/ssc-chsl/tier-1/subjects');
+assert.equal(getExamPreferenceHref({
+  examCode: 'SSC_CHSL',
+  examSlug: 'ssc-combined-higher-secondary-level-examination',
+  tierCode: null,
+  stageCode: 'TIER_II',
+}), '/ssc-chsl/tier-2/subjects');
+
 assert.equal(normalizeExamPreparationTrack({
   exam_profile_id: profileId,
   exam_code: 'MOCK_EXAM',

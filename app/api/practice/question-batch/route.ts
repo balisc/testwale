@@ -14,6 +14,7 @@ import {
 } from '@/lib/exactExamQuestionsServer';
 import { getExamPreparationTracks } from '@/lib/examPreferenceServer';
 import { getSscCglStageByCode, isSscCglExamCode } from '@/lib/sscCglSyllabus';
+import { getSscChslStageByCode, isSscChslExamCode } from '@/lib/sscChsl';
 import {
   isUuid,
   parseStrictBatchSize,
@@ -102,6 +103,14 @@ export async function GET(request: Request) {
         // locally avoids a slow preparation-track database lookup on every
         // cursor request while the exact profile mapping still scopes the data.
         const stage = getSscCglStageByCode(requestedStageCode);
+        if (!stage) return errorResponse('invalid_stage_code', 400);
+        exactStageCode = stage.code;
+      } else if (
+        selected.status === 'ready'
+          ? isSscChslExamCode(selected.examCode)
+          : isSscChslExamCode(searchParams.get('examCode'))
+      ) {
+        const stage = getSscChslStageByCode(requestedStageCode);
         if (!stage) return errorResponse('invalid_stage_code', 400);
         exactStageCode = stage.code;
       } else {

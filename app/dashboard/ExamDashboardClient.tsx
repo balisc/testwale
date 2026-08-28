@@ -22,7 +22,10 @@ import ExamPreparationPath from './ExamPreparationPath';
 import ExamSubjectExplorer from './ExamSubjectExplorer';
 import SscCglStageExplorer from './SscCglStageExplorer';
 import SscCglSelectedStageSubjects from './SscCglSelectedStageSubjects';
+import SscChslStageExplorer from './SscChslStageExplorer';
+import SscChslSelectedStageSubjects from './SscChslSelectedStageSubjects';
 import { isSscCglExamCode } from '@/lib/sscCglSyllabus';
+import { isSscChslExamCode, type SscChslStageSnapshot } from '@/lib/sscChsl';
 import type { SavedExamPreference } from '@/lib/examPreference';
 import type { SscCglStageTaxonomy } from '@/lib/sscCglSyllabus';
 
@@ -33,6 +36,13 @@ type ExamDashboardPayload = ExamLearningSnapshot & {
         status: 'ready';
         preference: SavedExamPreference;
         taxonomy: SscCglStageTaxonomy;
+      };
+  sscChslSelection?:
+    | { status: 'missing' | 'error' }
+    | {
+        status: 'ready';
+        preference: SavedExamPreference;
+        data: SscChslStageSnapshot;
       };
 };
 
@@ -133,8 +143,12 @@ export default function ExamDashboardClient() {
   const examName = pickCatalogText(data.exam.title, language) || data.exam.code;
   const showSscHero = isSscFamilyExam(data.exam.code, examName);
   const isSscCgl = isSscCglExamCode(data.exam.code);
+  const isSscChsl = isSscChslExamCode(data.exam.code);
   const selectedSscCglStage = data.sscCglSelection?.status === 'ready'
     ? data.sscCglSelection
+    : null;
+  const selectedSscChslStage = data.sscChslSelection?.status === 'ready'
+    ? data.sscChslSelection
     : null;
   const firstPractice = data.subtopics.find((row) => row.question_count > 0);
   const firstTopic = firstPractice ? data.topics.find((row) => row.id === firstPractice.topic_id) : null;
@@ -143,13 +157,14 @@ export default function ExamDashboardClient() {
     ? `/subjects/${firstSubject.slug}/${firstTopic.slug}/practice/${firstPractice.slug}?exam=${encodeURIComponent(data.exam.code)}`
     : '/subjects';
   const resolvedContinueHref = selectedSscCglStage?.taxonomy.stage.href
-    ?? (isSscCgl ? '/ssc-cgl' : continueHref);
+    ?? selectedSscChslStage?.data.stage.href
+    ?? (isSscCgl ? '/ssc-cgl' : isSscChsl ? '/ssc-chsl' : continueHref);
 
   return (
     <main className={`min-h-screen bg-[#F8FAFC] px-4 pb-8 sm:px-6 lg:px-10 ${showSscHero ? 'pt-3 sm:pt-4' : 'pt-8'}`}>
       <div className="mx-auto max-w-7xl">
         {showSscHero ? (
-          <SscExamHero snapshot={data} examName={examName} language={language} strictSscCgl={isSscCgl} />
+          <SscExamHero snapshot={data} examName={examName} language={language} strictSscCgl={isSscCgl} strictSscChsl={isSscChsl} />
         ) : null}
 
         <section className={`overflow-hidden rounded-3xl bg-gradient-to-br from-[#6D28D9] to-[#9333EA] p-6 text-white shadow-xl sm:p-8 ${showSscHero ? 'mt-10' : ''}`}>
@@ -166,7 +181,7 @@ export default function ExamDashboardClient() {
           {[[c.available, data.overview.total_questions], [c.attempted, data.overview.attempted_count], [c.accuracy, `${data.overview.accuracy_percent}%`], [c.progress, `${data.overview.completion_percent}%`]].map(([label,value]) => <div key={String(label)} className="rounded-2xl border border-purple-100 bg-white p-5 shadow-[0_8px_24px_rgba(76,29,149,0.04)] sm:p-6"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-3 text-2xl font-bold text-slate-950 sm:text-3xl">{value}</p></div>)}
         </section>
 
-        {showSscHero && !isSscCgl ? <ExamPreparationPath snapshot={data} /> : null}
+        {showSscHero && !isSscCgl && !isSscChsl ? <ExamPreparationPath snapshot={data} /> : null}
 
         {isSscCgl ? (
           selectedSscCglStage ? (
@@ -178,6 +193,14 @@ export default function ExamDashboardClient() {
             <div className="mt-8"><ExamContentUnavailable reason="error" /></div>
           ) : (
             <SscCglStageExplorer language={language} />
+          )
+        ) : isSscChsl ? (
+          selectedSscChslStage ? (
+            <SscChslSelectedStageSubjects data={selectedSscChslStage.data} language={language} />
+          ) : data.sscChslSelection?.status === 'error' ? (
+            <div className="mt-8"><ExamContentUnavailable reason="error" /></div>
+          ) : (
+            <SscChslStageExplorer language={language} />
           )
         ) : showSscHero && data.subjects.length > 0 ? (
           <ExamSubjectExplorer snapshot={data} language={language} />
@@ -192,7 +215,7 @@ export default function ExamDashboardClient() {
           </>
         )}
 
-        {!isSscCgl && recommended.length > 0 ? <section className="mt-10"><h2 className="text-2xl font-bold text-slate-900">{c.topics}</h2><div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">{recommended.map((topic) => { const subject=data.subjects.find((row)=>row.id===topic.subject_id); return subject ? <Link key={topic.id} href={`/subjects/${subject.slug}/${topic.slug}?exam=${encodeURIComponent(data.exam.code)}`} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4"><div><p className="font-bold text-slate-900">{pickCatalogText(topic.title,language)}</p><p className="mt-1 text-xs text-slate-500">{topic.question_count} {c.questions}</p></div><ArrowRight className="h-5 w-5 text-[#7C3AED]" /></Link> : null; })}</div></section> : null}
+        {!isSscCgl && !isSscChsl && recommended.length > 0 ? <section className="mt-10"><h2 className="text-2xl font-bold text-slate-900">{c.topics}</h2><div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">{recommended.map((topic) => { const subject=data.subjects.find((row)=>row.id===topic.subject_id); return subject ? <Link key={topic.id} href={`/subjects/${subject.slug}/${topic.slug}?exam=${encodeURIComponent(data.exam.code)}`} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4"><div><p className="font-bold text-slate-900">{pickCatalogText(topic.title,language)}</p><p className="mt-1 text-xs text-slate-500">{topic.question_count} {c.questions}</p></div><ArrowRight className="h-5 w-5 text-[#7C3AED]" /></Link> : null; })}</div></section> : null}
 
         <section className="mt-10 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
           <div className="rounded-3xl border border-purple-100 bg-purple-50 p-6"><Target className="h-8 w-8 text-[#7C3AED]" /><h2 className="mt-4 text-xl font-bold text-slate-900">{c.continue}</h2><Link href={resolvedContinueHref} className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-[#7C3AED] px-5 font-bold text-white">{c.continue}<ArrowRight className="ml-2 h-4 w-4" /></Link></div>

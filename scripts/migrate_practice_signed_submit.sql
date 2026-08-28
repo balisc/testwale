@@ -10,11 +10,11 @@ create extension if not exists pgcrypto;
 
 create table if not exists public.practice_server_secrets (
   id int primary key default 1 check (id = 1),
-  signing_secret text not null default 'questionwale-practice-dev-v1'
+  signing_secret text not null default encode(gen_random_bytes(32), 'hex')
 );
 
 insert into public.practice_server_secrets (id, signing_secret)
-values (1, 'questionwale-practice-dev-v1')
+values (1, encode(gen_random_bytes(32), 'hex'))
 on conflict (id) do nothing;
 
 alter table public.practice_server_secrets enable row level security;
@@ -115,8 +115,10 @@ revoke all on function public.practice_verify_proof(text, text[], bigint, text) 
 revoke all on function public.submit_question_answer_verified(uuid, uuid, text, integer, bigint, text) from public;
 revoke all on function public.get_user_progress_dashboard_verified(uuid, bigint, text) from public;
 
-grant execute on function public.submit_question_answer_verified(uuid, uuid, text, integer, bigint, text) to anon, authenticated, service_role;
-grant execute on function public.get_user_progress_dashboard_verified(uuid, bigint, text) to anon, authenticated, service_role;
+revoke execute on function public.submit_question_answer_verified(uuid, uuid, text, integer, bigint, text) from public, anon, authenticated;
+revoke execute on function public.get_user_progress_dashboard_verified(uuid, bigint, text) from public, anon, authenticated;
+grant execute on function public.submit_question_answer_verified(uuid, uuid, text, integer, bigint, text) to service_role;
+grant execute on function public.get_user_progress_dashboard_verified(uuid, bigint, text) to service_role;
 
 create or replace function public.get_practice_progress_rows_verified(
   p_user_id uuid,
@@ -156,4 +158,5 @@ end;
 $$;
 
 revoke all on function public.get_practice_progress_rows_verified(uuid, uuid, uuid, uuid, bigint, text) from public;
-grant execute on function public.get_practice_progress_rows_verified(uuid, uuid, uuid, uuid, bigint, text) to anon, authenticated, service_role;
+revoke execute on function public.get_practice_progress_rows_verified(uuid, uuid, uuid, uuid, bigint, text) from public, anon, authenticated;
+grant execute on function public.get_practice_progress_rows_verified(uuid, uuid, uuid, uuid, bigint, text) to service_role;

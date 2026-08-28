@@ -32,13 +32,20 @@ export type MapQuestion = {
   main_topic: string;
   subtopic: string;
   map_scope: MapScope;
-  tolerance_km: number;
-  explanation: string | null;
+  region_hint: string;
   difficulty: string | null;
   exam_tags: string[] | null;
   is_current_affairs: boolean;
   current_affairs_month: string | null;
-  correct_location: MapLocation;
+};
+
+export type MapAnswerResult = {
+  isCorrect: boolean;
+  distanceKm: number;
+  toleranceKm: number;
+  correctPoint: LatLngPoint;
+  correctLocationName: string;
+  explanation: string | null;
 };
 
 export type ReviewAttempt = {
@@ -107,10 +114,26 @@ export function fallbackToleranceByDifficulty(difficulty: string | null | undefi
   return 40;
 }
 
-export function getEffectiveToleranceKm(question: Pick<MapQuestion, 'tolerance_km' | 'difficulty'>): number {
+export function getEffectiveToleranceKm(question: {
+  tolerance_km?: number | string | null;
+  difficulty?: string | null;
+}): number {
   const dbTolerance = Number(question.tolerance_km);
   if (Number.isFinite(dbTolerance) && dbTolerance > 0) {
     return dbTolerance;
   }
   return fallbackToleranceByDifficulty(question.difficulty);
+}
+
+export function getBroadMapRegionHint(latitude: number, longitude: number, scope: MapScope) {
+  if (scope === 'india') {
+    if (latitude >= 26) return 'Hint: The location is in the northern India belt.';
+    if (latitude <= 14) return 'Hint: The location is in the southern India belt.';
+    if (longitude <= 76) return 'Hint: The location is towards western or central India.';
+    return 'Hint: The location is towards eastern or central India.';
+  }
+
+  const northSouth = latitude >= 0 ? 'Northern Hemisphere' : 'Southern Hemisphere';
+  const eastWest = longitude >= 0 ? 'Eastern Hemisphere' : 'Western Hemisphere';
+  return `Hint: The location lies in the ${northSouth} and ${eastWest}.`;
 }

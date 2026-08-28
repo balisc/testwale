@@ -1,6 +1,7 @@
 'use client';
 
 import { Bookmark, Building2, Check, Scale, type LucideIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import type { LangMode } from '@/app/demo/lib/bilingual';
 import { pick } from '@/app/demo/lib/bilingual';
 import type { BiString } from '@/content/revision/indian-polity/company-rule-and-early-acts.v1';
@@ -40,13 +41,14 @@ export function ActChapterHeader({
   progress,
   BadgeIcon = Building2,
 }: Props) {
+  const router = useRouter();
   const isComplete = progress.completedIds.includes(chapterId);
   const isGuest = progress.kind === 'guest';
 
   function handleMark() {
     if (isGuest) {
       const returnTo = `${window.location.pathname}${window.location.search}`;
-      window.location.href = `/login?returnTo=${encodeURIComponent(returnTo)}`;
+      router.push(`/login?returnTo=${encodeURIComponent(returnTo)}`);
       return;
     }
     progress.markChapterComplete(chapterId);

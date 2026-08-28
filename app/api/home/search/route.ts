@@ -2,9 +2,13 @@
 import { unstable_cache } from 'next/cache';
 import { getHomeCatalogSearchItems } from '@/app/home/lib/catalogSearch';
 import type { HomeSearchItem } from '@/app/home/lib/catalogSearch';
-import { getSelectedExamContext, getSelectedExamLearning } from '@/lib/examLearningServer';
+import {
+  getSelectedExamContext,
+  getSelectedExamLearningForContext,
+} from '@/lib/examLearningServer';
 import { getLocalizedText } from '@/lib/localizedText';
 import { isSscCglExamCode } from '@/lib/sscCglSyllabus';
+import { isSscChslExamCode } from '@/lib/sscChsl';
 
 export const runtime = 'nodejs';
 export const revalidate = 300;
@@ -27,11 +31,20 @@ export async function GET() {
       ];
       return NextResponse.json({ items }, { headers: { 'Cache-Control': 'private, no-store' } });
     }
+    if (context.status === 'ready' && isSscChslExamCode(context.examCode)) {
+      const items: HomeSearchItem[] = [
+        { id: 'ssc-chsl-tier-1', type: 'subject', label: 'SSC CHSL Tier I', labelHi: 'SSC CHSL टियर I', href: '/ssc-chsl/tier-1/subjects', path: 'SSC CHSL' },
+        { id: 'ssc-chsl-tier-2', type: 'subject', label: 'SSC CHSL Tier II', labelHi: 'SSC CHSL टियर II', href: '/ssc-chsl/tier-2/subjects', path: 'SSC CHSL' },
+      ];
+      return NextResponse.json({ items }, { headers: { 'Cache-Control': 'private, no-store' } });
+    }
     if (context.status !== 'unauthenticated' && context.status !== 'ready') {
       return NextResponse.json({ items: [] }, { headers: { 'Cache-Control': 'private, no-store' } });
     }
 
-    const selected = await getSelectedExamLearning();
+    const selected = context.status === 'ready'
+      ? await getSelectedExamLearningForContext(context)
+      : context;
     if (selected.status === 'ready') {
       const { snapshot } = selected;
       const subjectById = new Map(snapshot.subjects.map((row) => [row.id, row]));
@@ -73,6 +86,9 @@ export async function GET() {
       },
     );
   } catch {
-    return NextResponse.json({ items: [] }, { status: 200 });
+    return NextResponse.json(
+      { items: [] },
+      { status: 200, headers: { 'Cache-Control': 'private, no-store' } },
+    );
   }
 }
