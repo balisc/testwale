@@ -30,8 +30,8 @@ export async function getCatalogSiteStats(): Promise<CatalogSiteStats | null> {
 
   return {
     questions,
-    subjects: subjects.length,
-    topics: topics.length,
+    subjects: subjects.filter((row) => Number(row.question_count ?? 0) > 0).length,
+    topics: topics.filter((row) => Number(row.question_count ?? 0) > 0).length,
   };
 }
 

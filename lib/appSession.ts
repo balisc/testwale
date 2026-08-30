@@ -13,13 +13,23 @@ export type SessionUser = {
 
 type SessionPayload = SessionUser & { exp: number };
 
+export type LegacySession = {
+  user: SessionUser;
+  issuedAt: number;
+  expiresAt: number;
+};
+
+export const STORED_SESSION_PREFIX = 'v2.';
+
 function getAuthSecret() {
   const secret = process.env.AUTH_SECRET?.trim();
-  if (secret) return secret;
+  if (secret && (process.env.NODE_ENV !== 'production' || Buffer.byteLength(secret, 'utf8') >= 32)) {
+    return secret;
+  }
 
   if (process.env.NODE_ENV === 'production') {
     throw new Error(
-      '[auth] AUTH_SECRET is required in production. Set a strong random AUTH_SECRET (do not reuse service-role keys).',
+      '[auth] AUTH_SECRET with at least 32 bytes is required in production. Use an independent random value.',
     );
   }
 
@@ -31,6 +41,7 @@ function sign(body: string) {
   return createHmac('sha256', getAuthSecret()).update(body).digest('base64url');
 }
 
+/** Legacy transition token. New sessions are opaque and stored server-side. */
 export function createSessionToken(user: SessionUser) {
   const payload: SessionPayload = {
     ...user,
@@ -41,7 +52,12 @@ export function createSessionToken(user: SessionUser) {
 }
 
 export function parseSessionToken(token: string | undefined | null): SessionUser | null {
+  return parseLegacySessionToken(token)?.user ?? null;
+}
+
+export function parseLegacySessionToken(token: string | undefined | null): LegacySession | null {
   if (!token) return null;
+  if (token.startsWith(STORED_SESSION_PREFIX)) return null;
 
   const lastDot = token.lastIndexOf('.');
   if (lastDot <= 0) return null;
@@ -62,11 +78,15 @@ export function parseSessionToken(token: string | undefined | null): SessionUser
     if (Date.now() > payload.exp) return null;
 
     return {
-      id: payload.id,
-      fullName: payload.fullName,
-      email: payload.email,
-      provider: payload.provider,
-      avatarUrl: payload.avatarUrl ?? null,
+      user: {
+        id: payload.id,
+        fullName: payload.fullName,
+        email: payload.email,
+        provider: payload.provider,
+        avatarUrl: payload.avatarUrl ?? null,
+      },
+      issuedAt: payload.exp - AUTH_MAX_AGE_SECONDS * 1000,
+      expiresAt: payload.exp,
     };
   } catch {
     return null;
@@ -79,5 +99,6 @@ export function getSessionCookieOptions() {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
     path: '/',
+    maxAge: AUTH_MAX_AGE_SECONDS,
   };
 }

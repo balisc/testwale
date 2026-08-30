@@ -9,41 +9,41 @@ function post(headers: HeadersInit = {}) {
   });
 }
 
-test('safe methods do not require browser origin headers', () => {
+test('safe methods do not require browser origin headers', async () => {
   assert.deepEqual(
-    checkMutationRequest(new Request('https://questionwale.com/api/profile')),
+    await checkMutationRequest(new Request('https://questionwale.com/api/profile')),
     { ok: true },
   );
 });
 
-test('same-origin mutation is accepted', () => {
+test('same-origin mutation is accepted', async () => {
   assert.deepEqual(
-    checkMutationRequest(post({ origin: 'https://questionwale.com' })),
+    await checkMutationRequest(post({ origin: 'https://questionwale.com' })),
     { ok: true },
   );
 });
 
-test('cross-origin and same-site sibling mutations are rejected', () => {
+test('cross-origin and same-site sibling mutations are rejected', async () => {
   assert.deepEqual(
-    checkMutationRequest(post({ origin: 'https://evil.example' })),
+    await checkMutationRequest(post({ origin: 'https://evil.example' })),
     { ok: false, status: 403, error: 'cross_origin_request' },
   );
   assert.deepEqual(
-    checkMutationRequest(post({ 'sec-fetch-site': 'same-site' })),
+    await checkMutationRequest(post({ 'sec-fetch-site': 'same-site' })),
     { ok: false, status: 403, error: 'cross_origin_request' },
   );
 });
 
-test('same-origin fetch metadata is accepted when privacy settings omit referrer', () => {
+test('same-origin fetch metadata is accepted when privacy settings omit referrer', async () => {
   assert.deepEqual(
-    checkMutationRequest(post({ 'sec-fetch-site': 'same-origin' })),
+    await checkMutationRequest(post({ 'sec-fetch-site': 'same-origin' })),
     { ok: true },
   );
 });
 
-test('oversized mutations are rejected before route body parsing', () => {
+test('oversized mutations are rejected before route body parsing', async () => {
   assert.deepEqual(
-    checkMutationRequest(post({
+    await checkMutationRequest(post({
       origin: 'https://questionwale.com',
       'content-length': String(MAX_API_MUTATION_BYTES + 1),
     })),
@@ -51,21 +51,21 @@ test('oversized mutations are rejected before route body parsing', () => {
   );
 });
 
-test('preview deployments use their platform URL instead of the production canonical origin', () => {
+test('preview deployments use their platform URL instead of the production canonical origin', async () => {
   const previousEnvironment = process.env.VERCEL_ENV;
   const previousUrl = process.env.VERCEL_URL;
   try {
     process.env.VERCEL_ENV = 'preview';
     process.env.VERCEL_URL = 'questionwale-preview.example';
     assert.deepEqual(
-      checkMutationRequest(new Request('https://questionwale-preview.example/api/profile', {
+      await checkMutationRequest(new Request('https://questionwale-preview.example/api/profile', {
         method: 'PATCH',
         headers: { origin: 'https://questionwale-preview.example' },
       })),
       { ok: true },
     );
     assert.deepEqual(
-      checkMutationRequest(new Request('https://questionwale-preview.example/api/profile', {
+      await checkMutationRequest(new Request('https://questionwale-preview.example/api/profile', {
         method: 'PATCH',
         headers: { origin: 'https://questionwale.com' },
       })),
@@ -77,4 +77,30 @@ test('preview deployments use their platform URL instead of the production canon
     if (previousUrl === undefined) delete process.env.VERCEL_URL;
     else process.env.VERCEL_URL = previousUrl;
   }
+});
+
+test('chunked JSON bodies are bounded even without content-length', async () => {
+  const request = new Request('https://questionwale.com/api/profile', {
+    method: 'PATCH',
+    headers: { origin: 'https://questionwale.com', 'content-type': 'application/json' },
+    body: JSON.stringify({ value: 'x'.repeat(MAX_API_MUTATION_BYTES) }),
+  });
+  assert.deepEqual(await checkMutationRequest(request), {
+    ok: false,
+    status: 413,
+    error: 'payload_too_large',
+  });
+});
+
+test('unsafe request bodies require JSON except the local OAuth form route', async () => {
+  const request = new Request('https://questionwale.com/api/profile', {
+    method: 'PATCH',
+    headers: { origin: 'https://questionwale.com', 'content-type': 'text/plain' },
+    body: '{}',
+  });
+  assert.deepEqual(await checkMutationRequest(request), {
+    ok: false,
+    status: 415,
+    error: 'unsupported_media_type',
+  });
 });

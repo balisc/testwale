@@ -311,7 +311,11 @@ assert.match(proxySource, /headers\.get\('rsc'\) === '1'[\s\S]*return null/, 'RS
 
 const publicSubjects = readFileSync('app/subjects/page.tsx', 'utf8');
 assert.match(publicSubjects, /selected\.status === 'ready'/);
-assert.match(publicSubjects, /<SubjectGrid \/>/, 'unauthenticated public catalog rendering remains available');
+assert.match(
+  publicSubjects,
+  /<SubjectGrid counts=\{subjectCounts\} \/>/,
+  'unauthenticated public catalog rendering remains available with authoritative counts',
+);
 
 const submitRoute = readFileSync('app/api/practice/submit/route.ts', 'utf8');
 assert.match(submitRoute, /submitQuestionAnswerForUser/, 'existing answer submission semantics remain in place');

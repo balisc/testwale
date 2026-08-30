@@ -81,7 +81,7 @@ export default function HomeSignIn({ googleClientId = '' }: { googleClientId?: s
             <ul className="mt-6 space-y-3">
               {BENEFITS.map((item) => (
                 <li key={item} className="flex items-start gap-2.5 text-sm font-medium text-[#344054]">
-                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F5F3FF] text-[10px] font-bold text-[#6D28D9] ring-1 ring-[#DDD6FE]">
+                  <span aria-hidden="true" className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F5F3FF] text-[10px] font-bold text-[#6D28D9] ring-1 ring-[#DDD6FE]">
                     ✓
                   </span>
                   <span className="min-w-0">{item}</span>
@@ -116,7 +116,7 @@ export default function HomeSignIn({ googleClientId = '' }: { googleClientId?: s
                 <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                 <span>Secure one-click sign-in • No password required</span>
               </p>
-              <p className="mt-3 text-xs leading-5 text-[#98A2B3]">
+              <p className="mt-3 text-xs leading-5 text-[#667085]">
                 By continuing, you agree to the{' '}
                 <Link href="/terms" className="underline decoration-[#D0D5DD] hover:text-[#667085]">
                   Terms of Service

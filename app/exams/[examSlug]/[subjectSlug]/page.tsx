@@ -8,7 +8,7 @@ import { buildBreadcrumbListSchema } from '@/lib/breadcrumbSchema';
 import { findPublishedSyllabusSubject } from '@/lib/examSyllabus';
 import { withExamStageQuery } from '@/lib/examPreference';
 import { getLocalizedText } from '@/lib/localizedText';
-import { getPublicExamSyllabus } from '@/lib/publicExamExplorer';
+import { getPublicExamSyllabusStrict } from '@/lib/publicExamExplorer';
 import { buildConciseTitle, buildPageMetadata } from '@/lib/seo';
 import SyllabusBreadcrumb from '../SyllabusBreadcrumb';
 
@@ -25,15 +25,17 @@ export const revalidate = 300;
 
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { examSlug, subjectSlug } = await params;
-  const snapshot = await getPublicExamSyllabus(examSlug, selectedStage((await searchParams).stage));
+  const snapshot = await getPublicExamSyllabusStrict(examSlug, selectedStage((await searchParams).stage));
   const subject = snapshot
     ? findPublishedSyllabusSubject(snapshot.subjects, subjectSlug)
     : null;
-  if (!snapshot || !subject) return { title: 'Subject not found', robots: { index: false, follow: true } };
+  if (!snapshot || !subject) notFound();
   const subjectName = getLocalizedText(subject.title, 'en') || subject.slug;
   const examName = snapshot.exam.code.replaceAll('_', ' ');
-  const description = getLocalizedText(subject.description, 'en') ||
-    `Browse ${subjectName} topics and subtopics in the published ${examName} syllabus.`;
+  const storedDescription = getLocalizedText(subject.description, 'en');
+  const description = storedDescription
+    ? `${subjectName} in the published ${examName} syllabus: ${storedDescription}`
+    : `Browse ${subjectName} topics and subtopics in the published ${examName} syllabus.`;
   return buildPageMetadata({
     title: buildConciseTitle(subjectName, `${examName} Syllabus`),
     description,
@@ -44,7 +46,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 export default async function PublicExamSubjectPage({ params, searchParams }: PageProps) {
   const { examSlug, subjectSlug } = await params;
   const stageCode = selectedStage((await searchParams).stage);
-  const snapshot = await getPublicExamSyllabus(examSlug, stageCode);
+  const snapshot = await getPublicExamSyllabusStrict(examSlug, stageCode);
   if (!snapshot) notFound();
   const subject = findPublishedSyllabusSubject(snapshot.subjects, subjectSlug);
   if (!subject) notFound();

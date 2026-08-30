@@ -11,6 +11,7 @@ import { normalizeExamCode } from '@/lib/examCode';
 import type { Exam, Topic, TopicWithPriority } from '@/types/polity';
 import type { PolityRankedExamOption } from '@/types/polityExamRankingV2';
 import { topicMatchesSearch } from './SubjectPageContent';
+import { meaningfulCatalogDescription } from '@/lib/catalogDescription';
 
 type SubjectTopicGridProps = {
   subjectSlug: string;
@@ -53,7 +54,7 @@ function TopicCard({
   };
 }) {
   const title = useCatalogText(topic.title);
-  const scope = useCatalogText(topic.scope ?? topic.description);
+  const scope = meaningfulCatalogDescription(useCatalogText(topic.scope ?? topic.description));
   // Always call hook — never inside ternary (Rules of Hooks)
   const importanceText = useCatalogText(isPriorityTopic(topic) ? topic.importance : null);
   const importance = isPriorityTopic(topic) && importanceText ? importanceText : null;

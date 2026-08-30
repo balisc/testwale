@@ -8,6 +8,7 @@ export type DbUser = {
   provider: 'email' | 'google';
   google_id?: string | null;
   avatar_url?: string | null;
+  email_verified_at?: string | null;
 };
 
 function parseUser(data: unknown): DbUser | null {
@@ -21,6 +22,8 @@ function parseUser(data: unknown): DbUser | null {
     email: row.email,
     provider: row.provider === 'google' ? 'google' : 'email',
     avatar_url: typeof row.avatar_url === 'string' ? row.avatar_url : null,
+    email_verified_at:
+      typeof row.email_verified_at === 'string' ? row.email_verified_at : null,
   };
 }
 

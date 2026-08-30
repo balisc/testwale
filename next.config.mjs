@@ -53,11 +53,6 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: '/bali/:path*',
-        destination: '/',
-        permanent: true,
-      },
-      {
         source: '/pcb_page',
         destination: '/science',
         permanent: true,
@@ -89,12 +84,12 @@ const nextConfig = {
       },
       {
         source: '/exams/ssc-combined-graduate-level-examination',
-        destination: '/ssc-cgl',
+        destination: '/exams/ssc-cgl',
         permanent: true,
       },
       {
         source: '/exams/ssc-combined-graduate-level-examination/:path*',
-        destination: '/ssc-cgl',
+        destination: '/exams/ssc-cgl/:path*',
         permanent: true,
       },
       {
@@ -170,6 +165,24 @@ const nextConfig = {
       {
         source: '/signup',
         headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/forgot-password',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/reset-password',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
+      {
+        source: '/verify-email',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
       },
       {
         source: '/onboarding/:path*',

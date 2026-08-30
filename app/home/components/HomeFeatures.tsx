@@ -10,8 +10,8 @@
     ),
   },
   {
-    title: 'Clear Explanations',
-    body: 'Understand why an answer is correct with concise explanations and related facts.',
+    title: 'Published Explanations',
+    body: 'Review concise explanations and related facts where they are available.',
     icon: (
       <path
         d="M8 12.5l2.2 2.2L16 9M12 4l8 4v5c0 4-3.2 7.5-8 9-4.8-1.5-8-5-8-9V8l8-4Z"

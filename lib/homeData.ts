@@ -1,6 +1,6 @@
 import { unstable_cache } from 'next/cache';
 
-import { getCatalogSearchSuggestions } from './catalogStats';
+import { getCatalogSearchSuggestions, getCatalogSiteStats } from './catalogStats';
 
 import { getFastHomepageSubjectCounts } from './subjectCounts';
 
@@ -34,11 +34,13 @@ export type HomeSuggestion = {
 
 async function fetchHomeData() {
 
-  const [subjectCounts, suggestions] = await Promise.all([
+  const [subjectCounts, suggestions, catalogStats] = await Promise.all([
 
     getFastHomepageSubjectCounts(),
 
     getCatalogSearchSuggestions(40).catch(() => [] as HomeSuggestion[]),
+
+    getCatalogSiteStats().catch(() => null),
 
   ]);
 
@@ -52,7 +54,11 @@ async function fetchHomeData() {
 
   return {
 
-    stats: { questions, subjects, topics: null } satisfies HomeStats,
+    stats: {
+      questions: catalogStats?.questions ?? questions,
+      subjects: catalogStats?.subjects ?? subjects,
+      topics: catalogStats?.topics ?? null,
+    } satisfies HomeStats,
 
     subjectCounts,
 

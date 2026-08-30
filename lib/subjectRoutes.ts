@@ -10,10 +10,7 @@ export function resolveSubjectSlug(routeParam: string): string {
 
 export function getSubjectPageHref(subjectKey: string): string {
   const slug = resolveSubjectSlug(subjectKey);
-  if (LEGACY_SUBJECT_SLUG_MAP[subjectKey.toLowerCase()]) {
-    return `/subjects/${slug}`;
-  }
-  return `/${subjectKey}`;
+  return `/subjects/${slug}`;
 }
 
 /** Reverse map: catalog slug → homepage/search subject key (e.g. indian-polity → polity). */

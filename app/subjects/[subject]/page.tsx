@@ -141,7 +141,7 @@ export default async function SubjectSlugPage({ params, searchParams }: PageProp
           topics={topics}
           exams={exams}
           rankedExams={rankedExams}
-          examCode={examParam}
+          examCode={validation.valid ? validation.normalized : null}
           topicCount={topicCount}
           questionCount={questionCount}
         />
@@ -172,7 +172,7 @@ export default async function SubjectSlugPage({ params, searchParams }: PageProp
         subjectSlug={subjectSlug}
         topics={topics}
         exams={exams}
-        examCode={examParam}
+        examCode={dbExamCode ?? null}
         topicCount={topicCount}
         questionCount={questionCount}
       />

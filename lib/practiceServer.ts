@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import supabase, { getSupabaseHostname } from '@/lib/supabase';
+import { getSupabaseHostname } from '@/lib/supabase';
 import type { ReportQuestionResponse, SubmitAnswerResponse, PracticeProgress, UserAttemptSummary, ScopedProgressSnapshot } from '@/lib/practice';
 import type { AdvanceSubtopicCycleResult, SubtopicQuestionBatchState } from '@/lib/practiceMastery';
 import {
@@ -317,19 +317,6 @@ function synthesizeProgressRows(
     rows.push({ ...ids, is_correct: false });
   }
   return rows;
-}
-
-async function getUserProgressDashboardAnon(userId: string): Promise<UserProgressDashboard | null> {
-  const { data, error } = await supabase.rpc('get_user_progress_dashboard', {
-    p_user_id: userId,
-  });
-
-  if (error || !data) {
-    if (error) console.error('[practice/dashboardAnon] RPC failed:', error);
-    return null;
-  }
-
-  return normalizeProgressDashboard(data as Record<string, unknown>);
 }
 
 export async function getPracticeProgressForUser(
@@ -882,11 +869,6 @@ export async function getUserProgressDashboard(
   }
 
   return fetchProgressDashboardDirect(admin, userId);
-}
-
-async function getUserProgressDashboardSigned(userId: string): Promise<UserProgressDashboard | null> {
-  void userId;
-  return null;
 }
 
 /** Dashboard stats for logged-in user (service role or signed RPC). */

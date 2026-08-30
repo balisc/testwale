@@ -25,24 +25,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const inFlightRef = useRef<Promise<void> | null>(null);
   const lastCheckedAtRef = useRef(0);
+  const refreshAbortRef = useRef<AbortController | null>(null);
+  const loggingOutRef = useRef(false);
 
   const refreshUser = useCallback(() => {
+    if (loggingOutRef.current) return Promise.resolve();
     if (inFlightRef.current) return inFlightRef.current;
+    const controller = new AbortController();
+    refreshAbortRef.current = controller;
     const request = (async () => {
       try {
-        const response = await fetch('/api/auth/me', { cache: 'no-store', credentials: 'include' });
+        const response = await fetch('/api/auth/me', {
+          cache: 'no-store',
+          credentials: 'include',
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error('session_probe_failed');
         const data = (await response.json()) as { user?: AuthUser | null };
-        setUser(data.user ?? null);
+        if (!loggingOutRef.current && !controller.signal.aborted) {
+          setUser(data.user ?? null);
+        }
       } catch {
-        setUser(null);
+        if (!loggingOutRef.current && !controller.signal.aborted) setUser(null);
       } finally {
-        lastCheckedAtRef.current = Date.now();
-        setLoading(false);
+        if (!loggingOutRef.current && !controller.signal.aborted) {
+          lastCheckedAtRef.current = Date.now();
+          setLoading(false);
+        }
       }
     })();
     inFlightRef.current = request;
     void request.finally(() => {
       if (inFlightRef.current === request) inFlightRef.current = null;
+      if (refreshAbortRef.current === controller) refreshAbortRef.current = null;
     });
     return request;
   }, []);
@@ -70,14 +85,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     // Update the navbar immediately, then wait for the Set-Cookie deletion before
     // doing a hard navigation so the server renders the guest homepage as well.
+    loggingOutRef.current = true;
+    refreshAbortRef.current?.abort();
     window.dispatchEvent(new Event('questionwale:clear-user-caches'));
     setUser(null);
     setLoading(false);
     try {
       await fetch('/api/auth/logout', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
         cache: 'no-store',
         credentials: 'include',
+        keepalive: true,
       });
     } finally {
       window.location.replace('/');

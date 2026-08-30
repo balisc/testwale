@@ -38,46 +38,6 @@ export const translations = {
       hi: 'नीचे एक विषय चुनें और सही अभ्यास सेट के साथ अपनी परीक्षा की तैयारी शुरू करें।',
     },
     startPractice: { en: 'Start Practice', hi: 'अभ्यास शुरू करें' },
-    subjectList: {
-      history: {
-        name: { en: 'History', hi: 'इतिहास' },
-        count: { en: '2,450 Questions Available', hi: '2,450 प्रश्न उपलब्ध' },
-        icon: '📜',
-      },
-      science: {
-        name: { en: 'Science', hi: 'विज्ञान' },
-        count: { en: '2,120 Questions Available', hi: '2,120 प्रश्न उपलब्ध' },
-        icon: '🧪',
-      },
-      polity: {
-        name: { en: 'Polity', hi: 'राजनीति' },
-        count: { en: '1,980 Questions Available', hi: '1,980 प्रश्न उपलब्ध' },
-        icon: '⚖️',
-      },
-      economics: {
-        name: { en: 'Economics', hi: 'अर्थशास्त्र' },
-        count: { en: '1,720 Questions Available', hi: '1,720 प्रश्न उपलब्ध' },
-        icon: '💰',
-      },
-      geography: {
-        name: { en: 'Geography', hi: 'भूगोल' },
-        count: { en: '1,835 Questions Available', hi: '1,835 प्रश्न उपलब्ध' },
-        icon: '🗺️',
-      },
-      generalKnowledge: {
-        name: { en: 'General Knowledge', hi: 'सामान्य ज्ञान' },
-        count: { en: '2,050 Questions Available', hi: '2,050 प्रश्न उपलब्ध' },
-        icon: '🧠',
-      },
-    },
-  },
-
-  // Stats Section
-  stats: {
-    questions: { label: { en: 'Questions', hi: 'प्रश्न' }, value: '10K+' },
-    subjects: { label: { en: 'Subjects', hi: 'विषय' }, value: '6+' },
-    exams: { label: { en: 'Exams', hi: 'परीक्षाएं' }, value: '15+' },
-    students: { label: { en: 'Students', hi: 'छात्र' }, value: '50K+' },
   },
 
   // Practice Page
@@ -128,24 +88,6 @@ export const translations = {
   footer: {
     tagline: { en: 'Created by student for student', hi: 'छात्र द्वारा छात्र के लिए बनाया गया' },
     allRightsReserved: { en: 'All rights reserved', hi: 'सर्वाधिकार सुरक्षित' },
-  },
-
-  // Landing Page Stats
-  landingStats: {
-    mcqs: { label: { en: '10,000+ MCQs', hi: '10,000+ MCQs' }, desc: { en: 'Comprehensive question bank', hi: 'व्यापक प्रश्न बैंक' } },
-    subjects: { label: { en: '6+ Subjects', hi: '6+ विषय' }, desc: { en: 'All major exam topics', hi: 'सभी मुख्य परीक्षा विषय' } },
-    students: { label: { en: '50K+ Students', hi: '50K+ छात्र' }, desc: { en: 'Trusted by learners', hi: 'शिक्षार्थियों द्वारा विश्वसनीय' } },
-  },
-
-  // Landing Page Subjects
-  landingSubjects: {
-    title: { en: 'Explore Subjects', hi: 'विषयों का अन्वेषण करें' },
-    history: { name: { en: 'History', hi: 'इतिहास' }, count: { en: '2,450 MCQs', hi: '2,450 MCQs' } },
-    science: { name: { en: 'Science', hi: 'विज्ञान' }, count: { en: '2,120 MCQs', hi: '2,120 MCQs' } },
-    polity: { name: { en: 'Polity', hi: 'राजनीति' }, count: { en: '1,980 MCQs', hi: '1,980 MCQs' } },
-    economics: { name: { en: 'Economics', hi: 'अर्थशास्त्र' }, count: { en: '1,720 MCQs', hi: '1,720 MCQs' } },
-    geography: { name: { en: 'Geography', hi: 'भूगोल' }, count: { en: '1,835 MCQs', hi: '1,835 MCQs' } },
-    generalKnowledge: { name: { en: 'General Knowledge', hi: 'सामान्य ज्ञान' }, count: { en: '2,050 MCQs', hi: '2,050 MCQs' } },
   },
 
   // Common UI

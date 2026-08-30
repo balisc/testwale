@@ -40,12 +40,7 @@ export async function GET() {
     const message = error instanceof Error ? error.message : 'database_error';
     console.warn(`[exam-onboarding/get] code=${code} message=${message}`);
     return NextResponse.json(
-      {
-        error: 'catalogue_database_error',
-        databaseCode: error instanceof ExamCatalogueDatabaseError
-          ? error.databaseCode
-          : 'database_error',
-      },
+      { error: 'catalogue_unavailable' },
       { status: 503, headers: PRIVATE_NO_STORE },
     );
   }
@@ -110,7 +105,10 @@ export async function POST(request: Request) {
 
   if (!result.ok) {
     const status = /database|PGRST|57014|not_configured/i.test(result.code) ? 503 : 400;
-    return NextResponse.json({ error: result.code }, { status, headers: PRIVATE_NO_STORE });
+    return NextResponse.json(
+      { error: status === 503 ? 'preference_unavailable' : 'invalid_preference' },
+      { status, headers: PRIVATE_NO_STORE },
+    );
   }
 
   revalidateTag(SELECTED_EXAM_CONTEXT_CACHE_TAG, { expire: 0 });

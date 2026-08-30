@@ -973,4 +973,3 @@ grant execute on function public.reset_subtopic_practice_progress(uuid, uuid, te
 grant execute on function public.submit_question_answer(uuid, uuid, text, integer) to service_role;
 
 commit;
-swda

@@ -10,7 +10,7 @@ import {
 } from '@/lib/examSyllabus';
 import { withExamStageQuery } from '@/lib/examPreference';
 import { getLocalizedText } from '@/lib/localizedText';
-import { getPublicExamSyllabus } from '@/lib/publicExamExplorer';
+import { getPublicExamSyllabusStrict } from '@/lib/publicExamExplorer';
 import { buildConciseTitle, buildPageMetadata } from '@/lib/seo';
 import SyllabusBreadcrumb from '../../SyllabusBreadcrumb';
 
@@ -27,12 +27,12 @@ export const revalidate = 300;
 
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { examSlug, subjectSlug, topicSlug } = await params;
-  const snapshot = await getPublicExamSyllabus(examSlug, selectedStage((await searchParams).stage));
+  const snapshot = await getPublicExamSyllabusStrict(examSlug, selectedStage((await searchParams).stage));
   const subject = snapshot ? findPublishedSyllabusSubject(snapshot.subjects, subjectSlug) : null;
   const topic = subject && snapshot
     ? findPublishedSyllabusTopic(snapshot.topics, subject.id, topicSlug)
     : null;
-  if (!snapshot || !subject || !topic) return { title: 'Topic not found', robots: { index: false, follow: true } };
+  if (!snapshot || !subject || !topic) notFound();
   const examName = snapshot.exam.code.replaceAll('_', ' ');
   const subjectName = getLocalizedText(subject.title, 'en') || subject.slug;
   const topicName = getLocalizedText(topic.title, 'en') || topic.slug;
@@ -47,7 +47,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 export default async function PublicExamTopicPage({ params, searchParams }: PageProps) {
   const { examSlug, subjectSlug, topicSlug } = await params;
   const stageCode = selectedStage((await searchParams).stage);
-  const snapshot = await getPublicExamSyllabus(examSlug, stageCode);
+  const snapshot = await getPublicExamSyllabusStrict(examSlug, stageCode);
   if (!snapshot) notFound();
   const subject = findPublishedSyllabusSubject(snapshot.subjects, subjectSlug);
   if (!subject) notFound();

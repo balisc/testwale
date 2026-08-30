@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const admin = getSupabaseAdmin();
     if (!admin) {
       return NextResponse.json(
-        { success: false, code: 'saveError', message: 'Database is not configured.' },
+        { success: false, code: 'saveError' },
         { status: 503 },
       );
     }
@@ -51,24 +51,14 @@ export async function POST(request: Request) {
 
       if (isMissingTableError(error)) {
         return NextResponse.json(
-          {
-            success: false,
-            code: 'saveError',
-            message:
-              'Contact table is missing. Run scripts/create_contact_us_table.sql in Supabase.',
-          },
+          { success: false, code: 'saveError' },
           { status: 503 },
         );
       }
 
       if (/row-level security|permission denied|42501/i.test(error.message)) {
         return NextResponse.json(
-          {
-            success: false,
-            code: 'saveError',
-            message:
-              'Contact table permissions are missing. Run scripts/fix_contact_us_rls.sql in Supabase.',
-          },
+          { success: false, code: 'saveError' },
           { status: 503 },
         );
       }

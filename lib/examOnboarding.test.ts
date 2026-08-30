@@ -304,10 +304,10 @@ assert.match(callback, /attachAuthCookie/);
 assert.doesNotMatch(authContext, /registerTabCloseLogout|pagehide/, 'refresh must never trigger logout');
 assert.match(authContext, /await fetch\('\/api\/auth\/logout'/, 'explicit logout clears the server cookie');
 assert.match(authContext, /window\.location\.replace\('\/'\)/, 'logout immediately opens the guest homepage');
-assert.doesNotMatch(
+assert.match(
   appSession.match(/export function getSessionCookieOptions\(\)[\s\S]*?\n\}/)?.[0] ?? '',
-  /maxAge/,
-  'auth cookie is a browser-session cookie and survives page refresh',
+  /maxAge: AUTH_MAX_AGE_SECONDS/,
+  'auth cookie uses the bounded lifetime of the opaque server-side session',
 );
 
 console.log('exam onboarding tests passed');

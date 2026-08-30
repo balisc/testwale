@@ -30,7 +30,8 @@ begin
     'full_name', v_row.full_name,
     'email', v_row.email,
     'provider', v_row.provider,
-    'avatar_url', v_row.avatar_url
+    'avatar_url', v_row.avatar_url,
+    'email_verified_at', v_row.email_verified_at
   );
 exception
   when unique_violation then
@@ -73,7 +74,8 @@ begin
     'full_name', v_row.full_name,
     'email', v_row.email,
     'provider', v_row.provider,
-    'avatar_url', v_row.avatar_url
+    'avatar_url', v_row.avatar_url,
+    'email_verified_at', v_row.email_verified_at
   );
 end;
 $$;
@@ -103,21 +105,25 @@ begin
     raise exception 'use_password' using errcode = 'P0001';
   end if;
 
-  insert into public.users (full_name, email, password_hash, provider, google_id, avatar_url)
+  insert into public.users (
+    full_name, email, password_hash, provider, google_id, avatar_url, email_verified_at
+  )
   values (
     trim(p_full_name),
     lower(trim(p_email)),
     null,
     'google',
     p_google_id,
-    p_avatar_url
+    p_avatar_url,
+    now()
   )
   on conflict (email) do update
   set
     full_name = excluded.full_name,
     provider = 'google',
     google_id = excluded.google_id,
-    avatar_url = excluded.avatar_url
+    avatar_url = excluded.avatar_url,
+    email_verified_at = coalesce(public.users.email_verified_at, now())
   returning * into v_row;
 
   return jsonb_build_object(
@@ -125,7 +131,8 @@ begin
     'full_name', v_row.full_name,
     'email', v_row.email,
     'provider', v_row.provider,
-    'avatar_url', v_row.avatar_url
+    'avatar_url', v_row.avatar_url,
+    'email_verified_at', v_row.email_verified_at
   );
 end;
 $$;

@@ -7,6 +7,14 @@ import {
   SENSITIVE_AUTH_HASH_KEYS,
 } from './authSensitiveHash.ts';
 import { getSafeRedirectPath } from './safeRedirect.ts';
+import { getSessionCookieOptions } from './appSession.ts';
+import {
+  createOpaqueSessionToken,
+  isStoredSessionToken,
+  sessionTokenHashForTest,
+  shouldUpgradeLegacySessionInProxy,
+} from './sessionStore.ts';
+import { hashAccountToken, validateNewPassword } from './accountSecurity.ts';
 
 test('hashContainsSensitiveAuthKeys detects legacy implicit-flow fragments', () => {
   assert.equal(
@@ -77,4 +85,37 @@ test('sensitive hash key list covers required OAuth fragment keys', () => {
   ]) {
     assert.ok(SENSITIVE_AUTH_HASH_KEYS.includes(key as (typeof SENSITIVE_AUTH_HASH_KEYS)[number]));
   }
+});
+
+test('new sessions are random opaque values and only their hashes are persisted', () => {
+  const first = createOpaqueSessionToken();
+  const second = createOpaqueSessionToken();
+  assert.match(first, /^v2\.[A-Za-z0-9_-]{43}$/);
+  assert.equal(isStoredSessionToken(first), true);
+  assert.notEqual(first, second);
+  const digest = sessionTokenHashForTest(first);
+  assert.match(digest, /^[a-f0-9]{64}$/);
+  assert.notEqual(digest, first);
+});
+
+test('legacy session upgrades cannot reissue an auth cookie during logout', () => {
+  assert.equal(shouldUpgradeLegacySessionInProxy('GET', '/profile'), true);
+  assert.equal(shouldUpgradeLegacySessionInProxy('HEAD', '/dashboard'), true);
+  assert.equal(shouldUpgradeLegacySessionInProxy('GET', '/api/auth/me'), false);
+  assert.equal(shouldUpgradeLegacySessionInProxy('POST', '/api/auth/logout'), false);
+  assert.equal(shouldUpgradeLegacySessionInProxy('DELETE', '/api/auth/me'), false);
+});
+
+test('session cookie and account-token policies use production-safe primitives', () => {
+  const cookie = getSessionCookieOptions();
+  assert.equal(cookie.httpOnly, true);
+  assert.equal(cookie.sameSite, 'lax');
+  assert.equal(cookie.path, '/');
+  assert.match(hashAccountToken('example-token'), /^[a-f0-9]{64}$/);
+  assert.equal(validateNewPassword('letters123'), true);
+  assert.equal(validateNewPassword('letters-only'), false);
+  assert.equal(validateNewPassword('12345678'), false);
+
+  const sessionSource = readFileSync(join(process.cwd(), 'lib/appSession.ts'), 'utf8');
+  assert.match(sessionSource, /secure:\s*process\.env\.NODE_ENV === 'production'/);
 });

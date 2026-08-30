@@ -23,7 +23,7 @@ export default function HomeProgress() {
               'Bookmarks and mistake practice',
             ].map((item) => (
               <li key={item} className="flex items-start gap-2.5">
-                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#6D28D9] ring-1 ring-[#DDD6FE]">
+                <span aria-hidden="true" className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#6D28D9] ring-1 ring-[#DDD6FE]">
                   ✓
                 </span>
                 <span className="min-w-0">{item}</span>
@@ -41,7 +41,7 @@ export default function HomeProgress() {
         <div className="min-w-0 rounded-2xl border border-[#E4E7EC] bg-white p-5 shadow-[0_24px_60px_-32px_rgba(24,24,27,0.35)] sm:p-6 max-[479px]:p-3">
           <div className="flex items-center justify-between max-[479px]:flex-col max-[479px]:items-start max-[479px]:gap-1">
             <h3 className="text-sm font-semibold text-[#18181B]">Weekly Activity</h3>
-            <span className="text-xs text-[#98A2B3]">Sample preview</span>
+            <span className="text-xs text-[#667085]">Sample preview</span>
           </div>
           <div className="mt-4 h-28 max-[479px]:h-24">
             <svg viewBox="0 0 320 100" className="h-full w-full" preserveAspectRatio="none" aria-hidden>
@@ -75,7 +75,7 @@ export default function HomeProgress() {
                 key={stat.label}
                 className="rounded-xl border border-[#E4E7EC] bg-[#FAFAFC] px-3 py-3 max-[479px]:py-2.5"
               >
-                <p className="text-[11px] font-medium text-[#98A2B3]">{stat.label}</p>
+                <p className="text-[11px] font-medium text-[#667085]">{stat.label}</p>
                 <p className="mt-1 text-lg font-bold text-[#18181B] max-[479px]:text-base">{stat.value}</p>
               </div>
             ))}
@@ -107,10 +107,10 @@ export default function HomeProgress() {
           </div>
 
           <Link
-            href="/subjects/indian-polity"
+            href="/subjects"
             className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-[#DDD6FE] bg-[#F5F3FF] px-4 py-3 text-sm font-semibold text-[#6D28D9] transition hover:bg-[#EDE9FE] max-[479px]:px-3"
           >
-            <span className="min-w-0">Continue Practice</span>
+            <span className="min-w-0">Browse Published Subjects</span>
             <span aria-hidden>→</span>
           </Link>
         </div>

@@ -1,9 +1,11 @@
+import { isIP } from 'node:net';
+
 type RateLimitEntry = {
   count: number;
   resetAt: number;
 };
 
-type RateLimitOptions = {
+export type RateLimitOptions = {
   limit?: number;
   windowMs?: number;
 };
@@ -34,13 +36,17 @@ function boundedBucketKey(key: string, limit: number, windowMs: number, now: num
 }
 
 export function getClientIp(headers: Headers): string {
-  const forwarded = headers.get('x-forwarded-for');
-  const candidate = forwarded?.split(',')[0]?.trim() || headers.get('x-real-ip')?.trim() || '';
-  // Do not let arbitrary header text become an unbounded Map key. Vercel and
-  // conventional trusted proxies provide plain IPv4/IPv6 values here.
-  return candidate && candidate.length <= 64 && /^[0-9a-f:.]+$/i.test(candidate)
-    ? candidate
-    : 'unknown';
+  const isVercel = Boolean(process.env.VERCEL || process.env.VERCEL_ENV);
+  const forwarded = isVercel
+    ? headers.get('x-vercel-forwarded-for') || headers.get('x-forwarded-for')
+    : headers.get('x-forwarded-for') || headers.get('x-real-ip');
+  let candidate = forwarded?.split(',')[0]?.trim().toLowerCase() || '';
+  if (candidate.startsWith('[') && candidate.endsWith(']')) candidate = candidate.slice(1, -1);
+  const zoneIndex = candidate.indexOf('%');
+  if (zoneIndex > 0) candidate = candidate.slice(0, zoneIndex);
+  // Vercel overwrites its forwarding headers. Outside a configured trusted
+  // proxy, this value is abuse telemetry only and never an authorization input.
+  return candidate.length <= 64 && isIP(candidate) !== 0 ? candidate : 'unknown';
 }
 
 export function checkRateLimit(key: string, options: RateLimitOptions = {}) {
@@ -84,13 +90,27 @@ export function getApiRateLimitKey(ip: string, pathname: string) {
 
 export function getApiRateLimitPolicy(pathname: string): Required<RateLimitOptions> {
   if (pathname === '/api/auth/login' || pathname === '/api/signup') {
-    return { limit: 10, windowMs: 10 * 60_000 };
+    return { limit: 8, windowMs: 10 * 60_000 };
   }
   if (pathname.startsWith('/api/auth/google')) {
     return { limit: 20, windowMs: 5 * 60_000 };
   }
   if (pathname === '/api/contact') {
     return { limit: 5, windowMs: 10 * 60_000 };
+  }
+  if (
+    pathname === '/api/auth/recovery/request' ||
+    pathname === '/api/auth/email-verification/request'
+  ) {
+    return { limit: 5, windowMs: 15 * 60_000 };
+  }
+  if (
+    pathname === '/api/auth/recovery/confirm' ||
+    pathname === '/api/auth/email-verification/confirm' ||
+    pathname === '/api/auth/password/change' ||
+    pathname.startsWith('/api/auth/sessions')
+  ) {
+    return { limit: 10, windowMs: 15 * 60_000 };
   }
   if (pathname === '/api/practice/report') {
     return { limit: 10, windowMs: 10 * 60_000 };
@@ -102,5 +122,28 @@ export function getApiRateLimitPolicy(pathname: string): Required<RateLimitOptio
   ) {
     return { limit: 60, windowMs: 60_000 };
   }
+  if (pathname.startsWith('/api/practice/')) {
+    return { limit: 120, windowMs: 60_000 };
+  }
   return { limit: DEFAULT_LIMIT, windowMs: DEFAULT_WINDOW_MS };
+}
+
+export function normalizeRateLimitAccount(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  if (normalized.length < 3 || normalized.length > 254 || !normalized.includes('@')) return null;
+  return normalized;
+}
+
+export function routeRateLimitGroup(pathname: string) {
+  if (pathname === '/api/auth/login') return 'auth-login';
+  if (pathname === '/api/signup') return 'auth-signup';
+  if (pathname === '/api/auth/recovery/request') return 'auth-recovery';
+  if (pathname === '/api/auth/email-verification/request') return 'auth-email-verification';
+  if (pathname.startsWith('/api/auth/google')) return 'auth-google';
+  if (pathname === '/api/contact') return 'contact';
+  if (pathname === '/api/practice/report') return 'practice-report';
+  if (pathname.includes('/submit')) return 'answer-submit';
+  if (pathname.startsWith('/api/practice/')) return 'practice-mutation';
+  return pathname.slice(0, 120);
 }

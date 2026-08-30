@@ -56,11 +56,30 @@ async function fetchReadyExamSelectorOptions(): Promise<ExamSelectorOption[]> {
 // One successful authoritative readiness read is shared by homepage,
 // onboarding, preference validation and question routes. Exceptions are not
 // cached, so a timeout never becomes a cached "0 exams" response.
-export const getReadyExamSelectorOptions = unstable_cache(
+const getCachedReadyExamSelectorOptions = unstable_cache(
   fetchReadyExamSelectorOptions,
   ['ready-exam-selector-options-v1'],
   { revalidate: 60, tags: ['exam-selector-options'] },
 );
+
+const sharedServerState = globalThis as typeof globalThis & {
+  __questionWaleReadyExamSelectorInFlight?: Promise<ExamSelectorOption[]>;
+};
+
+export async function getReadyExamSelectorOptions(): Promise<ExamSelectorOption[]> {
+  const existing = sharedServerState.__questionWaleReadyExamSelectorInFlight;
+  if (existing) return existing;
+
+  const request = getCachedReadyExamSelectorOptions();
+  sharedServerState.__questionWaleReadyExamSelectorInFlight = request;
+  try {
+    return await request;
+  } finally {
+    if (sharedServerState.__questionWaleReadyExamSelectorInFlight === request) {
+      delete sharedServerState.__questionWaleReadyExamSelectorInFlight;
+    }
+  }
+}
 
 export async function getReadyExamSelectorOption(input: {
   examProfileId?: string | null;

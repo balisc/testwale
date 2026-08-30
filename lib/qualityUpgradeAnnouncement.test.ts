@@ -29,12 +29,12 @@ test('should show when not acknowledged and before deadline', () => {
   assert.equal(shouldShowQualityUpgradeNotice(QUALITY_UPGRADE_DEADLINE_MS - 1000, storage), true);
 });
 
-test('should show when not acknowledged even after deadline', () => {
+test('should not show after the fixed campaign deadline', () => {
   const storage = {
     getItem: () => null,
     setItem: () => undefined,
   };
-  assert.equal(shouldShowQualityUpgradeNotice(QUALITY_UPGRADE_DEADLINE_MS + 1000, storage), true);
+  assert.equal(shouldShowQualityUpgradeNotice(QUALITY_UPGRADE_DEADLINE_MS + 1000, storage), false);
 });
 
 test('should not show when acknowledged', () => {

@@ -11,6 +11,7 @@ import { LEGACY_SUBJECT_SLUG_MAP } from '@/lib/subjectRoutes';
 import { NOT_FOUND_METADATA } from '@/lib/catalogRouteGuards';
 import SubjectPageClient from './SubjectPageClient';
 import { LEGACY_NOINDEX_SUBJECT_KEYS } from '@/lib/sitemapPolicy';
+import { findLegacySubjectReplacement } from '@/lib/legacyRoutePolicy';
 
 const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
   history: { table: 'history_questions', label: 'History' },
@@ -54,6 +55,9 @@ export default async function SubjectPage({ params }: { params: Promise<{ subjec
   if (!subjectConfig) {
     notFound();
   }
+
+  const replacement = await findLegacySubjectReplacement(subjectKey);
+  if (replacement) permanentRedirect(replacement);
 
   if (subjectKey === 'geography') {
     return <GeographyClient />;

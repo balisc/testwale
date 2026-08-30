@@ -14,7 +14,7 @@ import {
 } from '@/lib/examSyllabus';
 import { withExamStageQuery } from '@/lib/examPreference';
 import { getLocalizedText } from '@/lib/localizedText';
-import { getPublicExamSyllabus } from '@/lib/publicExamExplorer';
+import { getPublicExamSyllabusStrict } from '@/lib/publicExamExplorer';
 import { buildPageMetadata } from '@/lib/seo';
 import { QUESTION_BATCH_PAGE_SIZE } from '@/lib/supabaseQueryLimits';
 import SyllabusBreadcrumb from '../../../SyllabusBreadcrumb';
@@ -36,7 +36,7 @@ function selectedStage(value: string | string[] | undefined): string | null {
 }
 
 async function resolvePage(params: Awaited<PageProps['params']>, stageCode: string | null) {
-  const snapshot = await getPublicExamSyllabus(params.examSlug, stageCode);
+  const snapshot = await getPublicExamSyllabusStrict(params.examSlug, stageCode);
   if (!snapshot) return null;
   const subject = findPublishedSyllabusSubject(snapshot.subjects, params.subjectSlug);
   if (!subject) return null;
@@ -50,7 +50,7 @@ async function resolvePage(params: Awaited<PageProps['params']>, stageCode: stri
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const route = await params;
   const resolved = await resolvePage(route, selectedStage((await searchParams).stage));
-  if (!resolved) return { title: 'Subtopic not found', robots: { index: false, follow: true } };
+  if (!resolved) notFound();
   const name = getLocalizedText(resolved.subtopic.title, 'en') || resolved.subtopic.slug;
   const subjectName = getLocalizedText(resolved.subject.title, 'en') || resolved.subject.slug;
   return buildPageMetadata({

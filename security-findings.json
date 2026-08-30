@@ -1,0 +1,136 @@
+{
+  "schema_version": "1.0",
+  "audit": {
+    "application": "QuestionWale",
+    "audit_start_date": "2026-08-28",
+    "report_date": "2026-08-29",
+    "audit_start_revision": "a2c400f06ab218d101c0519c645d70a0c83c8b95",
+    "report_time_revision": "41fbfb49eb01df7888feaac38b0fe11481f5143c",
+    "production_changes_performed": false,
+    "release_recommendation": "safe_after_listed_manual_actions"
+  },
+  "summary": {
+    "total": 11,
+    "critical": 1,
+    "high": 3,
+    "medium": 5,
+    "low": 2,
+    "informational": 0,
+    "fixed": 5,
+    "application_fixed_database_migration_required": 3,
+    "partially_mitigated": 1,
+    "manual_remediation_required": 2
+  },
+  "findings": [
+    {
+      "id": "SEC-001",
+      "title": "Framework and transitive dependencies below current security patch level",
+      "severity": "critical",
+      "cwe": ["CWE-1104"],
+      "owasp": ["OWASP Top 10 2021 A06: Vulnerable and Outdated Components"],
+      "affected_components": ["package.json", "package-lock.json", "Next.js App Router"],
+      "status": "fixed",
+      "verification_result": "PASS: Next.js and eslint-config-next 16.3.3; clean npm install; production build; zero known npm audit vulnerabilities; 421 signatures and 80 attestations verified."
+    },
+    {
+      "id": "SEC-002",
+      "title": "Map answer coordinates exposed through public database/API data",
+      "severity": "high",
+      "cwe": ["CWE-200"],
+      "owasp": ["OWASP API Security 2023 API3: Broken Object Property Level Authorization", "OWASP Top 10 2021 A01: Broken Access Control"],
+      "affected_components": ["public.map_locations", "public.map_questions", "app/api/map-practice/questions/route.ts", "app/api/map-practice/submit/route.ts", "lib/mapPractice.ts"],
+      "status": "application_fixed_database_migration_required",
+      "verification_result": "PASS locally: pre-submit response contains no exact answer fields and server-side submission calculates the result. Production read-only probe confirms direct table exposure remains until migration."
+    },
+    {
+      "id": "SEC-003",
+      "title": "Legacy quiz answers and explanations publicly downloadable",
+      "severity": "high",
+      "cwe": ["CWE-200"],
+      "owasp": ["OWASP API Security 2023 API3: Broken Object Property Level Authorization", "OWASP Top 10 2021 A01: Broken Access Control"],
+      "affected_components": ["legacy subject question tables", "app/api/legacy-practice/submit/route.ts", "lib/legacyQuiz.ts", "legacy quiz pages and ClientQuiz"],
+      "status": "application_fixed_database_migration_required",
+      "verification_result": "PASS locally: question response excludes answer fields and submit evaluates server-side. Production read-only probe confirms legacy answer fields remain directly selectable until migration."
+    },
+    {
+      "id": "SEC-004",
+      "title": "Public database/RPC permissions bypassed the trusted identity boundary",
+      "severity": "high",
+      "cwe": ["CWE-862", "CWE-639"],
+      "owasp": ["OWASP API Security 2023 API1: Broken Object Level Authorization", "OWASP API Security 2023 API5: Broken Function Level Authorization", "OWASP Top 10 2021 A01: Broken Access Control"],
+      "affected_components": ["users/contact tables", "profile/practice/auth RPCs", "lib/userRepository.ts", "lib/practiceServer.ts", "scripts/migrate_security_hardening_20260828.sql"],
+      "status": "application_fixed_database_migration_required",
+      "verification_result": "PASS static and regression review: sensitive calls use server-only service role, proof fallback fails closed, and migration contains required revokes/grants. SQL runtime execution remains required."
+    },
+    {
+      "id": "SEC-005",
+      "title": "Cookie-authenticated mutations lacked consistent CSRF enforcement",
+      "severity": "medium",
+      "cwe": ["CWE-352"],
+      "owasp": ["OWASP Top 10 2021 A01: Broken Access Control"],
+      "affected_components": ["proxy.ts", "lib/requestSecurity.ts", "cookie-authenticated API mutations"],
+      "status": "fixed",
+      "verification_result": "PASS: 6/6 unit cases; local same-origin request accepted and cross-origin/missing-origin requests rejected with 403."
+    },
+    {
+      "id": "SEC-006",
+      "title": "Practice reset/state endpoints had weak object scope and input bounds",
+      "severity": "medium",
+      "cwe": ["CWE-639", "CWE-20"],
+      "owasp": ["OWASP API Security 2023 API1: Broken Object Level Authorization", "OWASP API Security 2023 API4: Unrestricted Resource Consumption"],
+      "affected_components": ["app/api/practice/reset-subtopic/route.ts", "app/api/practice/question-state/route.ts", "app/api/practice/subtopic-state/route.ts", "app/api/practice/report/route.ts", "app/api/practice/validate-question-ids/route.ts"],
+      "status": "fixed",
+      "verification_result": "PASS: UUID/ownership/exam checks and size/count limits reviewed; broad delete fallback removed; typecheck, lint, and regression tests passed."
+    },
+    {
+      "id": "SEC-007",
+      "title": "Process-local rate limiting was unbounded and not distributed",
+      "severity": "medium",
+      "cwe": ["CWE-400"],
+      "owasp": ["OWASP API Security 2023 API4: Unrestricted Resource Consumption"],
+      "affected_components": ["lib/rateLimit.ts", "proxy.ts", "authentication/contact/report/submission routes"],
+      "status": "partially_mitigated",
+      "verification_result": "PASS for local key sanitization, bounded map, pruning, overflow behavior, and route policies. Managed multi-instance rate limiting remains a manual production action."
+    },
+    {
+      "id": "SEC-008",
+      "title": "Browser profiles and cache backups are tracked in Git",
+      "severity": "medium",
+      "cwe": ["CWE-200", "CWE-359"],
+      "owasp": ["OWASP Top 10 2021 A05: Security Misconfiguration"],
+      "affected_components": ["test-results/cache-backups", "test-results/lighthouse/chrome-profile*", ".gitignore", "Git history"],
+      "status": "manual_remediation_required",
+      "verification_result": "PASS prevention: test-results is ignored and no high-confidence secret was confirmed. CLEANUP PENDING: 2,972 identified tracked generated files and relevant history require explicit approval."
+    },
+    {
+      "id": "SEC-009",
+      "title": "Obsolete Google credential endpoints and provider enumeration remained reachable",
+      "severity": "low",
+      "cwe": ["CWE-287", "CWE-204"],
+      "owasp": ["OWASP Top 10 2021 A07: Identification and Authentication Failures"],
+      "affected_components": ["app/api/auth/google/route.ts", "app/api/auth/google/redirect/route.ts", "app/api/auth/login/route.ts"],
+      "status": "fixed",
+      "verification_result": "PASS: compatibility POST endpoints return 404 in production behavior; PKCE flow, safe redirects, source checks, and callback cleanup tests passed."
+    },
+    {
+      "id": "SEC-010",
+      "title": "Sensitive cache coverage and mixed-content defense were incomplete",
+      "severity": "low",
+      "cwe": ["CWE-525", "CWE-693"],
+      "owasp": ["OWASP Top 10 2021 A05: Security Misconfiguration"],
+      "affected_components": ["next.config.mjs", "authenticated profile/onboarding/exam page families"],
+      "status": "fixed",
+      "verification_result": "PASS: runtime headers included CSP upgrade instruction, frame denial, nosniff, referrer and permissions policies; sensitive routes returned private/no-store and production CSP excluded unsafe-eval."
+    },
+    {
+      "id": "SEC-011",
+      "title": "Stateless long-lived sessions lack central revocation and sensitive-action reauthentication",
+      "severity": "medium",
+      "cwe": ["CWE-613"],
+      "owasp": ["OWASP Top 10 2021 A07: Identification and Authentication Failures"],
+      "affected_components": ["qw_auth cookie", "lib/auth.ts", "logout/account lifecycle"],
+      "status": "manual_remediation_required",
+      "verification_result": "PASS for cookie attributes and current HMAC validation. Architectural limitation confirmed by code review; per-session revocation, recovery, email verification, and reauthentication remain unimplemented."
+    }
+  ]
+}

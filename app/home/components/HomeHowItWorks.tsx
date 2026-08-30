@@ -12,7 +12,7 @@
   {
     n: '03',
     title: 'Practice and Learn',
-    body: 'Answer MCQs, review explanations and track improvement.',
+    body: 'Answer MCQs, review available explanations and track improvement.',
   },
 ] as const;
 

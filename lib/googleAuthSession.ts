@@ -93,7 +93,7 @@ export async function redirectAfterGoogleAuth(request: Request, credential: stri
   }
 
   const response = authRedirectResponse(`${origin}${destination}`);
-  attachAuthCookie(response, toSessionUser({
+  await attachAuthCookie(response, toSessionUser({
     id: result.user.id,
     full_name: result.user.fullName,
     email: result.user.email,

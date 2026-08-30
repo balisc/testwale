@@ -76,7 +76,7 @@ export default function HomePracticePath({ tabs }: HomePracticePathProps) {
                       <p className="truncate text-[15px] font-semibold text-[#18181B] max-[479px]:text-sm max-[479px]:whitespace-normal">
                         {topic.name}
                       </p>
-                      <p className="text-xs text-[#98A2B3] max-[479px]:text-[11px]">
+                      <p className="text-xs text-[#667085] max-[479px]:text-[11px]">
                         Recommended for {activeTab.label}
                       </p>
                     </div>

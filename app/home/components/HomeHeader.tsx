@@ -42,90 +42,22 @@ function userFirstName(fullName: string, email: string) {
   return userDisplayName(fullName, email).split(' ')[0];
 }
 
-function LanguageDropdown() {
+function LanguageSelect() {
   const { language, setLanguage } = useLanguage();
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const current = LANG_OPTIONS.find((o) => o.id === language) ?? LANG_OPTIONS[0];
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointer = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onPointer);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onPointer);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
 
   return (
-    <div ref={rootRef} className="relative">
-      <button
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label="Language"
-        onClick={() => setOpen((v) => !v)}
+    <label className="relative">
+      <span className="sr-only">Language</span>
+      <select
+        value={language}
+        onChange={(event) => setLanguage(event.target.value as 'en' | 'hi')}
         className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-[#E4E7EC] bg-white px-3 text-[13px] font-semibold text-[#18181B] transition hover:border-[#DDD6FE] hover:bg-[#F5F3FF]"
       >
-        <span>{current.label}</span>
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 12 12"
-          fill="none"
-          aria-hidden
-          className={`text-[#475569] transition ${open ? 'rotate-180' : ''}`}
-        >
-          <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      </button>
-
-      {open ? (
-        <ul
-          role="listbox"
-          aria-label="Select language"
-          className="absolute right-0 z-[60] mt-1.5 min-w-[148px] overflow-hidden rounded-xl border border-[#E4E7EC] bg-white py-1 shadow-[0_12px_32px_-16px_rgba(24,24,27,0.35)]"
-        >
-          {LANG_OPTIONS.map((option) => {
-            const selected = option.id === language;
-            return (
-              <li key={option.id} role="option" aria-selected={selected}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLanguage(option.id);
-                    setOpen(false);
-                  }}
-                  className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm font-medium transition hover:bg-[#F5F3FF] ${
-                    selected ? 'text-[#5521BF]' : 'text-[#344054]'
-                  }`}
-                >
-                  {option.label}
-                  {selected ? (
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-                      <path
-                        d="M3 7.2L5.8 10L11 4"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  ) : null}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
-    </div>
+        {LANG_OPTIONS.map((option) => (
+          <option key={option.id} value={option.id}>{option.label}</option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -136,6 +68,8 @@ export default function HomeHeader() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [readProgress, setReadProgress] = useState(0);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
   const isRevisionPage = Boolean(pathname?.includes('/revision'));
 
   const authLabels =
@@ -169,6 +103,45 @@ export default function HomeHeader() {
     document.body.style.overflow = open ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const menuButton = menuButtonRef.current;
+    const frame = window.requestAnimationFrame(() => {
+      mobileMenuRef.current
+        ?.querySelector<HTMLElement>('a[href], button:not([disabled]), select')
+        ?.focus();
+    });
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab' || !mobileMenuRef.current) return;
+      const focusable = Array.from(
+        mobileMenuRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), select, [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener('keydown', onKeyDown);
+      menuButton?.focus();
     };
   }, [open]);
 
@@ -226,7 +199,7 @@ export default function HomeHeader() {
 
         <div className="flex shrink-0 items-center justify-self-end gap-2 max-[359px]:gap-1 lg:gap-3">
           <div className="hidden items-center gap-2 lg:flex lg:gap-3">
-            <LanguageDropdown />
+            <LanguageSelect />
             {showSignedIn && user ? (
               <>
                 <Link
@@ -262,24 +235,26 @@ export default function HomeHeader() {
               </Link>
             ) : null}
             <Link
-              href="/subjects/indian-polity"
+              href="/subjects"
               className="inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-xl bg-[#6D28D9] px-4 text-[15px] font-semibold text-white transition hover:bg-[#5B21B6] active:bg-[#4C1D95]"
             >
-              Start Practicing
+              Browse Subjects
             </Link>
           </div>
 
           <div className="flex shrink-0 items-center gap-2 max-[359px]:gap-1 lg:hidden">
             <Link
-              href="/subjects/indian-polity"
+              href="/subjects"
               className="inline-flex h-10 shrink-0 items-center rounded-xl bg-[#6D28D9] px-3 text-[13px] font-semibold text-white max-[279px]:hidden"
             >
-              Start <span className="sr-only">Indian Polity practice</span>
+              Browse <span className="sr-only">published subjects</span>
             </Link>
             <button
+              ref={menuButtonRef}
               type="button"
               aria-label={open ? 'Close menu' : 'Open menu'}
               aria-expanded={open}
+              aria-controls="home-mobile-menu"
               onClick={() => setOpen((v) => !v)}
               className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E4E7EC] max-[359px]:h-9 max-[359px]:w-9"
             >
@@ -295,7 +270,14 @@ export default function HomeHeader() {
       </div>
 
       {open ? (
-        <div className="border-t border-[#E4E7EC] bg-white lg:hidden">
+        <div
+          ref={mobileMenuRef}
+          id="home-mobile-menu"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mobile navigation"
+          className="border-t border-[#E4E7EC] bg-white lg:hidden"
+        >
           <nav className="home-container flex flex-col gap-1 py-4" aria-label="Mobile">
             {NAV.map((item) => {
               const href = user && item.href === '/' ? '/dashboard' : item.href;

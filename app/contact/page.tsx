@@ -4,7 +4,7 @@ import { buildPageMetadata } from '@/lib/seo';
 
 const title = 'Contact & Support';
 const description =
-  'Contact QuestionWale for support, feedback, topic requests, or to report wrong questions. Our team responds within 24–48 hours to help improve your exam preparation.';
+  'Contact QuestionWale for support, account questions, feedback, topic requests, or to report a content issue.';
 
 export const metadata: Metadata = buildPageMetadata({
   title,

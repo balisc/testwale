@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'SEO Example — QuestionWale',
+  title: 'SEO Example',
   description: 'Internal example page showing how to add page metadata.',
   alternates: { canonical: 'https://questionwale.com/examples/seo-example' },
   robots: { index: false, follow: false },

@@ -30,6 +30,7 @@ import { GENERAL_SCIENCE_PAGE_TITLE } from '@/lib/science/generalScienceData';
 import { buildPageMetadata } from '@/lib/seo';
 import { LEGACY_SUBJECT_SLUG_MAP } from '@/lib/subjectRoutes';
 import { LEGACY_NOINDEX_SUBJECT_KEYS } from '@/lib/sitemapPolicy';
+import { findLegacySubjectReplacement } from '@/lib/legacyRoutePolicy';
 
 const SUBJECT_TABLES: Record<string, { table: string; label: string }> = {
   history: { table: 'history_questions', label: 'History' },
@@ -237,6 +238,9 @@ export default async function TopicPage({
   if (!subjectConfig) {
     return redirect('/subjects');
   }
+
+  const replacement = await findLegacySubjectReplacement(subjectKey);
+  if (replacement) permanentRedirect(replacement);
 
   if (subjectKey === 'polity') {
     permanentRedirect(`/subjects/${LEGACY_SUBJECT_SLUG_MAP.polity}`);

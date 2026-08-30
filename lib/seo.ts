@@ -193,6 +193,7 @@ export function buildCatalogTopicMetadata(
     'quantitative aptitude and mathematical abilities': 'Quantitative Aptitude',
     'english language and comprehension': 'English',
     'computer knowledge test': 'Computer Knowledge',
+    'reasoning and general intelligence': 'Reasoning',
   };
   const subjectContext =
     subjectContextAliases[subjectTitle.trim().toLowerCase()] ?? subjectTitle;

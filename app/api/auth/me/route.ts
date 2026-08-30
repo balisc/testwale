@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
-import { clearAuthCookie, getAuthUserFromCookies } from '@/lib/authCookies';
+import {
+  clearAuthCookie,
+  getAuthSessionFromCookies,
+  rotateAuthCookieIfNeeded,
+} from '@/lib/authCookies';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,8 +17,10 @@ const PRIVATE_NO_STORE = {
  * Response must never be shared-cached.
  */
 export async function GET() {
-  const user = await getAuthUserFromCookies();
-  return NextResponse.json({ user }, { headers: PRIVATE_NO_STORE });
+  const session = await getAuthSessionFromCookies();
+  const response = NextResponse.json({ user: session?.user ?? null }, { headers: PRIVATE_NO_STORE });
+  if (session) await rotateAuthCookieIfNeeded(response, session);
+  return response;
 }
 
 export async function DELETE() {

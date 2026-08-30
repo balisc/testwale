@@ -26,16 +26,16 @@ export default function HomeFinalCta() {
           </p>
           <div className="relative mt-8 flex flex-row flex-wrap items-center justify-center gap-3 max-[479px]:mt-6 max-[479px]:flex-col max-[479px]:items-stretch">
             <Link
-              href="/subjects/indian-polity"
+              href="/subjects"
               className="inline-flex h-12 items-center justify-center rounded-xl bg-white px-6 text-[15px] font-semibold text-[#6D28D9] transition hover:bg-[#F5F3FF] max-[479px]:h-11 max-[479px]:w-full max-[479px]:px-4 max-[479px]:text-sm"
             >
-              Start Practicing Free →
+              Browse Published Subjects →
             </Link>
             <Link
-              href="/subjects/indian-polity"
+              href="/subjects"
               className="text-[15px] font-semibold text-white/90 hover:text-white max-[479px]:text-center max-[479px]:text-sm"
             >
-              Explore Indian Polity
+              Explore All Subjects
             </Link>
           </div>
         </div>

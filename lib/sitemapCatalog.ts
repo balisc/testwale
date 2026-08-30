@@ -5,7 +5,10 @@ import {
   listPublishedRevisionDocs,
   publishedRevisionPath,
 } from '@/lib/revision/registry';
-import { getPublicExamExplorerData } from '@/lib/publicExamExplorer';
+import {
+  getPublicExamSelectorOptionsStrict,
+  getPublicExamSyllabusStrict,
+} from '@/lib/publicExamExplorer';
 
 export type CatalogSitemapPath = {
   path: string;
@@ -61,42 +64,56 @@ export async function fetchCatalogSitemapPaths(): Promise<CatalogSitemapPath[]> 
 
 /** Public syllabus landing pages only. Interactive subtopic practice stays noindex. */
 export async function fetchPublicExamSitemapPaths(): Promise<CatalogSitemapPath[]> {
-  const explorer = await getPublicExamExplorerData();
-  if (!explorer) return [];
+  const options = await getPublicExamSelectorOptionsStrict();
+  const publicExamSlugs = Array.from(new Set(options.flatMap((option) => {
+    if (option.code === 'SSC_CGL') return ['ssc-cgl'];
+    const match = option.href?.match(/^\/exams\/([^/?#]+)/);
+    return match?.[1] ? [match[1]] : [];
+  })));
+  const snapshots = await Promise.all(publicExamSlugs.map(async (examSlug) => ({
+    examSlug,
+    snapshot: await getPublicExamSyllabusStrict(examSlug),
+  })));
+  const paths: CatalogSitemapPath[] = [];
 
-  const { examSlug, snapshot } = explorer;
-  const topicPaths: CatalogSitemapPath[] = [];
-  const subjectPaths: CatalogSitemapPath[] = [];
+  for (const { examSlug, snapshot } of snapshots) {
+    if (!snapshot) continue;
+    const topicPaths: CatalogSitemapPath[] = [];
+    const subjectPaths: CatalogSitemapPath[] = [];
 
-  for (const subject of snapshot.subjects) {
-    const topics = snapshot.topics.filter((topic) => topic.subject_id === subject.id);
-    let includedTopics = 0;
+    for (const subject of snapshot.subjects) {
+      const topics = snapshot.topics.filter((topic) => topic.subject_id === subject.id);
+      let includedTopics = 0;
 
-    for (const topic of topics) {
-      const hasPublishedSubtopics = snapshot.subtopics.some(
-        (subtopic) => subtopic.topic_id === topic.id,
-      );
-      if (!hasPublishedSubtopics) continue;
+      for (const topic of topics) {
+        const hasPublishedSubtopics = snapshot.subtopics.some(
+          (subtopic) => subtopic.topic_id === topic.id,
+        );
+        if (!hasPublishedSubtopics) continue;
 
-      topicPaths.push({
-        path: `/exams/${examSlug}/${subject.slug}/${topic.slug}`,
-        priority: 0.78,
-      });
-      includedTopics += 1;
+        topicPaths.push({
+          path: `/exams/${examSlug}/${subject.slug}/${topic.slug}`,
+          priority: 0.78,
+        });
+        includedTopics += 1;
+      }
+
+      if (includedTopics > 0) {
+        subjectPaths.push({
+          path: `/exams/${examSlug}/${subject.slug}`,
+          priority: 0.82,
+        });
+      }
     }
 
-    if (includedTopics > 0) {
-      subjectPaths.push({
-        path: `/exams/${examSlug}/${subject.slug}`,
-        priority: 0.82,
-      });
+    if (subjectPaths.length > 0) {
+      paths.push(
+        { path: `/exams/${examSlug}`, priority: 0.9 },
+        ...subjectPaths,
+        ...topicPaths,
+      );
     }
   }
 
-  if (subjectPaths.length === 0) return [];
-  return [
-    { path: `/exams/${examSlug}`, priority: 0.9 },
-    ...subjectPaths,
-    ...topicPaths,
-  ];
+  return paths;
 }

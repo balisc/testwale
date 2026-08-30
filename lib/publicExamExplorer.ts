@@ -51,12 +51,30 @@ export type PublicExamExplorerData = {
   snapshot: ExamLearningSnapshot;
 };
 
+export type PublicExamPathIndex = Pick<
+  ExamLearningSnapshot,
+  'subjects' | 'topics' | 'subtopics'
+>;
+
 const PUBLIC_CGL_SLUG = 'ssc-cgl';
 let publicExamFetchInFlight: Promise<PublicExamExplorerData | null> | null = null;
 let lastKnownPublicExamExplorerData: PublicExamExplorerData | null = null;
+const sharedServerState = globalThis as typeof globalThis & {
+  __questionWalePublicExamSyllabusInFlight?: Map<
+    string,
+    Promise<ExamLearningSnapshot | null>
+  >;
+};
+const publicExamSyllabusInFlight =
+  sharedServerState.__questionWalePublicExamSyllabusInFlight ??= new Map();
+const publicExamPathIndexInFlight = new Map<string, Promise<PublicExamPathIndex | null>>();
 
 function title(value: { en?: string; hi?: string }, fallback: string): string {
   return value.en?.trim() || value.hi?.trim() || fallback;
+}
+
+function publicExamHref(examCode: string, examSlug: string): string {
+  return examCode === 'SSC_CGL' ? '/exams/ssc-cgl' : `/exams/${examSlug}`;
 }
 
 function reportPublicExplorerFailure(scope: string, error: unknown) {
@@ -173,13 +191,13 @@ async function loadPublicExamExplorerData(): Promise<PublicExamExplorerData | nu
     }
       : null;
 
-  const ctaHref = '/ssc-cgl';
+  const ctaHref = examHref;
   const options = selectorOptions.map((option): PublicExamExplorerOption => {
     return {
       code: option.exam_code,
       label: option.short_name ?? title(option.display_title, option.exam_code),
       isAvailable: true,
-      href: option.exam_code === 'SSC_CGL' ? '/ssc-cgl' : `/exams/${option.exam_slug}`,
+      href: publicExamHref(option.exam_code, option.exam_slug),
     };
   });
 
@@ -265,7 +283,7 @@ const getCachedPublicExamSelectorOptions = unstable_cache(
         code: option.exam_code,
         label: option.short_name ?? title(option.display_title, option.exam_code),
         isAvailable: true,
-        href: option.exam_code === 'SSC_CGL' ? '/ssc-cgl' : `/exams/${option.exam_slug}`,
+        href: publicExamHref(option.exam_code, option.exam_slug),
       }));
   },
   ['public-exam-selector-ready-v2'],
@@ -280,6 +298,11 @@ export async function getPublicExamSelectorOptions(): Promise<PublicExamExplorer
     reportPublicExplorerFailure('[public-exam-selector]', error);
     return [];
   }
+}
+
+/** Sitemap callers must never mistake a catalogue outage for zero published exams. */
+export async function getPublicExamSelectorOptionsStrict(): Promise<PublicExamExplorerOption[]> {
+  return getCachedPublicExamSelectorOptions();
 }
 
 async function loadPublicExamSyllabus(
@@ -419,18 +442,119 @@ export async function getPublicExamSyllabus(
 
   const normalizedStageCode = stageCode?.trim() || null;
   try {
-    return await unstable_cache(
-      () => loadPublicExamSyllabus(normalizedSlug, normalizedStageCode),
-      [
-        'public-exam-syllabus-v1',
-        normalizedSlug,
-        normalizedStageCode ?? 'all-stages',
-      ],
-      { revalidate: 300, tags: ['public-exam-syllabus', 'catalog'] },
-    )();
+    return await getCachedPublicExamSyllabus(normalizedSlug, normalizedStageCode);
   } catch (error) {
     // Keep transient infrastructure failures outside the shared cache.
     reportPublicExplorerFailure('[public-exam-syllabus]', error);
     return null;
+  }
+}
+
+async function getCachedPublicExamSyllabus(
+  normalizedSlug: string,
+  normalizedStageCode: string | null,
+): Promise<ExamLearningSnapshot | null> {
+  const requestKey = `${normalizedSlug}:${normalizedStageCode ?? 'all-stages'}`;
+  const existing = publicExamSyllabusInFlight.get(requestKey);
+  if (existing) return existing;
+
+  const request = unstable_cache(
+    () => loadPublicExamSyllabus(normalizedSlug, normalizedStageCode),
+    [
+      'public-exam-syllabus-v1',
+      normalizedSlug,
+      normalizedStageCode ?? 'all-stages',
+    ],
+    { revalidate: 300, tags: ['public-exam-syllabus', 'catalog'] },
+  )();
+  publicExamSyllabusInFlight.set(requestKey, request);
+  try {
+    return await request;
+  } finally {
+    if (publicExamSyllabusInFlight.get(requestKey) === request) {
+      publicExamSyllabusInFlight.delete(requestKey);
+    }
+  }
+}
+
+/** Sitemap generation propagates transient failures instead of omitting valid exam URLs. */
+export async function getPublicExamSyllabusStrict(
+  examSlug: string,
+  stageCode?: string | null,
+): Promise<ExamLearningSnapshot | null> {
+  const normalizedSlug = examSlug.trim().toLowerCase();
+  if (!normalizedSlug) return null;
+  if (normalizedSlug === PUBLIC_CGL_SLUG) {
+    return (await getCachedPublicExamExplorerData())?.snapshot ?? null;
+  }
+  return getCachedPublicExamSyllabus(normalizedSlug, stageCode?.trim() || null);
+}
+
+async function loadPublicExamPathIndex(normalizedSlug: string): Promise<PublicExamPathIndex | null> {
+  const admin = getSupabaseAdmin();
+  if (!admin) return null;
+  const options = await getReadyExamSelectorOptions();
+  const option = normalizedSlug === PUBLIC_CGL_SLUG
+    ? options.find((candidate) => candidate.exam_code === 'SSC_CGL')
+    : options.find((candidate) => candidate.exam_slug === normalizedSlug);
+  if (!option) return null;
+
+  const versionResult = await admin
+    .from('exam_syllabus_versions')
+    .select('id')
+    .eq('exam_profile_id', option.exam_profile_id)
+    .eq('publication_status', 'published')
+    .eq('is_current', true)
+    .maybeSingle();
+  if (versionResult.error) throw new Error(versionResult.error.message);
+  if (!versionResult.data) return null;
+
+  const nodesResult = await admin
+    .from('exam_syllabus_nodes')
+    .select(
+      'id, syllabus_version_id, parent_node_id, node_code, node_type, title, description, sort_order, is_active, metadata',
+    )
+    .eq('syllabus_version_id', versionResult.data.id)
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true })
+    .order('node_code', { ascending: true });
+  if (nodesResult.error) throw new Error(nodesResult.error.message);
+
+  return buildPublishedSyllabusHierarchy(
+    (nodesResult.data ?? []) as ExamSyllabusNodeRow[],
+  );
+}
+
+const getCachedPublicExamPathIndex = unstable_cache(
+  loadPublicExamPathIndex,
+  ['public-exam-path-index-v1'],
+  { revalidate: 300, tags: ['public-exam-syllabus'] },
+);
+
+/** Lightweight 404 preflight: validates published slugs without scanning question mappings. */
+export async function getPublicExamPathIndexStrict(
+  examSlug: string,
+  stageCode?: string | null,
+): Promise<PublicExamPathIndex | null> {
+  const normalizedSlug = examSlug.trim().toLowerCase();
+  if (!normalizedSlug) return null;
+  const normalizedStageCode = stageCode?.trim() || null;
+  if (normalizedStageCode) {
+    const snapshot = await getPublicExamSyllabusStrict(normalizedSlug, normalizedStageCode);
+    return snapshot
+      ? { subjects: snapshot.subjects, topics: snapshot.topics, subtopics: snapshot.subtopics }
+      : null;
+  }
+
+  const existing = publicExamPathIndexInFlight.get(normalizedSlug);
+  if (existing) return existing;
+  const request = getCachedPublicExamPathIndex(normalizedSlug);
+  publicExamPathIndexInFlight.set(normalizedSlug, request);
+  try {
+    return await request;
+  } finally {
+    if (publicExamPathIndexInFlight.get(normalizedSlug) === request) {
+      publicExamPathIndexInFlight.delete(normalizedSlug);
+    }
   }
 }

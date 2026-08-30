@@ -17,6 +17,7 @@ const COPY: Record<
     subjects: string;
     about: string;
     contact: string;
+    standards: string;
     classic: string;
     terms: string;
     privacy: string;
@@ -36,6 +37,7 @@ const COPY: Record<
     subjects: 'All Subjects',
     about: 'About Us',
     contact: 'Contact',
+    standards: 'Content Standards',
     classic: 'Classic Home',
     terms: 'Terms of Service',
     privacy: 'Privacy Policy',
@@ -54,6 +56,7 @@ const COPY: Record<
     subjects: 'सभी विषय',
     about: 'हमारे बारे में',
     contact: 'संपर्क',
+    standards: 'सामग्री मानक',
     classic: 'पुराना होम',
     terms: 'सेवा की शर्तें',
     privacy: 'गोपनीयता नीति',
@@ -96,6 +99,9 @@ export default function Footer() {
               <Link href="/subjects" className={linkClass}>
                 {c.subjects}
               </Link>
+              <Link href="/map-practice" className={linkClass}>
+                Map Practice
+              </Link>
               <Link href="/classic" className={linkClass}>
                 {c.classic}
               </Link>
@@ -110,6 +116,9 @@ export default function Footer() {
               </Link>
               <Link href="/contact" className={linkClass}>
                 {c.contact}
+              </Link>
+              <Link href="/content-standards" className={linkClass}>
+                {c.standards}
               </Link>
             </nav>
           </div>

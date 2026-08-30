@@ -39,7 +39,16 @@ test('map scoring and public hint computation do not need client-side answer coo
 
 test('consolidation migration revokes public answer and identity-bearing access', () => {
   const migration = readFileSync('scripts/migrate_security_hardening_20260828.sql', 'utf8');
-  assert.match(migration, /revoke all privileges on table public\.%I from anon, authenticated/i);
+  assert.match(migration, /revoke all privileges on table public\.%I from public, anon, authenticated/i);
   assert.match(migration, /revoke execute on function %s from public, anon, authenticated/i);
   assert.doesNotMatch(migration, /questionwale-practice-dev-v1/i);
+});
+
+test('public API errors do not disclose database setup instructions or codes', () => {
+  const contact = readFileSync('app/api/contact/route.ts', 'utf8');
+  const mapQuestions = readFileSync('app/api/map-practice/questions/route.ts', 'utf8');
+  const onboarding = readFileSync('app/api/onboarding/exam/route.ts', 'utf8');
+  assert.doesNotMatch(contact, /Run scripts\/|Database is not configured/);
+  assert.doesNotMatch(mapQuestions, /Run scripts\/|SQL editor/);
+  assert.doesNotMatch(onboarding, /databaseCode:/);
 });

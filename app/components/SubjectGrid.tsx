@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { History, BookOpen, Globe, DollarSign, Calculator, Microscope, Newspaper, Brain } from 'lucide-react';
 import { useLanguage } from '../../lib/LanguageContext';
 import { getSubjectPageHref } from '@/lib/subjectRoutes';
+import { contentCanStartPractice, derivePublicContentStatus } from '@/lib/contentStatus';
 
 type Language = 'en' | 'hi';
 
@@ -23,6 +24,7 @@ const translations: Record<Language, Record<string, string>> = {
     reasoning: 'Reasoning',
     startPractice: 'Start Practice',
     preparingContent: 'Preparing content...',
+    comingSoon: 'Coming Soon',
     questions: 'questions',
   },
   hi: {
@@ -39,6 +41,7 @@ const translations: Record<Language, Record<string, string>> = {
     reasoning: 'तर्क',
     startPractice: 'अभ्यास शुरू करें',
     preparingContent: 'सामग्री तैयार हो रही है...',
+    comingSoon: 'जल्द आ रहा है',
     questions: 'प्रश्न',
   },
 };
@@ -118,18 +121,16 @@ export default function SubjectGrid({ counts: initialCounts, gridClassName }: Su
         {subjects.map((subject) => {
           const IconComponent = iconMap[subject.iconName];
           const subjectCount = counts?.[subject.id];
-          const hasTopicCount = !loading && subjectCount !== undefined && subjectCount > 0;
+          const status = loading
+            ? null
+            : derivePublicContentStatus({ isActive: true, questionCount: subjectCount });
+          const hasTopicCount = status ? contentCanStartPractice(status) : false;
           const displayCount = loading ? '...' : subjectCount !== undefined ? subjectCount : 0;
 
           const href = getSubjectPageHref(subject.id);
 
-          return (
-            <Link
-              key={subject.id}
-              href={href}
-              className={`group w-full min-w-0 text-left ${hasTopicCount ? '' : 'opacity-80'}`}
-            >
-              <div className="bg-white border border-slate-100 p-4 min-[360px]:p-6 rounded-2xl relative shadow-sm hover:border-purple-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 ease-out cursor-pointer flex items-start gap-3 min-[360px]:gap-4 h-full min-w-0">
+          const card = (
+              <div className={`bg-white border border-slate-100 p-4 min-[360px]:p-6 rounded-2xl relative shadow-sm transition-all duration-300 ease-out flex items-start gap-3 min-[360px]:gap-4 h-full min-w-0 ${hasTopicCount ? 'cursor-pointer hover:border-purple-300 hover:shadow-lg hover:-translate-y-0.5' : ''}`}>
                 {!loading && !hasTopicCount && (
                   <div className="absolute top-3 right-3 bg-slate-100 text-slate-500 border border-slate-200/60 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">
                     Coming Soon
@@ -137,7 +138,7 @@ export default function SubjectGrid({ counts: initialCounts, gridClassName }: Su
                 )}
 
                 <div className={`${subject.iconBgColor} w-12 h-12 rounded-xl flex items-center justify-center shrink-0`}>
-                  <IconComponent className={`w-6 h-6 ${subject.iconColor}`} />
+                  <IconComponent className={`w-6 h-6 ${subject.iconColor}`} aria-hidden="true" />
                 </div>
 
                 <div className="flex-1 flex flex-col min-w-0">
@@ -150,13 +151,25 @@ export default function SubjectGrid({ counts: initialCounts, gridClassName }: Su
 
                   <div
                     className={`w-full text-sm font-semibold py-2.5 rounded-xl mt-5 text-center block transition-all duration-200 ${hasTopicCount ? 'bg-slate-50 group-hover:bg-purple-600 group-hover:text-white text-slate-700' : 'bg-slate-100 text-slate-400'}`}
-                    aria-label={`${t.startPractice} - ${t[subject.titleKey as keyof typeof t]}`}
                   >
-                    {t.startPractice}
+                    {loading ? t.preparingContent : hasTopicCount ? t.startPractice : t.comingSoon}
                   </div>
                 </div>
               </div>
+          );
+          return hasTopicCount ? (
+            <Link
+              key={subject.id}
+              href={href}
+              className="group w-full min-w-0 text-left"
+              aria-label={`${t.startPractice} - ${t[subject.titleKey as keyof typeof t]}`}
+            >
+              {card}
             </Link>
+          ) : (
+            <div key={subject.id} className="group w-full min-w-0 text-left opacity-80" aria-disabled="true">
+              {card}
+            </div>
           );
         })}
       </div>

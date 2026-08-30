@@ -1,0 +1,64 @@
+name: Production quality gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-and-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test:sources
+      - run: npm run test:seo-policy
+      - run: npm run test:quality-upgrade
+      - run: npm run test:accessibility
+      - run: npm run test:request-security
+      - run: npm run test:security-regression
+      - run: npm run test:safe-redirect
+      - run: npm run test:auth-security
+      - run: npm run test:oauth-code-redirect
+      - run: npm run test:public-origin
+      - run: npm run test:exam-onboarding
+      - run: npm run test:exam-learning
+      - run: npm run test:ssc-cgl
+      - run: npm run test:ssc-chsl
+      - run: npm audit --omit=dev --audit-level=high
+
+  production-build:
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    needs: static-and-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SITE_URL: https://questionwale.com
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      DISTRIBUTED_RATE_LIMIT_REQUIRED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build

@@ -1,10 +1,14 @@
 ﻿import Link from 'next/link';
+import { CheckCircle2, FileQuestion, Languages } from 'lucide-react';
 import HomeHeroSearch from './HomeHeroSearch';
 
 function PracticePreviewCard() {
   return (
     <div className="relative mx-auto w-full max-w-[480px] px-3 pb-5 pt-5 sm:px-5 sm:pb-5 sm:pt-6">
-      <div className="rounded-2xl border border-[#E4E7EC] bg-white p-5 shadow-[0_24px_60px_-28px_rgba(24,24,27,0.28)] sm:p-6">
+      <div
+        className="rounded-2xl border border-[#E4E7EC] bg-white p-5 shadow-[0_24px_60px_-28px_rgba(24,24,27,0.28)] sm:p-6"
+        aria-label="Example practice question preview"
+      >
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-lg bg-[#F5F3FF] px-2.5 py-1 text-xs font-semibold text-[#6D28D9]">
             Indian Polity
@@ -59,25 +63,22 @@ function PracticePreviewCard() {
         </div>
 
         <div className="mt-5 flex items-center gap-2">
-          <button
-            type="button"
+          <span
             className="inline-flex h-10 min-w-0 flex-1 items-center justify-center rounded-xl bg-[#6D28D9] px-4 text-[15px] font-semibold leading-none text-white [text-size-adjust:100%]"
           >
             Submit Answer
-          </button>
-          <button
-            type="button"
+          </span>
+          <span
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E4E7EC] text-[#667085]"
-            aria-label="Bookmark"
+            aria-hidden="true"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path d="M7 4h10v16l-5-3-5 3V4Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
             </svg>
-          </button>
-          <button
-            type="button"
+          </span>
+          <span
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E4E7EC] text-[#667085]"
-            aria-label="Report"
+            aria-hidden="true"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path
@@ -88,12 +89,12 @@ function PracticePreviewCard() {
                 strokeLinejoin="round"
               />
             </svg>
-          </button>
+          </span>
         </div>
       </div>
 
       {/* Floating chips — hide only when they would collide on very narrow phones */}
-      <div className="absolute -left-5 -top-4 z-10 rounded-2xl border border-[#E4E7EC] bg-white px-3.5 py-3 shadow-[0_16px_40px_-24px_rgba(24,24,27,0.45)] max-[479px]:hidden lg:-left-7">
+      <div aria-hidden="true" className="absolute -left-5 -top-4 z-10 rounded-2xl border border-[#E4E7EC] bg-white px-3.5 py-3 shadow-[0_16px_40px_-24px_rgba(24,24,27,0.45)] max-[479px]:hidden lg:-left-7">
         <div className="flex items-center gap-3">
           <div className="relative h-11 w-11">
             <svg viewBox="0 0 44 44" className="h-11 w-11 -rotate-90">
@@ -120,7 +121,7 @@ function PracticePreviewCard() {
         </div>
       </div>
 
-      <div className="absolute -bottom-4 -right-4 z-10 rounded-2xl border border-[#E4E7EC] bg-white px-3.5 py-3 shadow-[0_16px_40px_-24px_rgba(24,24,27,0.45)] max-[479px]:hidden lg:-right-6">
+      <div aria-hidden="true" className="absolute -bottom-4 -right-4 z-10 rounded-2xl border border-[#E4E7EC] bg-white px-3.5 py-3 shadow-[0_16px_40px_-24px_rgba(24,24,27,0.45)] max-[479px]:hidden lg:-right-6">
         <p className="text-[11px] font-medium uppercase tracking-wide text-[#667085]">Streak</p>
         <p className="mt-0.5 text-lg font-bold text-[#18181B]">6 days</p>
       </div>
@@ -130,8 +131,8 @@ function PracticePreviewCard() {
 
 function formatQuestionCount(value: number | null | undefined) {
   const count = Number(value ?? 0);
-  if (!Number.isFinite(count) || count <= 0) return 'Verified Questions';
-  return `${new Intl.NumberFormat('en-IN').format(Math.trunc(count))}+ Questions`;
+  if (!Number.isFinite(count) || count <= 0) return 'Published Questions';
+  return `${new Intl.NumberFormat('en-IN').format(Math.trunc(count))} Published Questions`;
 }
 
 export default function HomeHero({ totalQuestions }: { totalQuestions: number | null }) {
@@ -147,13 +148,13 @@ export default function HomeHero({ totalQuestions }: { totalQuestions: number | 
           </p>
 
           <h1 className="mt-5 text-[48px] font-bold leading-[1.12] tracking-[-0.02em] text-[#18181B] md:text-[56px] md:leading-[64px] max-[767px]:text-[40px] max-[479px]:mt-4 max-[479px]:text-[28px] max-[479px]:leading-[1.15] [font-display:swap]">
-            Master Every Topic.
+            Master Every Topic.{' '}
             <span className="mt-1 block text-[#6D28D9]">One MCQ at a Time.</span>
           </h1>
 
           <p className="mt-5 max-w-xl text-[17px] leading-7 text-[#667085] max-[767px]:text-base max-[767px]:leading-[26px] max-[479px]:mt-4 max-[479px]:text-sm max-[479px]:leading-6">
-            Practice source-verified bilingual MCQs for SSC, Railway, UPSC and State Exams—with clear
-            explanations and focused progress tracking.
+            Practice source-verified bilingual MCQs for SSC, Railway, UPSC and State Exams—with
+            explanations where available and focused progress tracking.
           </p>
 
           <div className="mt-8 min-w-0 max-[479px]:mt-6">
@@ -162,10 +163,10 @@ export default function HomeHero({ totalQuestions }: { totalQuestions: number | 
 
           <div className="mt-4 flex flex-row flex-wrap items-center gap-3 max-[479px]:mt-3 max-[479px]:flex-col max-[479px]:gap-2.5">
             <Link
-              href="/subjects/indian-polity"
+              href="/subjects"
               className="inline-flex h-12 items-center justify-center rounded-xl bg-[#6D28D9] px-6 text-[15px] font-semibold text-white transition hover:bg-[#5B21B6] max-[479px]:h-11 max-[479px]:w-full max-[479px]:px-4 max-[479px]:text-sm"
             >
-              Start Free Practice →
+              Browse Published Subjects →
             </Link>
             <Link
               href="/#public-exam-explorer"
@@ -175,19 +176,19 @@ export default function HomeHero({ totalQuestions }: { totalQuestions: number | 
             </Link>
           </div>
 
-          <p className="mt-3 text-sm text-[#98A2B3] max-[479px]:text-xs max-[479px]:leading-5">
+          <p className="mt-3 text-sm text-[#667085] max-[479px]:text-xs max-[479px]:leading-5">
             No login required to practise • Sign in anytime to save progress
           </p>
 
           <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 border-t border-[#E4E7EC] pt-6 text-sm font-medium text-[#344054] max-[479px]:mt-6 max-[479px]:flex-col max-[479px]:gap-2.5 max-[479px]:pt-5 max-[479px]:text-xs">
             {[
-              { label: formatQuestionCount(totalQuestions), icon: 'Q' },
-              { label: 'Hindi + English', icon: '文' },
-              { label: 'Clear Explanations', icon: '✓' },
+              { label: formatQuestionCount(totalQuestions), Icon: FileQuestion },
+              { label: 'Hindi + English', Icon: Languages },
+              { label: 'Explanations Where Available', Icon: CheckCircle2 },
             ].map((item) => (
               <div key={item.label} className="inline-flex items-center gap-2">
-                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#F5F3FF] text-xs font-bold text-[#6D28D9]">
-                  {item.icon}
+                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#F5F3FF] text-[#6D28D9]">
+                  <item.Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 {item.label}
               </div>

@@ -1,4 +1,3 @@
-﻿'use client';
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
@@ -14,11 +13,9 @@ type HomeSubjectCardProps = {
   meta?: string[];
   href?: string;
   ctaLabel: string;
-  ctaIcon?: 'arrow' | 'bell';
   showProgress?: boolean;
   progressPercent?: number;
   progressLabel?: string;
-  onAction?: () => void;
 };
 
 const cardBase =
@@ -39,20 +36,6 @@ function ArrowIcon({ className = '' }: { className?: string }) {
   );
 }
 
-function BellIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-      <path
-        d="M8 1.75a3.5 3.5 0 0 0-3.5 3.5v1.4c0 .55-.18 1.09-.5 1.54L3 9.75h10l-1-1.56a2.7 2.7 0 0 1-.5-1.54V5.25A3.5 3.5 0 0 0 8 1.75Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-      <path d="M6.5 12.25a1.5 1.5 0 0 0 3 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export default function HomeSubjectCard({
   state,
   title,
@@ -62,11 +45,9 @@ export default function HomeSubjectCard({
   meta = [],
   href,
   ctaLabel,
-  ctaIcon = 'arrow',
   showProgress = false,
   progressPercent = 0,
   progressLabel,
-  onAction,
 }: HomeSubjectCardProps) {
   const muted = state === 'comingSoon' || state === 'more';
   const badgeClass =
@@ -97,7 +78,7 @@ export default function HomeSubjectCard({
       </p>
 
       {meta.length > 0 ? (
-        <p className="mt-4 text-[13px] leading-5 text-[#98A2B3]">
+        <p className="mt-4 text-[13px] leading-5 text-[#667085]">
           {meta.map((item, index) => (
             <span key={item}>
               {index > 0 ? <span className="mx-2 text-[#D0D5DD]">•</span> : null}
@@ -119,20 +100,19 @@ export default function HomeSubjectCard({
               style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
             />
           </div>
-          {progressLabel ? <p className="mt-1.5 text-[12px] text-[#98A2B3]">{progressLabel}</p> : null}
+          {progressLabel ? <p className="mt-1.5 text-[12px] text-[#667085]">{progressLabel}</p> : null}
         </div>
       ) : null}
 
       <div className="mt-auto border-t border-[#F2F4F7] pt-4">
         {state === 'comingSoon' ? (
-          <span className="inline-flex min-h-[44px] items-center gap-2 text-[15px] font-semibold text-[#667085] transition group-hover:text-[#6D28D9]">
+          <span className="inline-flex min-h-[44px] items-center text-[15px] font-semibold text-[#667085]">
             {ctaLabel}
-            <BellIcon />
           </span>
         ) : (
           <span className="inline-flex min-h-[44px] w-full items-center justify-between gap-2 text-left text-[15px] font-semibold text-[#6D28D9] transition group-hover:text-[#5B21B6] max-[479px]:text-sm">
             <span className="min-w-0">{ctaLabel}</span>
-            {ctaIcon === 'arrow' ? <ArrowIcon className="shrink-0" /> : <BellIcon />}
+            <ArrowIcon className="shrink-0" />
           </span>
         )}
       </div>
@@ -141,14 +121,9 @@ export default function HomeSubjectCard({
 
   if (state === 'comingSoon') {
     return (
-      <button
-        type="button"
-        onClick={onAction}
-        className={`${cardBase} text-left opacity-[0.96]`}
-        aria-label={`${title}, coming soon. ${ctaLabel}`}
-      >
+      <div className={`${cardBase} text-left opacity-[0.96]`} aria-label={`${title}, coming soon`}>
         {body}
-      </button>
+      </div>
     );
   }
 

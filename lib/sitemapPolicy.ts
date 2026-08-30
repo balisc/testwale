@@ -3,6 +3,12 @@ export const LEGACY_REDIRECT_SUBJECT_KEYS = new Set(['polity']);
 
 /** Legacy subject pages kept for UX but excluded from sitemap (thin / coming-soon). */
 export const LEGACY_NOINDEX_SUBJECT_KEYS = new Set([
+  'history',
+  'science',
+  'economics',
+  'geography',
+  'math',
+  'reasoning',
   'current-affairs',
   'general-knowledge',
 ]);

@@ -4,7 +4,11 @@ export const MAX_API_MUTATION_BYTES = 64 * 1024;
 
 type MutationRequestCheck =
   | { ok: true }
-  | { ok: false; status: 403 | 413; error: 'cross_origin_request' | 'payload_too_large' };
+  | {
+      ok: false;
+      status: 403 | 413 | 415;
+      error: 'cross_origin_request' | 'payload_too_large' | 'unsupported_media_type';
+    };
 
 function normalizeOrigin(value: string | null): string | null {
   if (!value) return null;
@@ -46,7 +50,42 @@ function expectedOrigins(request: Request): Set<string> {
  * Non-browser administrative requests authenticate separately and are exempted
  * by the caller before reaching this check.
  */
-export function checkMutationRequest(request: Request): MutationRequestCheck {
+async function bodyWithinLimit(request: Request) {
+  const clone = request.clone();
+  const reader = clone.body?.getReader();
+  if (!reader) return true;
+  let bytes = 0;
+  try {
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) return true;
+      bytes += chunk.value.byteLength;
+      if (bytes > MAX_API_MUTATION_BYTES) {
+        // Do not await cancellation of a tee'd Request stream: runtimes may
+        // wait for the downstream branch that the route has not consumed yet.
+        void reader.cancel();
+        return false;
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+function hasSupportedContentType(request: Request) {
+  if (!request.body) return true;
+  const contentType = request.headers.get('content-type')?.toLowerCase() ?? '';
+  if (contentType.startsWith('application/json')) return true;
+  const pathname = new URL(request.url).pathname;
+  return (
+    process.env.NODE_ENV !== 'production' &&
+    pathname === '/api/auth/google/redirect' &&
+    (contentType.startsWith('application/x-www-form-urlencoded') ||
+      contentType.startsWith('multipart/form-data'))
+  );
+}
+
+export async function checkMutationRequest(request: Request): Promise<MutationRequestCheck> {
   if (SAFE_METHODS.has(request.method.toUpperCase())) return { ok: true };
 
   const contentLength = request.headers.get('content-length');
@@ -55,6 +94,14 @@ export function checkMutationRequest(request: Request): MutationRequestCheck {
     if (bytes > MAX_API_MUTATION_BYTES) {
       return { ok: false, status: 413, error: 'payload_too_large' };
     }
+  }
+
+  if (!hasSupportedContentType(request)) {
+    return { ok: false, status: 415, error: 'unsupported_media_type' };
+  }
+
+  if (!contentLength && !(await bodyWithinLimit(request))) {
+    return { ok: false, status: 413, error: 'payload_too_large' };
   }
 
   const expected = expectedOrigins(request);

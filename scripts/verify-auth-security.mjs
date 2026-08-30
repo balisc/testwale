@@ -129,7 +129,9 @@ async function main() {
     console.log(`BLOCKED callback runtime probe: ${error instanceof Error ? error.message : String(error)}`);
   }
 
-  process.exit(failed > 0 ? 1 : 0);
+  // Let Node drain fetch/undici handles. Immediate process.exit() can trigger a
+  // Windows libuv assertion on Node 24 even after every probe has passed.
+  process.exitCode = failed > 0 ? 1 : 0;
 }
 
 main();

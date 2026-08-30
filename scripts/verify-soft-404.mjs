@@ -25,6 +25,15 @@ const INVALID_PATHS = [
   { path: '/totally-unknown-route-404-test', label: 'unknown-top-level' },
 ];
 
+const PERMANENTLY_REMOVED_PATHS = [
+  '/economics/topics/social-security',
+  '/economics/topics/growthsustainability-balance',
+  '/economics/topics/first-to-twelfth-five-year-plans',
+  '/economics/topics/education',
+  '/economics/topics/aadhaar-enabled-delivery',
+  '/economics/topics/ease-of-doing-business',
+];
+
 const VALID_PATHS = [
   { path: '/subjects/indian-polity', label: 'valid-subject' },
   {
@@ -62,6 +71,10 @@ console.log(`Soft-404 verification — ${base}\n`);
 
 for (const row of INVALID_PATHS) {
   await check(row.path, 404, row.label);
+}
+
+for (const path of PERMANENTLY_REMOVED_PATHS) {
+  await check(path, 410, 'removed-legacy-topic');
 }
 
 for (const row of VALID_PATHS) {

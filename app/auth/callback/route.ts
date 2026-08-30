@@ -72,6 +72,6 @@ export async function GET(request: Request) {
 
   await clearSupabaseAuthCookies();
   clearSupabaseAuthCookiesOnResponse(response, cookieStore.getAll());
-  attachAuthCookie(response, toSessionUser(saveResult.user));
+  await attachAuthCookie(response, toSessionUser(saveResult.user));
   return response;
 }

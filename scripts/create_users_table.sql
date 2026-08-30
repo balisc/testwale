@@ -11,11 +11,14 @@ create table if not exists public.users (
   provider text not null check (provider in ('email', 'google')),
   google_id text unique,
   avatar_url text,
+  email_verified_at timestamptz,
   created_at timestamptz not null default now(),
   constraint users_password_for_email check (
     provider <> 'email' or password_hash is not null
   )
 );
+
+alter table public.users add column if not exists email_verified_at timestamptz;
 
 create index if not exists idx_users_email on public.users (email);
 create index if not exists idx_users_provider on public.users (provider);

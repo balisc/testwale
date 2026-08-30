@@ -1,4 +1,5 @@
-import { permanentRedirect, redirect } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
+import { cache } from 'react';
 import questionsData from '@/data/questions.json';
 import ClientQuiz from '@/app/subjects/[subject]/[topicSlug]/ClientQuiz';
 import { SUPABASE_AVAILABLE } from '@/lib/supabase';
@@ -11,6 +12,8 @@ import { slugifySubject } from '@/lib/slugGenerator';
 import { legacyColumnsForTable } from '@/lib/questionColumns';
 import { MAX_QUIZ_CANDIDATE_ROWS } from '@/lib/supabaseQueryLimits';
 import { stripLegacyAnswerFields } from '@/lib/legacyQuiz';
+import { findLegacyTopicReplacement } from '@/lib/legacyRoutePolicy';
+import { isPermanentlyRemovedLegacyTopicPath } from '@/lib/legacyRouteTombstones';
 
 const HISTORY_SUBCATEGORY_HI: Record<string, string> = {
   ancient: 'प्राचीन',
@@ -245,15 +248,10 @@ function questionMatchesTopic(row: any, subject: string, normalizedTopic: string
 }
 
 async function fetchQuestionsFromSupabaseTable(tableName: string, subject: string, normalizedTopic: string) {
-  try {
-    const fastCandidates = await fetchCandidateQuestionsFromSupabase(tableName, subject, normalizedTopic);
-    return fastCandidates
-      .filter(isQuestionVisible)
-      .filter((row: any) => questionMatchesTopic(row, subject, normalizedTopic));
-  } catch (error) {
-    console.warn(`Topic questions query failed for ${tableName}:`, error instanceof Error ? error.message : error);
-    return [];
-  }
+  const fastCandidates = await fetchCandidateQuestionsFromSupabase(tableName, subject, normalizedTopic);
+  return fastCandidates
+    .filter(isQuestionVisible)
+    .filter((row: any) => questionMatchesTopic(row, subject, normalizedTopic));
 }
 
 async function fetchQuizQuestions(subject: string, decodedTopic: string) {
@@ -264,9 +262,14 @@ async function fetchQuizQuestions(subject: string, decodedTopic: string) {
 
   let data: any[] = [];
   let fetchError: string | null = null;
+  let unavailable = false;
 
   try {
     const normalizedTopic = decodedTopic.trim();
+
+    if (!SUPABASE_AVAILABLE && process.env.NODE_ENV === 'production') {
+      throw new Error('question_store_unavailable');
+    }
 
     if (!SUPABASE_AVAILABLE) {
       data = (questionsData as any[]).filter((row: any) => questionMatchesTopic(row, subject, normalizedTopic));
@@ -278,12 +281,23 @@ async function fetchQuizQuestions(subject: string, decodedTopic: string) {
       fetchError = `No questions found for ${decodedTopic}.`;
     }
   } catch (err) {
-    console.error('❌ QUIZ FETCH ERROR:', err);
-    fetchError = 'An unexpected error occurred while fetching quiz questions.';
+    console.error('Legacy quiz fetch failed:', err instanceof Error ? err.message : 'unknown_error');
+    fetchError = 'Quiz questions are temporarily unavailable.';
+    unavailable = true;
   }
 
-  return { questions: data, fetchError };
+  return { questions: data, fetchError, unavailable };
 }
+
+const resolveLegacyTopicRoute = cache(async (subjectKey: string, normalizedTopicSlug: string) => {
+  const decodedTopic = normalizedTopicSlug.replace(/-/g, ' ').trim();
+  const replacement = await findLegacyTopicReplacement(subjectKey, normalizedTopicSlug);
+  if (replacement) {
+    return { kind: 'redirect' as const, destination: replacement.destination, decodedTopic };
+  }
+  const quiz = await fetchQuizQuestions(subjectKey, decodedTopic);
+  return { kind: 'quiz' as const, decodedTopic, ...quiz };
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ subject: string; topicSlug: string }> }) {
   const { subject, topicSlug: rawTopicSlug } = await params;
@@ -298,9 +312,21 @@ export async function generateMetadata({ params }: { params: Promise<{ subject: 
   }
 
   const topicSlug = decodeTopicSlug(rawTopicSlug);
-  const topic = topicSlug.replace(/-/g, ' ');
+  const normalizedTopicSlug = slugifySubject(topicSlug);
+  if (!normalizedTopicSlug) permanentRedirect(`/${subjectKey}`);
+  if (isPermanentlyRemovedLegacyTopicPath(`/${subjectKey}/topics/${normalizedTopicSlug}`)) {
+    notFound();
+  }
+  const resolved = await resolveLegacyTopicRoute(subjectKey, normalizedTopicSlug);
+  if (resolved.kind === 'redirect') permanentRedirect(resolved.destination);
+  if (resolved.unavailable) throw new Error('Legacy quiz data is temporarily unavailable');
+  if (!resolved.questions.length) notFound();
 
-  return buildQuizMetadata(subjectConfig.label, topic, `/${subjectKey}/topics/${slugifySubject(topicSlug)}`);
+  return buildQuizMetadata(
+    subjectConfig.label,
+    resolved.decodedTopic,
+    `/${subjectKey}/topics/${normalizedTopicSlug}`,
+  );
 }
 
 export default async function TopicPage({ params }: { params: Promise<{ subject: string; topicSlug: string }> }) {
@@ -309,18 +335,25 @@ export default async function TopicPage({ params }: { params: Promise<{ subject:
   const subjectConfig = SUBJECT_TABLES[subjectKey];
 
   if (!subjectConfig) {
-    return redirect('/subjects');
+    notFound();
   }
 
   const topicSlug = decodeTopicSlug(String(rawTopicSlug ?? '').trim());
   const normalizedTopicSlug = slugifySubject(topicSlug);
-  const decodedTopic = normalizedTopicSlug.replace(/-/g, ' ').trim();
-
-  if (!decodedTopic) {
+  if (!normalizedTopicSlug) {
     return permanentRedirect(`/${subjectKey}`);
   }
+  if (isPermanentlyRemovedLegacyTopicPath(`/${subjectKey}/topics/${normalizedTopicSlug}`)) {
+    notFound();
+  }
 
-  const { questions, fetchError } = await fetchQuizQuestions(subjectKey, decodedTopic);
+  const resolved = await resolveLegacyTopicRoute(subjectKey, normalizedTopicSlug);
+  if (resolved.kind === 'redirect') permanentRedirect(resolved.destination);
+  const { questions, fetchError, unavailable, decodedTopic } = resolved;
+  if (unavailable) {
+    throw new Error('Legacy quiz data is temporarily unavailable');
+  }
+  if (!questions.length) notFound();
   const topicPath = `/${subjectKey}/topics/${slugifySubject(decodedTopic)}`;
   const breadcrumbJsonLd = buildBreadcrumbListSchema([
     { name: 'Home', href: '/' },

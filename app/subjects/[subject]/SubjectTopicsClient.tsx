@@ -1727,7 +1727,8 @@ export default function SubjectTopicsClient({
                 return null;
               }
 
-              const questionLabel = `${topic.count ?? 45} ${labels.questionsAvailable}`;
+              const questionCount = Math.max(0, Number(topic.count ?? 0));
+              const questionLabel = `${questionCount.toLocaleString()} ${labels.questionsAvailable}`;
               const href = `/${subjectKey}/topics/${slugifySubject(topicLabel)}`;
 
               return (

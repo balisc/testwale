@@ -6,7 +6,10 @@ QuestionWale is a bilingual learning and MCQ-practice platform for Indian compet
 
 - [QuestionWale Home](https://questionwale.com/)
 - [Browse Subjects](https://questionwale.com/subjects)
+- [SSC CGL Syllabus & MCQ Practice](https://questionwale.com/exams/ssc-cgl)
+- [SSC CHSL Syllabus & MCQ Practice](https://questionwale.com/exams/ssc-chsl)
 - [About Us](https://questionwale.com/about_us)
+- [Content Standards](https://questionwale.com/content-standards)
 - [Contact](https://questionwale.com/contact)
 
 ## Subjects and learning resources

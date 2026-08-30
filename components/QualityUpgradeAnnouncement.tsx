@@ -92,6 +92,10 @@ export default function QualityUpgradeAnnouncement() {
   }, []);
 
   useEffect(() => {
+    if (countdown?.expired) setPhase('closed');
+  }, [countdown?.expired]);
+
+  useEffect(() => {
     if (phase !== 'open') return;
 
     previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -128,7 +132,7 @@ export default function QualityUpgradeAnnouncement() {
     };
   }, [phase]);
 
-  if (phase !== 'open' || !countdown) return null;
+  if (phase !== 'open' || !countdown || countdown.expired) return null;
 
   return (
     <ModalPortal
@@ -172,24 +176,15 @@ export default function QualityUpgradeAnnouncement() {
         </div>
 
         <div className="mt-4">
-          {countdown.expired ? (
-            <p
-              className="rounded-xl border border-[#DDD6FE] bg-[#FAF5FF] px-4 py-6 text-center text-base font-semibold text-brand sm:text-lg"
-              role="status"
-            >
-              {c.completed}
-            </p>
-          ) : (
-            <CountdownUnitCards
-              days={countdown.days}
-              hours={countdown.hours}
-              minutes={countdown.minutes}
-              seconds={countdown.seconds}
-              labels={{ days: c.days, hours: c.hours, minutes: c.minutes, seconds: c.seconds }}
-              ariaLabel={c.countdownAria}
-              size="md"
-            />
-          )}
+          <CountdownUnitCards
+            days={countdown.days}
+            hours={countdown.hours}
+            minutes={countdown.minutes}
+            seconds={countdown.seconds}
+            labels={{ days: c.days, hours: c.hours, minutes: c.minutes, seconds: c.seconds }}
+            ariaLabel={c.countdownAria}
+            size="md"
+          />
         </div>
 
         <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-500 sm:text-sm">

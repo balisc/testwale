@@ -20,7 +20,8 @@
     "test:request-security": "node --experimental-strip-types lib/requestSecurity.test.ts",
     "test:security-regression": "node --experimental-strip-types lib/securityRegression.test.ts",
     "test:safe-redirect": "node --experimental-strip-types lib/safeRedirect.test.ts",
-    "test:auth-security": "node --experimental-strip-types lib/authSecurity.test.ts",
+    "test:auth-security": "node --import ./scripts/test-register.mjs --experimental-strip-types lib/authSecurity.test.ts",
+    "test:accessibility": "node --experimental-strip-types lib/accessibilityRegression.test.ts",
     "test:oauth-code-redirect": "node --import ./scripts/test-register.mjs --experimental-strip-types lib/oauthCodeRedirect.test.ts",
     "test:public-origin": "node --experimental-strip-types lib/publicOrigin.test.ts",
     "test:profile-overview": "node --experimental-strip-types lib/profileOverview.test.ts",
@@ -33,6 +34,7 @@
     "test:ssc-cgl": "node --import ./scripts/test-register.mjs --experimental-strip-types lib/sscCglSyllabus.test.ts && node --import ./scripts/test-register.mjs --experimental-strip-types lib/sscCglPreference.test.ts && node --experimental-strip-types lib/publicExamExplorer.test.ts",
     "test:ssc-chsl": "node --import ./scripts/test-register.mjs --experimental-strip-types lib/sscChsl.test.ts && node --import ./scripts/test-register.mjs --experimental-strip-types lib/examPreference.test.ts && node --experimental-strip-types lib/publicExamExplorer.test.ts",
     "test:quality-upgrade": "node --experimental-strip-types lib/qualityUpgradeAnnouncement.test.ts",
+    "test:seo-policy": "node --import ./scripts/test-register.mjs --experimental-strip-types lib/seoPolicy.test.ts",
     "test:verify-auth": "node scripts/verify-auth-security.mjs"
   },
   "dependencies": {

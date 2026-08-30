@@ -22,6 +22,7 @@ import {
 } from '@/lib/examSyllabus';
 import { isSscCglExamCode } from '@/lib/sscCglSyllabus';
 import { isSscChslExamCode } from '@/lib/sscChsl';
+import { meaningfulCatalogDescription } from '@/lib/catalogDescription';
 
 export const revalidate = 3600;
 
@@ -49,7 +50,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const topicTitle = getLocalizedText(topic.title, 'en');
   const subjectTitle = getLocalizedText(subject.title, 'en');
-  const topicDesc = getLocalizedText(topic.description, 'en');
+  const topicDesc = meaningfulCatalogDescription(getLocalizedText(topic.description, 'en'));
 
   const metadata = buildCatalogTopicMetadata(
     topicTitle,

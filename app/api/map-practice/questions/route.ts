@@ -123,10 +123,10 @@ export async function GET(request: Request) {
         topics: [],
         subtopics: [],
         error: isMissingTable
-          ? 'Map practice tables are not created yet. Run scripts/create_map_practice_tables.sql in Supabase SQL editor.'
+          ? 'Map practice is temporarily unavailable.'
           : 'Unable to fetch map questions.',
       },
-      { status: isMissingTable ? 200 : 500, headers: { 'Cache-Control': 'no-store' } }
+      { status: isMissingTable ? 503 : 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 

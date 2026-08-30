@@ -41,8 +41,9 @@ export function assertProductionEnv(): void {
 
   const missing: string[] = [];
 
-  if (!process.env.AUTH_SECRET?.trim()) {
-    missing.push('AUTH_SECRET');
+  const authSecret = process.env.AUTH_SECRET?.trim() ?? '';
+  if (Buffer.byteLength(authSecret, 'utf8') < 32) {
+    missing.push('AUTH_SECRET (independent random value, at least 32 bytes)');
   }
 
   const supabaseUrl = (
@@ -71,6 +72,21 @@ export function assertProductionEnv(): void {
 
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
     missing.push('SUPABASE_SERVICE_ROLE_KEY');
+  }
+
+  if (process.env.REQUIRE_EMAIL_VERIFICATION === 'true') {
+    const deliveryUrl = process.env.AUTH_EMAIL_DELIVERY_URL?.trim() ?? '';
+    let validDeliveryUrl = false;
+    try {
+      const parsed = new URL(deliveryUrl);
+      validDeliveryUrl = parsed.protocol === 'https:' && !parsed.username && !parsed.password && !parsed.hash;
+    } catch {
+      validDeliveryUrl = false;
+    }
+    if (!validDeliveryUrl) missing.push('AUTH_EMAIL_DELIVERY_URL (valid HTTPS URL)');
+    if (!process.env.AUTH_EMAIL_DELIVERY_BEARER_TOKEN?.trim()) {
+      missing.push('AUTH_EMAIL_DELIVERY_BEARER_TOKEN');
+    }
   }
 
   if (missing.length > 0) {

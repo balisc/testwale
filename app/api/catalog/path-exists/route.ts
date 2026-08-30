@@ -9,7 +9,7 @@ import {
   findPublishedSyllabusSubtopic,
   findPublishedSyllabusTopic,
 } from '@/lib/examSyllabus';
-import { getPublicExamSyllabus } from '@/lib/publicExamExplorer';
+import { getPublicExamPathIndexStrict } from '@/lib/publicExamExplorer';
 import {
   buildQuestionLookupContext,
   extractQuestionIdFromQuestionSlug,
@@ -59,7 +59,7 @@ async function examPathExists(pathname: string, stageCode: string | null): Promi
   const segments = pathname.split('/').filter(Boolean);
   if (segments[0] !== 'exams' || segments.length < 2 || segments.length > 5) return false;
 
-  const snapshot = await getPublicExamSyllabus(segments[1]!, stageCode);
+  const snapshot = await getPublicExamPathIndexStrict(segments[1]!, stageCode);
   if (!snapshot) return false;
   if (segments.length === 2) return true;
 

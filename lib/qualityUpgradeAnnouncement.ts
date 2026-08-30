@@ -39,10 +39,10 @@ type NoticeStorage = Pick<Storage, 'getItem' | 'setItem'>;
 type NoticeReadStorage = Pick<Storage, 'getItem'>;
 
 export function shouldShowQualityUpgradeNotice(
-  _nowMs = Date.now(),
+  nowMs = Date.now(),
   storage?: NoticeReadStorage,
 ): boolean {
-  return !hasAcknowledgedQualityUpgradeNotice(storage);
+  return nowMs < QUALITY_UPGRADE_DEADLINE_MS && !hasAcknowledgedQualityUpgradeNotice(storage);
 }
 
 function getBrowserNoticeStorage(): Storage | null {

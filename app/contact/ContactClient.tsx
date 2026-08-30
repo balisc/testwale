@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import Link from 'next/link';
 import {
   ArrowRight,
   AtSign,
@@ -93,7 +93,7 @@ const CONTENT: Record<
       },
       {
         title: 'Response Time',
-        desc: 'We typically respond within 24–48 hours',
+        desc: 'Replies use the email address supplied with your request.',
       },
       {
         title: 'Question Report Feature',
@@ -158,7 +158,7 @@ const CONTENT: Record<
       },
       {
         title: 'प्रतिक्रिया समय',
-        desc: 'हम आमतौर पर 24–48 घंटों के भीतर जवाब देते हैं',
+        desc: 'उत्तर आपके अनुरोध के साथ दिए गए ईमेल पते पर भेजे जाते हैं।',
       },
       {
         title: 'प्रश्न रिपोर्ट सुविधा',
@@ -213,7 +213,11 @@ const CONTENT: Record<
 const TOUCH_ICONS = [Headphones, Clock, Flag, Lightbulb, MessageSquare] as const;
 
 function scrollToForm() {
-  document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('contact-form')?.scrollIntoView({
+    behavior: reduceMotion ? 'auto' : 'smooth',
+    block: 'start',
+  });
 }
 
 export default function ContactClient() {
@@ -237,6 +241,7 @@ export default function ContactClient() {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
     setFormValues((prev) => ({ ...prev, [name]: value }));
+    setSubmitted(false);
     if (fieldErrors[name as ContactField]) {
       setFieldErrors((prev) => {
         const next = { ...prev };
@@ -297,7 +302,6 @@ export default function ContactClient() {
       setSubmitted(true);
       setFormValues({ name: '', email: '', mobile: '', subject: '', message: '' });
       setSelectedCategory(null);
-      setTimeout(() => setSubmitted(false), 5000);
     } catch {
       setFormError(getContactErrorMessage(lang, 'submitError'));
     } finally {
@@ -310,12 +314,7 @@ export default function ContactClient() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="mx-auto max-w-[1180px] px-4 pb-16 pt-10 sm:px-6 lg:px-8"
-      >
+      <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-10 sm:px-6 lg:px-8">
         {/* Hero */}
         <section className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           <div>
@@ -340,7 +339,7 @@ export default function ContactClient() {
           <div className="rounded-[24px] border border-slate-100 bg-white p-6 shadow-[0_4px_24px_rgba(15,23,42,0.05)] sm:p-7">
             <div className="flex items-start gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F3E8FF] text-[#7C3AED]">
-                <MessageCircle className="h-5 w-5" strokeWidth={2.1} />
+                <MessageCircle className="h-5 w-5" strokeWidth={2.1} aria-hidden="true" />
               </div>
               <div>
                 <h2 className="text-[17px] font-bold text-[#111827]">{c.getInTouchTitle}</h2>
@@ -354,7 +353,7 @@ export default function ContactClient() {
                 return (
                   <li key={item.title} className="flex gap-3">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F3E8FF] text-[#7C3AED]">
-                      <Icon className="h-4 w-4" strokeWidth={2.1} />
+                      <Icon className="h-4 w-4" strokeWidth={2.1} aria-hidden="true" />
                     </div>
                     <div>
                       <p className="text-[14px] font-bold text-[#111827]">{item.title}</p>
@@ -373,7 +372,7 @@ export default function ContactClient() {
           >
             <div className="flex items-start gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F3E8FF] text-[#7C3AED]">
-                <Mail className="h-5 w-5" strokeWidth={2.1} />
+                <Mail className="h-5 w-5" strokeWidth={2.1} aria-hidden="true" />
               </div>
               <div>
                 <h2 className="text-[17px] font-bold text-[#111827]">{c.formTitle}</h2>
@@ -385,7 +384,7 @@ export default function ContactClient() {
               <div>
                 <label htmlFor="contact-name" className="mb-1.5 block text-[13px] font-semibold text-[#374151]">{c.fullName}</label>
                 <div className="relative">
-                  <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
+                  <User aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
                   <input
                     id="contact-name"
                     name="name"
@@ -407,7 +406,7 @@ export default function ContactClient() {
               <div>
                 <label htmlFor="contact-email" className="mb-1.5 block text-[13px] font-semibold text-[#374151]">{c.email}</label>
                 <div className="relative">
-                  <AtSign className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
+                  <AtSign aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
                   <input
                     id="contact-email"
                     name="email"
@@ -430,7 +429,7 @@ export default function ContactClient() {
               <div>
                 <label htmlFor="contact-mobile" className="mb-1.5 block text-[13px] font-semibold text-[#374151]">{c.mobile}</label>
                 <div className="relative">
-                  <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
+                  <Phone aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
                   <input
                     id="contact-mobile"
                     name="mobile"
@@ -528,16 +527,26 @@ export default function ContactClient() {
               </div>
 
               {formError && (
-                <p className="rounded-xl bg-[#FEF2F2] px-4 py-3 text-[13px] font-medium text-[#DC2626]">
+                <p className="rounded-xl bg-[#FEF2F2] px-4 py-3 text-[13px] font-medium text-[#DC2626]" role="alert">
                   {formError}
                 </p>
               )}
 
               {submitted && (
-                <p className="rounded-xl bg-[#F0FDF4] px-4 py-3 text-[13px] font-medium text-[#15803D]">
+                <p className="rounded-xl bg-[#F0FDF4] px-4 py-3 text-[13px] font-medium text-[#15803D]" role="status" aria-live="polite">
                   {c.sentSuccess}
                 </p>
               )}
+
+              <p className="text-[11px] leading-5 text-[#6B7280]">
+                {lang === 'hi'
+                  ? 'भेजने पर, QuestionWale सहायता देने के लिए इस फॉर्म की जानकारी का उपयोग करेगा। '
+                  : 'By sending, you allow QuestionWale to use this form information to provide support. '}
+                <Link href="/privacy" className="font-semibold text-[#7C3AED] hover:underline">
+                  {lang === 'hi' ? 'गोपनीयता नीति पढ़ें' : 'Read the Privacy Policy'}
+                </Link>
+                .
+              </p>
 
               <button
                 type="submit"
@@ -546,9 +555,9 @@ export default function ContactClient() {
               >
                 {submitting ? c.sendingButton : c.sendButton}
                 {submitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                 ) : (
-                  <Send className="h-4 w-4" />
+                  <Send className="h-4 w-4" aria-hidden="true" />
                 )}
               </button>
             </form>
@@ -558,7 +567,7 @@ export default function ContactClient() {
           <div className="rounded-[24px] border border-slate-100 bg-white p-6 shadow-[0_4px_24px_rgba(15,23,42,0.05)] sm:p-7">
             <div className="flex items-start gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F3E8FF] text-[#7C3AED]">
-                <Flag className="h-5 w-5" strokeWidth={2.1} />
+                <Flag className="h-5 w-5" strokeWidth={2.1} aria-hidden="true" />
               </div>
               <div>
                 <h2 className="text-[17px] font-bold text-[#111827]">{c.reportTitle}</h2>
@@ -593,24 +602,24 @@ export default function ContactClient() {
                       <span className={`flex-1 font-medium ${isWrong ? 'text-[#DC2626]' : 'text-[#374151]'}`}>
                         {option}
                       </span>
-                      {isWrong && <X className="h-4 w-4 shrink-0 text-[#DC2626]" strokeWidth={2.5} />}
+                      {isWrong && <X className="h-4 w-4 shrink-0 text-[#DC2626]" strokeWidth={2.5} aria-hidden="true" />}
                     </div>
                   );
                 })}
               </div>
 
               <div className="mt-3 flex gap-2 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3 py-2.5">
-                <X className="mt-0.5 h-4 w-4 shrink-0 text-[#DC2626]" strokeWidth={2.5} />
+                <X className="mt-0.5 h-4 w-4 shrink-0 text-[#DC2626]" strokeWidth={2.5} aria-hidden="true" />
                 <p className="text-[11px] leading-5 text-[#DC2626]">{c.sampleWrong}</p>
               </div>
 
-              <button
-                type="button"
+              <div
+                aria-label="Example question-report control"
                 className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#7C3AED] bg-white px-4 py-2.5 text-[12px] font-semibold text-[#7C3AED] transition hover:bg-[#F3E8FF]"
               >
-                <Flag className="h-3.5 w-3.5" />
+                <Flag className="h-3.5 w-3.5" aria-hidden="true" />
                 {c.reportButton}
-              </button>
+              </div>
             </div>
 
             <ol className="mt-5 space-y-3">
@@ -630,7 +639,7 @@ export default function ContactClient() {
         <section className="mt-12 rounded-[28px] border border-[#E9D5FF] bg-[#F3E8FF]/60 p-6 sm:p-8 lg:mt-14">
           <div className="flex flex-col items-center gap-6 text-center md:flex-row md:text-left">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white text-[#7C3AED] shadow-sm">
-              <Trophy className="h-8 w-8" strokeWidth={2.1} />
+              <Trophy className="h-8 w-8" strokeWidth={2.1} aria-hidden="true" />
             </div>
 
             <div className="flex-1">
@@ -644,11 +653,11 @@ export default function ContactClient() {
               className="inline-flex items-center gap-2 rounded-full bg-[#7C3AED] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(124,58,237,0.28)] transition hover:bg-[#6D28D9]"
             >
               {c.ctaButton}
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         </section>
-      </motion.div>
+      </div>
     </div>
   );
 }

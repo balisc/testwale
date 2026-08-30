@@ -62,12 +62,13 @@ export default function HomeDemo() {
 
         <div className="mt-10 grid min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg md:grid-cols-2 max-[479px]:mt-8">
           <div className="min-w-0 border-b border-slate-200 p-5 sm:p-7 md:border-b-0 md:border-r max-[479px]:p-3">
-            <div className="hidden" aria-hidden="true">
+            <div className="inline-flex flex-wrap gap-1 rounded-xl bg-violet-50 p-1" aria-label="Question language">
               {LANG_OPTIONS.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setLang(item.id)}
+                  aria-pressed={lang === item.id}
                   className={`rounded-full px-3 py-1.5 transition max-[479px]:px-2.5 ${
                     lang === item.id ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500'
                   }`}
@@ -142,7 +143,7 @@ export default function HomeDemo() {
                 }}
                 className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 px-5 text-[15px] font-semibold leading-none text-slate-500 transition hover:bg-zinc-50 min-[480px]:w-auto [text-size-adjust:100%]"
               >
-                Skip Question
+                Reset Question
               </button>
             </div>
           </div>
@@ -194,19 +195,17 @@ export default function HomeDemo() {
 
                 <div className="rounded-2xl border border-slate-200 bg-white p-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-600">
-                      Source Verified
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
+                      Content review example
                     </span>
-                    <Link href="/about_us" className="text-xs font-semibold text-[#6D28D9] hover:underline">
-                      View official source
+                    <Link href="/content-standards" className="text-xs font-semibold text-[#6D28D9] hover:underline">
+                      How sources are reviewed
                     </Link>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold">
-                    <button type="button" className="text-slate-500 hover:text-zinc-900">
-                      Report an Issue
-                    </button>
-                    <Link href="/subjects/indian-polity" className="text-[#6D28D9] hover:underline">
-                      Practice Similar Question
+                    <span className="text-slate-500">Issue reporting is available in practice</span>
+                    <Link href="/subjects" className="text-[#6D28D9] hover:underline">
+                      Browse published subjects
                     </Link>
                   </div>
                 </div>

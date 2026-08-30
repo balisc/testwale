@@ -27,17 +27,11 @@ const pageTranslations = {
     searchButton: 'Search',
     landingTitle: 'Choose Your Subject',
     historyName: 'History',
-    historyCount: '1500+ questions',
     scienceName: 'Science',
-    scienceCount: '1300+ questions',
     polityName: 'Polity',
-    polityCount: '1200+ questions',
     economicsName: 'Economics',
-    economicsCount: '1100+ questions',
     geographyName: 'Geography',
-    geographyCount: '1000+ questions',
     generalKnowledgeName: 'General Knowledge',
-    generalKnowledgeCount: '900+ questions',
     exploreSubject: 'Explore Subject',
     footerAbout: 'About Us',
     footerContact: 'Contact',
@@ -55,17 +49,11 @@ const pageTranslations = {
     searchButton: 'खोजें',
     landingTitle: 'अपना विषय चुनें',
     historyName: 'इतिहास',
-    historyCount: '1500+ प्रश्न',
     scienceName: 'विज्ञान',
-    scienceCount: '1300+ प्रश्न',
     polityName: 'राजव्यवस्था',
-    polityCount: '1200+ प्रश्न',
     economicsName: 'अर्थशास्त्र',
-    economicsCount: '1100+ प्रश्न',
     geographyName: 'भूगोल',
-    geographyCount: '1000+ प्रश्न',
     generalKnowledgeName: 'सामान्य ज्ञान',
-    generalKnowledgeCount: '900+ प्रश्न',
     exploreSubject: 'विषय देखें',
     footerAbout: 'हमारे बारे में',
     footerContact: 'संपर्क करें',
@@ -626,19 +614,19 @@ export default function HomeClientLegacy({ initialSiteStats, initialSubjectCount
                     <div className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-2">
                       {loadingSiteStats ? animatedSiteStats.questions.toLocaleString() : formatCount(siteStats.questions, '0')}
                     </div>
-                    <div className="text-xs md:text-sm font-semibold uppercase tracking-[0.28em] text-muted">Questions</div>
+                    <div className="text-xs md:text-sm font-semibold uppercase tracking-[0.28em] text-muted">Published Questions</div>
                   </div>
                   <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl flex flex-col items-center justify-center text-center">
                     <div className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-2">
                       {loadingSiteStats ? animatedSiteStats.subjects.toLocaleString() : formatCount(siteStats.subjects, '0')}
                     </div>
-                    <div className="text-xs md:text-sm font-semibold uppercase tracking-[0.28em] text-muted">Subjects</div>
+                    <div className="text-xs md:text-sm font-semibold uppercase tracking-[0.28em] text-muted">Active Subjects</div>
                   </div>
                   <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl flex flex-col items-center justify-center text-center">
                     <div className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-2">
                       {loadingSiteStats ? animatedSiteStats.topics.toLocaleString() : formatCount(siteStats.topics, '0')}
                     </div>
-                    <div className="text-xs md:text-sm font-semibold uppercase tracking-[0.28em] text-muted">Topics</div>
+                    <div className="text-xs md:text-sm font-semibold uppercase tracking-[0.28em] text-muted">Published Topics</div>
                   </div>
                 </div>
                 {siteStatsError && (

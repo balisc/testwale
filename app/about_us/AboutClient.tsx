@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import AboutHeroIllustration from './AboutHeroIllustration';
 import {
   ArrowRight,
@@ -51,12 +50,12 @@ const CONTENT: Record<
     heroTitle2: 'One Question at a Time.',
     heroSub:
       'QuestionWale is a dedicated platform for government exam aspirants to practice topic-wise MCQs and strengthen their preparation.',
-    statQuestions: 'Questions',
-    statTopics: 'Topics',
-    statSubjects: 'Subjects',
+    statQuestions: 'Published Questions',
+    statTopics: 'Published Topics',
+    statSubjects: 'Active Subjects',
     missionTitle: 'Our Mission',
     missionText:
-      'To provide high-quality, exam-focused MCQs with detailed explanations, helping aspirants practice effectively, improve accuracy, and achieve their dream of a government job.',
+      'To provide high-quality, exam-focused MCQs with published explanations where available, helping aspirants practice effectively and improve accuracy.',
     missionFeatures: [
       {
         title: 'Exam Focused',
@@ -84,11 +83,11 @@ const CONTENT: Record<
       },
       {
         title: 'Detailed Explanations',
-        desc: 'Every question comes with clear explanations to help you understand the concept.',
+        desc: 'Published explanations help you review the concept behind an answer where available.',
       },
       {
         title: 'Exam-Oriented',
-        desc: 'Our content is crafted as per latest exam patterns and syllabus.',
+        desc: 'Exam directories use the published syllabus versions and content mappings available on QuestionWale.',
       },
       {
         title: 'Access Anywhere',
@@ -109,12 +108,12 @@ const CONTENT: Record<
     heroTitle2: 'एक समय में एक प्रश्न।',
     heroSub:
       'QuestionWale सरकारी परीक्षा के अभ्यर्थियों के लिए विषय-वार MCQs का अभ्यास करने और अपनी तैयारी को मजबूत करने हेतु एक समर्पित मंच है।',
-    statQuestions: 'प्रश्न',
-    statTopics: 'विषय',
-    statSubjects: 'मुख्य विषय',
+    statQuestions: 'प्रकाशित प्रश्न',
+    statTopics: 'प्रकाशित टॉपिक',
+    statSubjects: 'सक्रिय विषय',
     missionTitle: 'हमारा लक्ष्य',
     missionText:
-      'उच्च गुणवत्ता वाले, परीक्षा-केंद्रित MCQs विस्तृत व्याख्याओं के साथ प्रदान करना, जिससे अभ्यर्थी प्रभावी ढंग से अभ्यास कर सकें, सटीकता बढ़ा सकें और सरकारी नौकरी के अपने सपने को पूरा कर सकें।',
+      'उच्च गुणवत्ता वाले, परीक्षा-केंद्रित MCQs और उपलब्ध होने पर प्रकाशित व्याख्याएँ प्रदान करना, जिससे अभ्यर्थी प्रभावी ढंग से अभ्यास कर सकें और सटीकता बढ़ा सकें।',
     missionFeatures: [
       {
         title: 'परीक्षा-केंद्रित',
@@ -142,11 +141,11 @@ const CONTENT: Record<
       },
       {
         title: 'विस्तृत व्याख्या',
-        desc: 'हर प्रश्न स्पष्ट व्याख्या के साथ आता है ताकि आप अवधारणा समझ सकें।',
+        desc: 'जहाँ उपलब्ध हो, प्रकाशित व्याख्या उत्तर के पीछे की अवधारणा को समझने में मदद करती है।',
       },
       {
         title: 'परीक्षा-उन्मुख',
-        desc: 'हमारी सामग्री नवीनतम परीक्षा पैटर्न और पाठ्यक्रम के अनुसार तैयार है।',
+        desc: 'परीक्षा निर्देशिकाएँ QuestionWale पर उपलब्ध प्रकाशित पाठ्यक्रम संस्करणों और सामग्री मैपिंग का उपयोग करती हैं।',
       },
       {
         title: 'कहीं भी पहुँच',
@@ -166,9 +165,9 @@ const CONTENT: Record<
 const MISSION_ICONS = [Award, ShieldCheck, BarChart3, Languages] as const;
 const WHY_ICONS = [Target, Lightbulb, Crosshair, Smartphone, UserRound] as const;
 
-function formatStat(value: number | null | undefined, fallback: string) {
-  if (value == null || Number.isNaN(value)) return fallback;
-  return `${value.toLocaleString()}+`;
+function formatStat(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) return '—';
+  return value.toLocaleString('en-IN');
 }
 
 type AboutClientProps = {
@@ -183,29 +182,24 @@ export default function AboutClient({ stats }: AboutClientProps) {
   const statCards = [
     {
       icon: BookOpen,
-      value: formatStat(stats?.questions, '2,254+'),
+      value: formatStat(stats?.questions),
       label: c.statQuestions,
     },
     {
       icon: Layers,
-      value: formatStat(stats?.topics, '43+'),
+      value: formatStat(stats?.topics),
       label: c.statTopics,
     },
     {
       icon: Target,
-      value: formatStat(stats?.subjects, '2+'),
+      value: formatStat(stats?.subjects),
       label: c.statSubjects,
     },
   ];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="mx-auto max-w-[1100px] px-4 pb-16 pt-10 sm:px-6 lg:px-8"
-      >
+      <div className="mx-auto max-w-[1100px] px-4 pb-16 pt-10 sm:px-6 lg:px-8">
         {/* Hero */}
         <section className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           <div>
@@ -228,7 +222,7 @@ export default function AboutClient({ stats }: AboutClientProps) {
                   className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3.5 shadow-[0_4px_20px_rgba(15,23,42,0.04)]"
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F3E8FF] text-[#7C3AED]">
-                    <Icon className="h-5 w-5" strokeWidth={2.1} />
+                    <Icon className="h-5 w-5" strokeWidth={2.1} aria-hidden="true" />
                   </div>
                   <div>
                     <p className="text-lg font-bold leading-none text-[#111827]">{value}</p>
@@ -247,7 +241,7 @@ export default function AboutClient({ stats }: AboutClientProps) {
           <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-10">
             <div>
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F3E8FF] text-[#7C3AED]">
-                <Target className="h-7 w-7" strokeWidth={2.1} />
+                <Target className="h-7 w-7" strokeWidth={2.1} aria-hidden="true" />
               </div>
               <h2 className="mt-5 text-2xl font-bold text-[#111827]">{c.missionTitle}</h2>
               <p className="mt-3 text-[14px] leading-7 text-[#6B7280]">{c.missionText}</p>
@@ -259,7 +253,7 @@ export default function AboutClient({ stats }: AboutClientProps) {
                 return (
                   <div key={feature.title} className="rounded-2xl border border-slate-100 bg-[#FAFAFA] p-5">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3E8FF] text-[#7C3AED]">
-                      <Icon className="h-5 w-5" strokeWidth={2.1} />
+                      <Icon className="h-5 w-5" strokeWidth={2.1} aria-hidden="true" />
                     </div>
                     <h3 className="mt-4 text-[15px] font-bold text-[#111827]">{feature.title}</h3>
                     <p className="mt-2 text-[13px] leading-6 text-[#6B7280]">{feature.desc}</p>
@@ -290,7 +284,7 @@ export default function AboutClient({ stats }: AboutClientProps) {
               return (
                 <div key={feature.title} className="px-0 text-center lg:px-5 xl:px-6">
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F3E8FF] text-[#7C3AED]">
-                    <Icon className="h-5 w-5" strokeWidth={2.1} />
+                    <Icon className="h-5 w-5" strokeWidth={2.1} aria-hidden="true" />
                   </div>
                   <h3 className="mt-4 text-[15px] font-bold text-[#111827]">{feature.title}</h3>
                   <p className="mt-2 text-[13px] leading-6 text-[#6B7280]">{feature.desc}</p>
@@ -304,7 +298,7 @@ export default function AboutClient({ stats }: AboutClientProps) {
         <section className="mt-12 rounded-[28px] border border-[#E9D5FF] bg-[#F3E8FF]/60 p-6 sm:p-8 lg:mt-14">
           <div className="flex flex-col items-center gap-6 text-center md:flex-row md:text-left">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white text-[#7C3AED] shadow-sm">
-              <Trophy className="h-8 w-8" strokeWidth={2.1} />
+              <Trophy className="h-8 w-8" strokeWidth={2.1} aria-hidden="true" />
             </div>
 
             <div className="flex-1">
@@ -317,11 +311,11 @@ export default function AboutClient({ stats }: AboutClientProps) {
               className="inline-flex items-center gap-2 rounded-full bg-[#7C3AED] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(124,58,237,0.28)] transition hover:bg-[#6D28D9]"
             >
               {c.ctaButton}
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         </section>
-      </motion.div>
+      </div>
     </div>
   );
 }

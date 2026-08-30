@@ -6,6 +6,7 @@ import ExamContentUnavailable from '@/components/ExamContentUnavailable';
 import { redirect } from 'next/navigation';
 import { isSscCglExamCode } from '@/lib/sscCglSyllabus';
 import { isSscChslExamCode } from '@/lib/sscChsl';
+import { getHomepageSubjectCounts } from '@/lib/subjectCounts';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,10 @@ export const metadata = buildPageMetadata({
 });
 
 export default async function SubjectsPage() {
-  const selected = await getSelectedExamLearning();
+  const [selected, subjectCounts] = await Promise.all([
+    getSelectedExamLearning(),
+    getHomepageSubjectCounts(),
+  ]);
   if (selected.status === 'ready') {
     if (isSscCglExamCode(selected.snapshot.exam.code)) redirect('/ssc-cgl');
     if (isSscChslExamCode(selected.snapshot.exam.code)) redirect('/ssc-chsl');
@@ -40,7 +44,7 @@ export default async function SubjectsPage() {
             Click any active subject to jump straight into topics and start practicing immediately.
           </p>
         </div>
-        <SubjectGrid />
+        <SubjectGrid counts={subjectCounts} />
       </section>
     </main>
   );

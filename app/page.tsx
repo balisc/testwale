@@ -13,10 +13,12 @@ import {
   DEFAULT_OG_IMAGE,
   SITE_NAME,
 } from '@/lib/seo';
+import { getHomeData } from '@/lib/homeData';
+import { getPublicExamSelectorOptions } from '@/lib/publicExamExplorer';
 
 const title = 'Government Exam MCQ Practice in Hindi & English';
 const description =
-  'Practice source-verified bilingual MCQs for SSC, Railway, UPSC and State Exams with clear explanations, topic-wise quizzes and progress tracking.';
+  'Practice source-verified bilingual MCQs for SSC, Railway, UPSC and State Exams with topic-wise quizzes, progress tracking and explanations where available.';
 const ogImage = absoluteUrl(DEFAULT_OG_IMAGE);
 
 const homepageStructuredData = [
@@ -62,14 +64,18 @@ const HomeBelowFold = dynamic(() => import('@/app/home/components/HomeBelowFold'
   loading: () => null,
 });
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [homeData, publicExamOptions] = await Promise.all([
+    getHomeData(),
+    getPublicExamSelectorOptions(),
+  ]);
   return (
     <div className="home-page w-full min-w-0 overflow-x-clip bg-[#FAFAFC] text-[#18181B] antialiased">
       <JsonLd data={homepageStructuredData} />
       <main>
-        <HomeHero totalQuestions={null} />
-        <PublicExamExplorer />
-        <HomeSubjects subjectCounts={{}} />
+        <HomeHero totalQuestions={homeData.stats.questions} />
+        <PublicExamExplorer options={publicExamOptions} />
+        <HomeSubjects subjectCounts={homeData.subjectCounts} />
         <HomeBelowFold />
       </main>
     </div>

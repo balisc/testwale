@@ -6,9 +6,9 @@ const COLUMNS = [
     title: 'Practice',
     links: [
       { label: 'SSC Exams', href: '/#public-exam-explorer' },
-      { label: 'Indian Polity', href: '/subjects/indian-polity' },
-      { label: 'Practice MCQs', href: '/subjects/indian-polity' },
-      { label: 'Exam Practice Paths', href: '/#public-exam-explorer' },
+      { label: 'Browse Subjects', href: '/subjects' },
+      { label: 'Map Practice', href: '/map-practice' },
+      { label: 'Content Standards', href: '/content-standards' },
     ],
   },
   {
@@ -16,7 +16,7 @@ const COLUMNS = [
     links: [
       { label: 'About Us', href: '/about_us' },
       { label: 'Contact', href: '/contact' },
-      { label: 'Content Standards', href: '/about_us' },
+      { label: 'Content Standards', href: '/content-standards' },
     ],
   },
   {
@@ -59,7 +59,7 @@ export default function HomeFooter() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-center gap-3 border-t border-[#E4E7EC] pt-6 text-center text-sm text-[#98A2B3] max-[479px]:text-xs sm:flex-row sm:justify-between sm:text-left">
+        <div className="mt-10 flex flex-col items-center gap-3 border-t border-[#E4E7EC] pt-6 text-center text-sm text-[#667085] max-[479px]:text-xs sm:flex-row sm:justify-between sm:text-left">
           <p>© {new Date().getFullYear()} QuestionWale. All rights reserved.</p>
           <p className="inline-flex items-center gap-1.5 text-[#667085]">
             <span aria-hidden className="text-base leading-none text-red-500">
