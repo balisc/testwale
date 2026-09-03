@@ -33,8 +33,8 @@ export async function GET() {
     }
     if (context.status === 'ready' && isSscChslExamCode(context.examCode)) {
       const items: HomeSearchItem[] = [
-        { id: 'ssc-chsl-tier-1', type: 'subject', label: 'SSC CHSL Tier I', labelHi: 'SSC CHSL टियर I', href: '/ssc-chsl/tier-1/subjects', path: 'SSC CHSL' },
-        { id: 'ssc-chsl-tier-2', type: 'subject', label: 'SSC CHSL Tier II', labelHi: 'SSC CHSL टियर II', href: '/ssc-chsl/tier-2/subjects', path: 'SSC CHSL' },
+        { id: 'ssc-chsl-tier-1', type: 'subject', label: 'SSC CHSL Tier 1', labelHi: 'SSC CHSL टियर 1', href: '/ssc-chsl/tier-1/subjects', path: 'SSC CHSL' },
+        { id: 'ssc-chsl-tier-2', type: 'subject', label: 'SSC CHSL Tier 2', labelHi: 'SSC CHSL टियर 2', href: '/ssc-chsl/tier-2/subjects', path: 'SSC CHSL' },
       ];
       return NextResponse.json({ items }, { headers: { 'Cache-Control': 'private, no-store' } });
     }

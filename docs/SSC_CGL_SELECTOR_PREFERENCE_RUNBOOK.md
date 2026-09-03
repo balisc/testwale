@@ -111,7 +111,7 @@ and save all result grids. Confirm:
 
 - normal selector query contains only `can_select=true` rows;
 - exact mapping and selector question counts match;
-- Tier I/Tier II availability agrees with exact stage-coded questions;
+- Tier 1/Tier 2 availability agrees with exact stage-coded questions;
 - generic preparation tracks contain only active MCQ stages with verified
   questions and the track view is inaccessible to browser roles;
 - explicit operational subtopic link audit reports zero missing links;

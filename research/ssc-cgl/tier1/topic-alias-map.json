@@ -1,0 +1,24 @@
+{
+  "version": "ssc-cgl-tier1-aliases-2026-09-01-v1",
+  "status": "provisional-unvalidated-against-shift-corpus",
+  "aliases": {
+    "analogy": ["analogy", "semantic analogy", "number analogy", "figural analogy"],
+    "classification": ["classification", "odd one out", "word classification", "figural classification"],
+    "series": ["series", "number series", "alphabet series", "figural series", "non-verbal series"],
+    "coding_operations": ["coding decoding", "symbolic operations", "numerical operations"],
+    "relations_direction_ranking": ["blood relation", "relationship concepts", "direction sense", "ranking"],
+    "logic_inference": ["syllogism", "venn diagram", "statement conclusion", "drawing inference"],
+    "missing_matrix_arithmetic": ["missing number", "number matrix", "arithmetical reasoning"],
+    "non_verbal": ["mirror image", "paper folding", "paper cutting", "embedded figure", "figure completion"],
+    "dice_cube_spatial": ["dice", "cube", "space orientation", "space visualization"],
+    "current_events": ["current affairs", "current events", "persons in news", "appointments"],
+    "polity": ["polity", "general policy", "indian constitution"],
+    "commercial_math": ["profit and loss", "discount", "simple interest", "compound interest"],
+    "speed_distance": ["time and distance", "time speed distance", "trains", "boats and streams"],
+    "data_interpretation": ["data interpretation", "tables and graphs", "histogram", "bar diagram", "pie chart"],
+    "error_improvement": ["spot the error", "error spotting", "sentence improvement"],
+    "voice_narration": ["active passive voice", "direct indirect speech", "narration"],
+    "atomic_comprehension": ["cloze test", "reading comprehension", "passage"]
+  }
+}
+

@@ -10,6 +10,7 @@ function absolutePath(path: string) {
 
 const STATIC_PAGES: Array<{ path: string; priority: number }> = [
   { path: '/', priority: 1 },
+  { path: '/exams', priority: 0.95 },
   { path: '/subjects', priority: 0.9 },
   { path: '/about_us', priority: 0.6 },
   { path: '/content-standards', priority: 0.6 },

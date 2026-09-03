@@ -65,6 +65,34 @@ if (legacyBad.length) {
   console.log('PASS no legacy /polity URLs');
 }
 
+const sitemapPathnames = new Set(locs.map((loc) => new URL(loc).pathname));
+for (const requiredPath of [
+  '/exams',
+  '/exams/ssc-cgl',
+  '/exams/ssc-combined-higher-secondary-level-examination',
+]) {
+  if (!sitemapPathnames.has(requiredPath)) {
+    console.error(`FAIL missing public exam URL ${requiredPath}`);
+    failed++;
+  } else {
+    console.log(`PASS public exam URL ${requiredPath}`);
+  }
+}
+
+const privateOrDuplicateUrls = locs.filter((loc) => {
+  const parsed = new URL(loc);
+  return parsed.search !== ''
+    || parsed.hash !== ''
+    || /^\/(?:api|auth|dashboard|profile)(?:\/|$)/.test(parsed.pathname)
+    || /^\/mock-tests\/[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(parsed.pathname);
+});
+if (privateOrDuplicateUrls.length) {
+  console.error(`FAIL private or duplicate-state URLs: ${privateOrDuplicateUrls.join(', ')}`);
+  failed++;
+} else {
+  console.log('PASS no private, user-specific, query, or hash URLs');
+}
+
 const topicUrls = locs.filter((loc) => /\/subjects\/indian-polity\/[^/]+$/.test(loc));
 console.log(`INFO indian-polity topic URLs in sitemap: ${topicUrls.length}`);
 if (topicUrls.length === 0) {

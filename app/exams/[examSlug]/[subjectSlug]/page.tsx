@@ -61,12 +61,14 @@ export default async function PublicExamSubjectPage({ params, searchParams }: Pa
     <main className="min-h-screen bg-[#F8FAFC] px-4 py-8 text-slate-900 sm:px-6 lg:px-8">
       <JsonLd data={buildBreadcrumbListSchema([
         { name: 'Home', href: '/' },
+        { name: 'Exams', href: '/exams' },
         { name: `${examName} syllabus`, href: `/exams/${examSlug}` },
         { name: subjectName },
       ])} />
       <div className="mx-auto max-w-[1240px]">
         <SyllabusBreadcrumb items={[
           { label: 'Home', href: '/' },
+          { label: 'Exams', href: '/exams' },
           { label: `${examName} syllabus`, href: examHref },
           { label: subjectName },
         ]} />

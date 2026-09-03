@@ -7,6 +7,7 @@ import HomeHeader from '@/app/home/components/HomeHeader';
 import HomeFooter from '@/app/home/components/HomeFooter';
 import SmoothHashScroll, { SCROLL_INTENT_KEY } from './SmoothHashScroll';
 import OAuthCodeQueryGuard from '@/components/OAuthCodeQueryGuard';
+import type { PublicExamNavigationEntry } from '@/lib/publicExamDirectory';
 
 const HIDDEN_CHROME_PATHS = ['/loading-test', '/onboarding'];
 const PageChromeVisibilityContext = createContext<((visible: boolean) => void) | null>(null);
@@ -15,7 +16,13 @@ export function usePageChromeVisibility() {
   return useContext(PageChromeVisibilityContext) ?? (() => undefined);
 }
 
-export default function LayoutShell({ children }: { children: ReactNode }) {
+export default function LayoutShell({
+  children,
+  publicExams,
+}: {
+  children: ReactNode;
+  publicExams: readonly PublicExamNavigationEntry[];
+}) {
   const pathname = usePathname();
   const hideChromeByPath = pathname
     ? HIDDEN_CHROME_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))
@@ -41,7 +48,7 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
     <PageChromeVisibilityContext.Provider value={setShowPageChrome}>
       <OAuthCodeQueryGuard />
       <SmoothHashScroll />
-      {showPageChrome ? <HomeHeader /> : null}
+      {showPageChrome ? <HomeHeader publicExams={publicExams} /> : null}
       <Template disableTopPadding={!showPageChrome}>{children}</Template>
       {showPageChrome ? <HomeFooter /> : null}
     </PageChromeVisibilityContext.Provider>

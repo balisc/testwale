@@ -1,6 +1,6 @@
 -- Repair the independently authored SSC CGL General Awareness V6.1 pack.
 -- The 1,340 questions already carry an authoritative pack code and stable
--- syllabus node code. General Awareness is shared by Tier I and Tier II
+-- syllabus node code. General Awareness is shared by Tier 1 and Tier 2
 -- Paper I, so every exact profile mapping must include both stage codes.
 -- Safe to re-run: all writes are idempotent and guarded by strict assertions.
 
@@ -172,7 +172,7 @@ begin
     and q.source = 'QW_GA_V6_1_ORIGINAL'
     and q.source_metadata ->> 'pack_code' = 'SSC_CGL_GA_V6_1_1340';
   if v_count <> 1340 then
-    raise exception 'Expected 1340 exact Tier I + Tier II Paper I General Awareness mappings, found %', v_count;
+    raise exception 'Expected 1340 exact Tier 1 + Tier 2 Paper I General Awareness mappings, found %', v_count;
   end if;
 end
 $migration$;

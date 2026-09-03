@@ -27,7 +27,7 @@ export const SSC_CHSL_STAGES = [
     tag: 'SSC_CHSL_TIER_1',
     tier: 'tier-1',
     href: '/ssc-chsl/tier-1/subjects',
-    label: { en: 'Tier I', hi: 'टियर I' },
+    label: { en: 'Tier 1', hi: 'टियर 1' },
     description: {
       en: 'Computer Based Examination covering Reasoning, Mathematics, English and General Awareness.',
       hi: 'रीजनिंग, गणित, अंग्रेज़ी और सामान्य जागरूकता की कंप्यूटर आधारित परीक्षा।',
@@ -38,7 +38,7 @@ export const SSC_CHSL_STAGES = [
     tag: 'SSC_CHSL_TIER_2',
     tier: 'tier-2',
     href: '/ssc-chsl/tier-2/subjects',
-    label: { en: 'Tier II', hi: 'टियर II' },
+    label: { en: 'Tier 2', hi: 'टियर 2' },
     description: {
       en: 'Objective sections plus the qualifying Computer Knowledge and Skill/Typing Test scope.',
       hi: 'वस्तुनिष्ठ अनुभागों के साथ अर्हकारी कंप्यूटर ज्ञान और कौशल/टंकण परीक्षा का दायरा।',

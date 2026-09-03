@@ -295,7 +295,7 @@ alter table public.user_exam_preferences
   alter column preparation_mode set not null;
 
 -- Releases may temporarily persist SSC CHSL in the older CGL-constrained
--- table by using TIER_II_PAPER_I as a Tier II storage marker. Canonicalize
+-- table by using TIER_II_PAPER_I as a Tier 2 storage marker. Canonicalize
 -- those exact-profile rows before installing the generic stage constraint.
 update public.user_exam_preferences p
 set preferred_tier_code = null,

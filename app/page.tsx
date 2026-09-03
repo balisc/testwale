@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import '@/app/home/home.css';
 import HomeHero from '@/app/home/components/HomeHero';
 import PublicExamExplorer from '@/app/home/components/PublicExamExplorer';
+import MockTestShowcaseSection from '@/app/home/components/mockShowcase/MockTestShowcaseSection';
 import HomeSubjects from '@/app/home/components/HomeSubjects';
 import JsonLd from '@/components/JsonLd';
 import {
@@ -15,6 +16,7 @@ import {
 } from '@/lib/seo';
 import { getHomeData } from '@/lib/homeData';
 import { getPublicExamSelectorOptions } from '@/lib/publicExamExplorer';
+import { getPublicMockExamSummaries } from '@/lib/mockTests/showcaseServer';
 
 const title = 'Government Exam MCQ Practice in Hindi & English';
 const description =
@@ -65,9 +67,10 @@ const HomeBelowFold = dynamic(() => import('@/app/home/components/HomeBelowFold'
 });
 
 export default async function HomePage() {
-  const [homeData, publicExamOptions] = await Promise.all([
+  const [homeData, publicExamOptions, publicMockExams] = await Promise.all([
     getHomeData(),
     getPublicExamSelectorOptions(),
+    getPublicMockExamSummaries(),
   ]);
   return (
     <div className="home-page w-full min-w-0 overflow-x-clip bg-[#FAFAFC] text-[#18181B] antialiased">
@@ -75,6 +78,7 @@ export default async function HomePage() {
       <main>
         <HomeHero totalQuestions={homeData.stats.questions} />
         <PublicExamExplorer options={publicExamOptions} />
+        <MockTestShowcaseSection exams={publicMockExams} />
         <HomeSubjects subjectCounts={homeData.subjectCounts} />
         <HomeBelowFold />
       </main>

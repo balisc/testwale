@@ -33,6 +33,10 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
+    // Root navigation reads one cached public directory. Keep static workers
+    // from stampeding the readiness view during production generation.
+    staticGenerationMaxConcurrency: 4,
+    staticGenerationMinPagesPerWorker: 100,
   },
   images: {
     formats: ['image/avif', 'image/webp'],

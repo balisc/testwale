@@ -9,9 +9,10 @@ import UserAvatar from '@/components/UserAvatar';
 import HomeLogo from './HomeLogo';
 import { getSscCglLoginHref } from '@/lib/sscCglPreference';
 import { getSscChslLoginHref } from '@/lib/sscChsl';
+import type { PublicExamNavigationEntry } from '@/lib/publicExamDirectory';
+import { DesktopExamNavigation, MobileExamNavigation } from './ExamNavigation';
 
-const NAV = [
-  { label: 'Home', href: '/' },
+const SECONDARY_NAV = [
   { label: 'Subjects', href: '/subjects' },
   { label: 'About Us', href: '/about_us' },
   { label: 'Contact', href: '/contact' },
@@ -61,7 +62,7 @@ function LanguageSelect() {
   );
 }
 
-export default function HomeHeader() {
+export default function HomeHeader({ publicExams }: { publicExams: readonly PublicExamNavigationEntry[] }) {
   const { language, setLanguage } = useLanguage();
   const { user, logout, loading } = useAuth();
   const pathname = usePathname();
@@ -166,25 +167,26 @@ export default function HomeHeader() {
         scrolled ? 'border-[#E4E7EC] shadow-[0_1px_0_rgba(24,24,27,0.04)]' : 'border-[#E4E7EC]'
       }`}
     >
-      <div className="home-container grid h-[72px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 max-[359px]:h-14 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:gap-4">
+      <div className="home-container grid h-[72px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 max-[359px]:h-14 xl:grid-cols-[auto_minmax(0,1fr)_auto] xl:gap-4">
         <HomeLogo
           className="min-w-0 shrink-0 justify-self-start"
           href={user ? '/dashboard' : '/'}
         />
 
         <nav
-          className="hidden min-w-0 items-center justify-center gap-1 justify-self-center lg:flex"
+          className="hidden min-w-0 items-center justify-center gap-1 justify-self-center xl:flex"
           aria-label="Primary"
         >
-          {NAV.map((item) => {
+          {[{ label: 'Home', href: '/' }, ...SECONDARY_NAV].map((item, index) => {
             const href = user && item.href === '/' ? '/dashboard' : item.href;
             const active = user && item.href === '/'
               ? pathname === '/dashboard'
               : isActivePath(pathname, item.href);
-            return (
+            const link = (
               <Link
                 key={item.label}
                 href={href}
+                aria-current={pathname === href ? 'page' : undefined}
                 className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-3 py-2 text-[15px] font-medium transition ${
                   active
                     ? 'text-[#5521BF]'
@@ -194,11 +196,20 @@ export default function HomeHeader() {
                 {item.label}
               </Link>
             );
+            if (index === 0) {
+              return (
+                <div key="primary-home-and-exams" className="contents">
+                  {link}
+                  <DesktopExamNavigation exams={publicExams} language={language} pathname={pathname} />
+                </div>
+              );
+            }
+            return link;
           })}
         </nav>
 
-        <div className="flex shrink-0 items-center justify-self-end gap-2 max-[359px]:gap-1 lg:gap-3">
-          <div className="hidden items-center gap-2 lg:flex lg:gap-3">
+        <div className="flex shrink-0 items-center justify-self-end gap-2 max-[359px]:gap-1 xl:gap-3">
+          <div className="hidden items-center gap-2 xl:flex xl:gap-3">
             <LanguageSelect />
             {showSignedIn && user ? (
               <>
@@ -242,7 +253,7 @@ export default function HomeHeader() {
             </Link>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2 max-[359px]:gap-1 lg:hidden">
+          <div className="flex shrink-0 items-center gap-2 max-[359px]:gap-1 xl:hidden">
             <Link
               href="/subjects"
               className="inline-flex h-10 shrink-0 items-center rounded-xl bg-[#6D28D9] px-3 text-[13px] font-semibold text-white max-[279px]:hidden"
@@ -276,23 +287,40 @@ export default function HomeHeader() {
           role="dialog"
           aria-modal="true"
           aria-label="Mobile navigation"
-          className="border-t border-[#E4E7EC] bg-white lg:hidden"
+          className="border-t border-[#E4E7EC] bg-white xl:hidden"
         >
           <nav className="home-container flex flex-col gap-1 py-4" aria-label="Mobile">
-            {NAV.map((item) => {
+            {[{ label: 'Home', href: '/' }, ...SECONDARY_NAV].map((item, index) => {
               const href = user && item.href === '/' ? '/dashboard' : item.href;
-              return <Link
-                key={item.label}
-                href={href}
-                onClick={() => setOpen(false)}
-                className={`rounded-xl px-3 py-3 text-[15px] font-medium hover:bg-[#F5F3FF] ${
-                  (user && item.href === '/' ? pathname === '/dashboard' : isActivePath(pathname, item.href))
-                    ? 'text-[#5521BF]'
-                    : 'text-[#18181B]'
-                }`}
-              >
-                {item.label}
-              </Link>;
+              const link = (
+                <Link
+                  key={item.label}
+                  href={href}
+                  aria-current={pathname === href ? 'page' : undefined}
+                  onClick={() => setOpen(false)}
+                  className={`min-h-11 rounded-xl px-3 py-3 text-[15px] font-medium hover:bg-[#F5F3FF] ${
+                    (user && item.href === '/' ? pathname === '/dashboard' : isActivePath(pathname, item.href))
+                      ? 'text-[#5521BF]'
+                      : 'text-[#18181B]'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+              if (index === 0) {
+                return (
+                  <div key="mobile-home-and-exams" className="contents">
+                    {link}
+                    <MobileExamNavigation
+                      exams={publicExams}
+                      language={language}
+                      pathname={pathname}
+                      onNavigate={() => setOpen(false)}
+                    />
+                  </div>
+                );
+              }
+              return link;
             })}
 
             {showSignedIn && user ? (

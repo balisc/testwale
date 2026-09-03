@@ -5,7 +5,7 @@ const COLUMNS = [
   {
     title: 'Practice',
     links: [
-      { label: 'SSC Exams', href: '/#public-exam-explorer' },
+      { label: 'SSC Exams', href: '/exams' },
       { label: 'Browse Subjects', href: '/subjects' },
       { label: 'Map Practice', href: '/map-practice' },
       { label: 'Content Standards', href: '/content-standards' },

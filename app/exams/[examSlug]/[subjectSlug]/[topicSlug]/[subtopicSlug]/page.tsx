@@ -97,6 +97,7 @@ export default async function PublicExamSubtopicPage({ params, searchParams }: P
         <div className="mx-auto max-w-3xl">
           <SyllabusBreadcrumb items={[
             { label: 'Home', href: '/' },
+            { label: 'Exams', href: '/exams' },
             { label: snapshot.exam.code.replaceAll('_', ' '), href: examHref },
             { label: subjectName, href: subjectHref },
             { label: topicName, href: topicHref },
@@ -118,6 +119,7 @@ export default async function PublicExamSubtopicPage({ params, searchParams }: P
       <div className="mx-auto max-w-3xl px-4 pt-6 sm:px-6">
         <SyllabusBreadcrumb items={[
           { label: 'Home', href: '/' },
+          { label: 'Exams', href: '/exams' },
           { label: snapshot.exam.code.replaceAll('_', ' '), href: examHref },
           { label: subjectName, href: subjectHref },
           { label: topicName, href: topicHref },

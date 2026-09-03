@@ -21,8 +21,8 @@ The publish migration is safe to rerun. In addition to the existing 5/38/251
 published-hierarchy checks, it creates deterministic syllabus-node stage
 mappings:
 
-- Tier I receives the four non-qualifying subject trees.
-- Tier II receives the complete objective hierarchy and the qualifying
+- Tier 1 receives the four non-qualifying subject trees.
+- Tier 2 receives the complete objective hierarchy and the qualifying
   Computer Knowledge and Skill/Typing Test scope.
 
 The generic preference migration must follow it because preparation-track
@@ -44,7 +44,7 @@ Manual smoke checks:
 
 - A guest opening `/ssc-chsl` or a deep private CHSL route lands on the public
   SSC CHSL syllabus.
-- A signed-in learner can select Tier I or Tier II and is taken to the saved
+- A signed-in learner can select Tier 1 or Tier 2 and is taken to the saved
   stage's subjects.
 - `?change=1` on `/ssc-chsl` permits changing the saved tier.
 - Subject, topic, subtopic, question, pagination, answer submission, and

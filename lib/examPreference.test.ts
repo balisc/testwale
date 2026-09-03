@@ -17,7 +17,7 @@ const cglTrack = normalizeExamPreparationTrack({
   display_title: { en: 'SSC CGL', hi: 'एसएससी सीजीएल' },
   tier_code: 'TIER_II',
   stage_code: 'TIER_II_PAPER_I',
-  stage_title: { en: 'Tier II', hi: 'टियर II' },
+  stage_title: { en: 'Tier 2', hi: 'टियर 2' },
   paper_or_section: { en: 'Paper I', hi: 'पेपर I' },
   preparation_mode: 'MCQ',
   is_objective: false,

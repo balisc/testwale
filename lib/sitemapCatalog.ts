@@ -6,9 +6,9 @@ import {
   publishedRevisionPath,
 } from '@/lib/revision/registry';
 import {
-  getPublicExamSelectorOptionsStrict,
   getPublicExamSyllabusStrict,
 } from '@/lib/publicExamExplorer';
+import { getPublicExamDirectoryStrict } from '@/lib/publicExamDirectoryServer';
 
 export type CatalogSitemapPath = {
   path: string;
@@ -62,21 +62,17 @@ export async function fetchCatalogSitemapPaths(): Promise<CatalogSitemapPath[]> 
   return paths;
 }
 
-/** Public syllabus landing pages only. Interactive subtopic practice stays noindex. */
+/** Published exam directories plus production-ready mock discovery. Practice state stays noindex. */
 export async function fetchPublicExamSitemapPaths(): Promise<CatalogSitemapPath[]> {
-  const options = await getPublicExamSelectorOptionsStrict();
-  const publicExamSlugs = Array.from(new Set(options.flatMap((option) => {
-    if (option.code === 'SSC_CGL') return ['ssc-cgl'];
-    const match = option.href?.match(/^\/exams\/([^/?#]+)/);
-    return match?.[1] ? [match[1]] : [];
-  })));
-  const snapshots = await Promise.all(publicExamSlugs.map(async (examSlug) => ({
-    examSlug,
-    snapshot: await getPublicExamSyllabusStrict(examSlug),
+  const exams = await getPublicExamDirectoryStrict();
+  const snapshots = await Promise.all(exams.map(async (exam) => ({
+    exam,
+    examSlug: exam.canonicalPath.slice('/exams/'.length),
+    snapshot: await getPublicExamSyllabusStrict(exam.canonicalPath.slice('/exams/'.length)),
   })));
   const paths: CatalogSitemapPath[] = [];
 
-  for (const { examSlug, snapshot } of snapshots) {
+  for (const { exam, examSlug, snapshot } of snapshots) {
     if (!snapshot) continue;
     const topicPaths: CatalogSitemapPath[] = [];
     const subjectPaths: CatalogSitemapPath[] = [];
@@ -108,10 +104,13 @@ export async function fetchPublicExamSitemapPaths(): Promise<CatalogSitemapPath[
 
     if (subjectPaths.length > 0) {
       paths.push(
-        { path: `/exams/${examSlug}`, priority: 0.9 },
+        { path: exam.canonicalPath, priority: 0.9 },
         ...subjectPaths,
         ...topicPaths,
       );
+      if (exam.mockAvailable && exam.mockPath) {
+        paths.push({ path: exam.mockPath, priority: 0.86 });
+      }
     }
   }
 

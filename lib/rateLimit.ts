@@ -115,6 +115,15 @@ export function getApiRateLimitPolicy(pathname: string): Required<RateLimitOptio
   if (pathname === '/api/practice/report') {
     return { limit: 10, windowMs: 10 * 60_000 };
   }
+  if (pathname === '/api/mock-tests/generate') {
+    return { limit: 3, windowMs: 60_000 };
+  }
+  if (pathname.startsWith('/api/mock-tests/') && pathname.endsWith('/responses')) {
+    return { limit: 180, windowMs: 60_000 };
+  }
+  if (pathname.startsWith('/api/mock-tests/')) {
+    return { limit: 60, windowMs: 60_000 };
+  }
   if (
     pathname === '/api/practice/submit' ||
     pathname === '/api/map-practice/submit' ||
@@ -143,6 +152,8 @@ export function routeRateLimitGroup(pathname: string) {
   if (pathname.startsWith('/api/auth/google')) return 'auth-google';
   if (pathname === '/api/contact') return 'contact';
   if (pathname === '/api/practice/report') return 'practice-report';
+  if (pathname === '/api/mock-tests/generate') return 'mock-generate';
+  if (pathname.startsWith('/api/mock-tests/')) return 'mock-test';
   if (pathname.includes('/submit')) return 'answer-submit';
   if (pathname.startsWith('/api/practice/')) return 'practice-mutation';
   return pathname.slice(0, 120);

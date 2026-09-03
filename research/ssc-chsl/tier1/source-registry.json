@@ -1,0 +1,106 @@
+{
+  "sources": {
+    "BUDGET_2025": {
+      "url": "https://www.indiabudget.gov.in/budget2025-26/doc/Budget_Speech.pdf",
+      "title": "Union Budget 2025-2026 Speech",
+      "publisher": "Ministry of Finance, Government of India",
+      "checked_on": "2026-09-02",
+      "authority": "primary",
+      "scope": "Budget 2025-26 schemes and announcements"
+    },
+    "ISRO_TIMELINE_2025": {
+      "url": "https://www.isro.gov.in/media_isro/pdf/AnnualReport/Annual_Report_2025_26_Eng_29042026_Rev.pdf",
+      "title": "ISRO Annual Report 2025-26",
+      "publisher": "Indian Space Research Organisation",
+      "checked_on": "2026-09-02",
+      "authority": "primary",
+      "scope": "NISAR launch and SpaDeX docking milestones"
+    },
+    "NATIONAL_GAMES_2025": {
+      "url": "https://www.pib.gov.in/PressReleaseIframePage.aspx?PRID=2103368&lang=1&reg=6",
+      "title": "38th National Games 2025 concludes in Uttarakhand",
+      "publisher": "Press Information Bureau, Government of India",
+      "checked_on": "2026-09-02",
+      "authority": "primary",
+      "scope": "Host and dates of the 38th National Games"
+    },
+    "PBD_2025": {
+      "url": "https://pbdindia.gov.in/",
+      "title": "18th Pravasi Bharatiya Divas Convention 2025",
+      "publisher": "Ministry of External Affairs, Government of India",
+      "checked_on": "2026-09-02",
+      "authority": "primary",
+      "scope": "Convention number, dates and Bhubaneswar venue"
+    },
+    "MOSPI_GOISTATS_2025": {
+      "url": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2140618&lang=1&reg=37",
+      "title": "MoSPI launches GoIStats Mobile App",
+      "publisher": "Press Information Bureau, Government of India",
+      "checked_on": "2026-09-02",
+      "authority": "primary",
+      "scope": "GoIStats launch date and purpose"
+    },
+    "NCERT_MODERN_HISTORY": {
+      "url": "https://www.ncert.nic.in/textbook.php",
+      "title": "NCERT Textbooks PDF (Classes I-XII)",
+      "publisher": "National Council of Educational Research and Training",
+      "checked_on": "2026-09-02",
+      "authority": "primary",
+      "scope": "Modern Indian history textbook facts"
+    },
+    "SANGEET_NATAK_CULTURE": {
+      "url": "https://sangeetnatak.gov.in/publications",
+      "title": "Sangeet Natak Akademi Publications",
+      "publisher": "Sangeet Natak Akademi, Ministry of Culture",
+      "checked_on": "2026-09-02",
+      "authority": "primary",
+      "scope": "Indian music, dance, drama and performing arts"
+    },
+    "NCERT_GEOGRAPHY_GSI": {
+      "url": "https://www.ncert.nic.in/textbook.php",
+      "title": "NCERT Geography Textbooks and GSI Publications",
+      "publisher": "NCERT and Geological Survey of India",
+      "checked_on": "2026-09-02",
+      "authority": "primary",
+      "supporting_urls": [
+        "https://gsi.gov.in/publications/gsi-publications/"
+      ],
+      "scope": "Physical and Indian geography facts"
+    },
+    "CONSTITUTION_INDIA": {
+      "url": "https://www.legislative.gov.in/constitution-of-india",
+      "title": "The Constitution of India",
+      "publisher": "Legislative Department, Ministry of Law and Justice",
+      "checked_on": "2026-09-02",
+      "authority": "primary",
+      "scope": "Constitutional provisions and institutions"
+    },
+    "RBI": {
+      "url": "https://www.rbi.org.in/CommonPerson/english/History/Scripts/BriefHistory.aspx",
+      "title": "Reserve Bank of India - Brief History and Functions",
+      "publisher": "Reserve Bank of India",
+      "checked_on": "2026-09-02",
+      "authority": "primary",
+      "scope": "Banking, currency and central-bank facts"
+    },
+    "NCERT_SCIENCE": {
+      "url": "https://www.ncert.nic.in/textbook.php",
+      "title": "NCERT Science Textbooks PDF (Classes I-XII)",
+      "publisher": "National Council of Educational Research and Training",
+      "checked_on": "2026-09-02",
+      "authority": "primary",
+      "scope": "School-level biology, physics and chemistry facts"
+    },
+    "NCERT_ECOLOGY_MOEFCC": {
+      "url": "https://www.ncert.nic.in/textbook.php",
+      "title": "NCERT Ecology Textbooks and MoEFCC Annual Reports",
+      "publisher": "NCERT and Ministry of Environment, Forest and Climate Change",
+      "checked_on": "2026-09-02",
+      "authority": "primary",
+      "supporting_urls": [
+        "https://moef.gov.in/annual-report"
+      ],
+      "scope": "Ecology, biodiversity and environmental governance facts"
+    }
+  }
+}

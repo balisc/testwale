@@ -6,8 +6,10 @@ import JsonLd from '@/components/JsonLd';
 import { buildBreadcrumbListSchema } from '@/lib/breadcrumbSchema';
 import { getLocalizedText } from '@/lib/localizedText';
 import { getPublicExamSyllabusStrict } from '@/lib/publicExamExplorer';
+import { publicExamCanonicalPath } from '@/lib/publicExamDirectory';
 import { absoluteUrl, buildConciseTitle, buildPageMetadata } from '@/lib/seo';
 import SyllabusBreadcrumb from './SyllabusBreadcrumb';
+import SscMockEntry from '@/components/mockTests/SscMockEntry';
 
 type PageProps = {
   params: Promise<{ examSlug: string }>;
@@ -28,10 +30,11 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     notFound();
   }
   const examName = getLocalizedText(snapshot.exam.title, 'en') || snapshot.exam.code.replaceAll('_', ' ');
+  const canonicalPath = publicExamCanonicalPath(snapshot.exam.code, examSlug) ?? `/exams/${examSlug}`;
   return buildPageMetadata({
     title: buildConciseTitle(`${examName} Syllabus & MCQ Practice`),
     description: `Explore the published ${examName} syllabus by subject, topic and subtopic, with accurate available-question counts and focused MCQ practice.`,
-    path: `/exams/${examSlug}`,
+    path: canonicalPath,
   });
 }
 
@@ -41,7 +44,7 @@ export default async function PublicExamPage({ params, searchParams }: PageProps
   const snapshot = await getPublicExamSyllabusStrict(examSlug, stageCode);
   if (!snapshot || snapshot.subjects.length === 0 || snapshot.topics.length === 0) notFound();
   const examName = getLocalizedText(snapshot.exam.title, 'en') || snapshot.exam.code.replaceAll('_', ' ');
-  const canonicalPath = `/exams/${examSlug}`;
+  const canonicalPath = publicExamCanonicalPath(snapshot.exam.code, examSlug) ?? `/exams/${examSlug}`;
   const questionCount = Math.max(0, Number(snapshot.overview.total_questions ?? 0));
   const subjectCount = snapshot.subjects.length;
   const topicCount = snapshot.topics.length;
@@ -49,12 +52,14 @@ export default async function PublicExamPage({ params, searchParams }: PageProps
   const stageLabel = stageCode ? stageCode.replaceAll('_', ' ') : null;
   const breadcrumbItems = [
     { label: 'Home', href: '/' },
+    { label: 'Exams', href: '/exams' },
     { label: `${examName} syllabus` },
   ];
 
   const breadcrumbSchema = buildBreadcrumbListSchema([
     { name: 'Home', href: '/' },
-    { name: `${examName} syllabus` },
+    { name: 'Exams', href: '/exams' },
+    { name: `${examName} syllabus`, href: canonicalPath },
   ]);
   const subjectItemList = {
     '@context': 'https://schema.org',
@@ -128,6 +133,16 @@ export default async function PublicExamPage({ params, searchParams }: PageProps
           </dl>
         </header>
       </div>
+      {snapshot.exam.code === 'SSC_CGL' ? (
+        <div className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
+          <SscMockEntry examKey="ssc-cgl" compact />
+        </div>
+      ) : null}
+      {snapshot.exam.code === 'SSC_CHSL' ? (
+        <div className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
+          <SscMockEntry examKey="ssc-chsl" compact />
+        </div>
+      ) : null}
       <section aria-labelledby="published-subjects-heading">
         <div className="mx-auto max-w-[1240px] px-4 pt-10 sm:px-6 lg:px-8">
           <h2 id="published-subjects-heading" className="text-2xl font-bold text-slate-950">

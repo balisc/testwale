@@ -222,6 +222,38 @@ export async function getExactExamQuestionCounts(input: {
   const ids = [...new Set(input.contentSubtopicIds.filter((id) => UUID_PATTERN.test(id)))];
   const stageCodes = [...new Set((input.stageCodes ?? []).map((value) => value.trim()).filter(Boolean))];
   const counts: Record<string, number> = {};
+  if (ids.length === 0) return counts;
+
+  // Preferred path: aggregate inside Postgres and transfer only one compact row
+  // per subtopic. Keep the paged-ID scan below as a deployment-order fallback.
+  let compactRpcMissing = false;
+  for (let offset = 0; offset < ids.length; offset += 200) {
+    const compactResult = await admin.rpc('get_exam_question_counts_compact', {
+      p_exam_profile_id: input.examProfileId,
+      p_content_subtopic_ids: ids.slice(offset, offset + 200),
+      p_stage_codes: stageCodes,
+    });
+    if (compactResult.error) {
+      const missing = ['42883', 'PGRST202'].includes(String(compactResult.error.code ?? ''))
+        || /get_exam_question_counts_compact/i.test(compactResult.error.message ?? '')
+          && /does not exist|schema cache|not find/i.test(compactResult.error.message ?? '');
+      if (missing) {
+        compactRpcMissing = true;
+        break;
+      }
+      throw new Error(
+        `exact_exam_question_counts_compact_failed:${compactResult.error.code ?? 'database_error'}:${compactResult.error.message}`,
+      );
+    }
+    for (const row of (compactResult.data ?? []) as Array<Record<string, unknown>>) {
+      const subtopicId = typeof row.subtopic_id === 'string' ? row.subtopic_id : '';
+      if (subtopicId) counts[subtopicId] = Number(row.question_count ?? 0);
+    }
+  }
+  if (!compactRpcMissing) return counts;
+
+  // Safe fallback while the application is deployed before the SQL migration.
+  for (const key of Object.keys(counts)) delete counts[key];
   const pageSize = 1000;
 
   for (let offset = 0; offset < ids.length; offset += 50) {

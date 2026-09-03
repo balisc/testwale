@@ -8,6 +8,7 @@ import ProfileShell from './ProfileShell';
 import ProfileOverview from './components/ProfileOverview';
 import ProfileOverviewSkeleton from './components/ProfileOverviewSkeleton';
 import ExamPreferenceCard from './components/ExamPreferenceCard';
+import ProfileMockTests from './components/ProfileMockTests';
 
 export default function ProfileOverviewPage() {
   const { language } = useLanguage();
@@ -30,6 +31,7 @@ export default function ProfileOverviewPage() {
             {profileData.profile.target_exam_profile_id ? (
               <ExamPreferenceCard />
             ) : null}
+            <ProfileMockTests />
           </>
         ) : null
       }

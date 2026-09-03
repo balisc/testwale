@@ -7,15 +7,15 @@ export default function SscChslStageExplorer({ language }: { language: 'en' | 'h
   const copy = language === 'hi'
     ? {
         badge: 'SSC CHSL टियर', title: 'पहले अपना टियर चुनें',
-        body: 'Tier I और Tier II का पाठ्यक्रम और प्रश्न अभ्यास अलग-अलग दायरे में दिखाया जाता है।',
-        tier1: 'Tier I', tier1Body: 'रीजनिंग · गणित · अंग्रेज़ी · सामान्य जागरूकता',
-        tier2: 'Tier II', tier2Body: 'वस्तुनिष्ठ अनुभाग · कंप्यूटर ज्ञान · कौशल/टंकण दायरा', open: 'टियर खोलें',
+        body: 'Tier 1 और Tier 2 का पाठ्यक्रम और प्रश्न अभ्यास अलग-अलग दायरे में दिखाया जाता है।',
+        tier1: 'Tier 1', tier1Body: 'रीजनिंग · गणित · अंग्रेज़ी · सामान्य जागरूकता',
+        tier2: 'Tier 2', tier2Body: 'वस्तुनिष्ठ अनुभाग · कंप्यूटर ज्ञान · कौशल/टंकण दायरा', open: 'टियर खोलें',
       }
     : {
         badge: 'SSC CHSL tiers', title: 'Choose your tier first',
-        body: 'Tier I and Tier II keep their syllabus scope and exact question practice separate.',
-        tier1: 'Tier I', tier1Body: 'Reasoning · Mathematics · English · General Awareness',
-        tier2: 'Tier II', tier2Body: 'Objective sections · Computer Knowledge · Skill/Typing scope', open: 'Open tier',
+        body: 'Tier 1 and Tier 2 keep their syllabus scope and exact question practice separate.',
+        tier1: 'Tier 1', tier1Body: 'Reasoning · Mathematics · English · General Awareness',
+        tier2: 'Tier 2', tier2Body: 'Objective sections · Computer Knowledge · Skill/Typing scope', open: 'Open tier',
       };
   const cards = [
     { href: '/ssc-chsl/tier-1/subjects', title: copy.tier1, body: copy.tier1Body, Icon: BookOpen },

@@ -78,7 +78,7 @@ export default function ExamPreferenceCard() {
       ) : preference ? (
         <dl className="mt-5 grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="min-w-0 rounded-xl bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{copy.exam}</dt><dd className="mt-1 break-words text-sm font-bold text-slate-900">{localized(preference.examTitle, language, preference.examCode)}</dd></div>
-          {preference.tierCode ? <div className="min-w-0 rounded-xl bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{copy.tier}</dt><dd className="mt-1 text-sm font-bold text-slate-900">{preference.tierCode === 'TIER_I' ? 'Tier I' : 'Tier II'}</dd></div> : null}
+          {preference.tierCode ? <div className="min-w-0 rounded-xl bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{copy.tier}</dt><dd className="mt-1 text-sm font-bold text-slate-900">{preference.tierCode === 'TIER_I' ? 'Tier 1' : 'Tier 2'}</dd></div> : null}
           <div className="min-w-0 rounded-xl bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{copy.stage}</dt><dd className="mt-1 break-words text-sm font-bold text-slate-900">{localized(preference.paperOrSection, language, localized(preference.stageTitle, language, preference.stageCode))}</dd></div>
           <div className="min-w-0 rounded-xl bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{copy.mode}</dt><dd className="mt-1 text-sm font-bold text-slate-900">{preference.preparationMode === 'MCQ' ? 'MCQ / Objective' : 'Written / Descriptive'}</dd></div>
         </dl>

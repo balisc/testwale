@@ -13,6 +13,7 @@ import { getExactExamQuestionCounts } from '@/lib/exactExamQuestionsServer';
 import { getExamPreparationTracks } from '@/lib/examPreferenceServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import type { ExamLearningSnapshot } from '@/lib/examLearning';
+import { publicExamCanonicalPath } from '@/lib/publicExamDirectory';
 import type { ExamSyllabusNodeRow, ExamSyllabusVersionRow } from '@/types/supabase';
 
 export type PublicExamExplorerOption = {
@@ -71,10 +72,6 @@ const publicExamPathIndexInFlight = new Map<string, Promise<PublicExamPathIndex 
 
 function title(value: { en?: string; hi?: string }, fallback: string): string {
   return value.en?.trim() || value.hi?.trim() || fallback;
-}
-
-function publicExamHref(examCode: string, examSlug: string): string {
-  return examCode === 'SSC_CGL' ? '/exams/ssc-cgl' : `/exams/${examSlug}`;
 }
 
 function reportPublicExplorerFailure(scope: string, error: unknown) {
@@ -197,7 +194,7 @@ async function loadPublicExamExplorerData(): Promise<PublicExamExplorerData | nu
       code: option.exam_code,
       label: option.short_name ?? title(option.display_title, option.exam_code),
       isAvailable: true,
-      href: publicExamHref(option.exam_code, option.exam_slug),
+      href: publicExamCanonicalPath(option.exam_code, option.exam_slug),
     };
   });
 
@@ -205,7 +202,7 @@ async function loadPublicExamExplorerData(): Promise<PublicExamExplorerData | nu
     examCode: cgl.exam_code,
     examSlug,
     examName: cgl.short_name ?? title(cgl.display_title, cgl.exam_code),
-    examDescription: 'Tier I and Tier II preparation through the current published syllabus.',
+    examDescription: 'Tier 1 and Tier 2 preparation through the current published syllabus.',
     options,
     counts: {
       subjects: hierarchy.subjects.length,
@@ -283,7 +280,7 @@ const getCachedPublicExamSelectorOptions = unstable_cache(
         code: option.exam_code,
         label: option.short_name ?? title(option.display_title, option.exam_code),
         isAvailable: true,
-        href: publicExamHref(option.exam_code, option.exam_slug),
+        href: publicExamCanonicalPath(option.exam_code, option.exam_slug),
       }));
   },
   ['public-exam-selector-ready-v2'],
@@ -382,7 +379,7 @@ async function loadPublicExamSyllabus(
       && (normalizedStageCode === 'TIER_I' || normalizedStageCode === 'TIER_II')
     ) {
       // Compatibility for databases deployed before CHSL node-stage mappings.
-      // Tier I owns the four non-qualifying subject trees; Tier II owns the
+      // Tier 1 owns the four non-qualifying subject trees; Tier 2 owns the
       // complete objective hierarchy, including Computer Knowledge. The exact
       // track check above and stage-scoped question counts still fail closed.
       nodes = normalizedStageCode === 'TIER_I'

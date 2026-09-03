@@ -43,7 +43,7 @@ begin
     and m.stage_tag = 'SSC_CHSL_TIER_1'
     and m.is_active is true;
   if v_actual <> v_expected then
-    raise exception 'SSC CHSL Tier I mapping mismatch: expected %, found %', v_expected, v_actual;
+    raise exception 'SSC CHSL Tier 1 mapping mismatch: expected %, found %', v_expected, v_actual;
   end if;
 
   select count(*) into v_expected
@@ -59,7 +59,7 @@ begin
     and m.stage_tag = 'SSC_CHSL_TIER_2'
     and m.is_active is true;
   if v_actual <> v_expected then
-    raise exception 'SSC CHSL Tier II mapping mismatch: expected %, found %', v_expected, v_actual;
+    raise exception 'SSC CHSL Tier 2 mapping mismatch: expected %, found %', v_expected, v_actual;
   end if;
 
   select count(*) into v_count

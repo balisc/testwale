@@ -126,7 +126,7 @@ begin
   end if;
 
   -- Materialize the exact learner-visible hierarchy for both CHSL stages.
-  -- Tier I contains the four non-qualifying CBT subjects. Tier II contains
+  -- Tier 1 contains the four non-qualifying CBT subjects. Tier 2 contains
   -- the complete objective hierarchy plus the separately rendered qualifying
   -- Skill/Typing Test nodes. This avoids title-based filtering at request time.
   insert into public.exam_syllabus_node_stage_mappings (
@@ -194,7 +194,7 @@ begin
       and n.node_type in ('subject', 'topic', 'subtopic')
       and n.is_qualifying is false
   ) then
-    raise exception 'SSC CHSL Tier I node-stage mapping audit failed';
+    raise exception 'SSC CHSL Tier 1 node-stage mapping audit failed';
   end if;
 
   select count(*) into v_count
@@ -209,7 +209,7 @@ begin
     where n.syllabus_version_id = v_version_id
       and n.is_active is true
   ) then
-    raise exception 'SSC CHSL Tier II node-stage mapping audit failed';
+    raise exception 'SSC CHSL Tier 2 node-stage mapping audit failed';
   end if;
 
   select count(*) into v_count

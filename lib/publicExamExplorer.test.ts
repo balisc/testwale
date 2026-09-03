@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 const loader = readFileSync('lib/publicExamExplorer.ts', 'utf8');
 const catalogue = readFileSync('lib/examCatalogueServer.ts', 'utf8');
+const directory = readFileSync('lib/publicExamDirectory.ts', 'utf8');
 assert.match(loader, /const PUBLIC_CGL_SLUG = 'ssc-cgl'/);
 assert.match(catalogue, /from\('exam_selector_options'\)[\s\S]*eq\('can_select', true\)[\s\S]*eq\('is_coming_soon', false\)/);
 assert.match(catalogue, /__questionWaleReadyExamSelectorInFlight/, 'concurrent routes share one selector readiness read');
@@ -16,7 +17,8 @@ assert.doesNotMatch(
   /getPublicExamSyllabusStrict/,
   'path existence never triggers exact question-count scans',
 );
-assert.match(loader, /function publicExamHref[\s\S]*'\/exams\/ssc-cgl'/);
+assert.match(loader, /publicExamCanonicalPath/);
+assert.match(directory, /SSC_CGL: 'ssc-cgl'/, 'the established CGL canonical remains centralized');
 assert.doesNotMatch(loader, /href: option\.exam_code === 'SSC_CGL' \? '\/ssc-cgl'/);
 assert.doesNotMatch(loader, /FALLBACK|SSC_OPTION_FALLBACK_LABELS|PREFERRED_SSC_CODES/);
 assert.match(loader, /public-exam-syllabus-v1/);

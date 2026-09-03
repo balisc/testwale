@@ -457,7 +457,7 @@ async function saveLegacySscCglPreference(
     }
   }
 
-  // The legacy onboarding RPC stores Paper I as Tier II's default. Run the
+  // The legacy onboarding RPC stores Paper I as Tier 2's default. Run the
   // validated legacy preference RPC as well so Paper II/III selections are
   // preserved, and so profile-only changes use the same code path.
   const preference = await admin.rpc('update_user_exam_tier_preference', {
@@ -510,7 +510,7 @@ async function saveLegacySscChslPreference(
 
   // Before the generic preference migration, the legacy CGL-only table has a
   // non-null Tier constraint. TIER_II_PAPER_I is used only as a compatible
-  // storage marker for CHSL Tier II; reads translate it back to TIER_II.
+  // storage marker for CHSL Tier 2; reads translate it back to TIER_II.
   const updatedAt = new Date().toISOString();
   const preference = await admin
     .from('user_exam_preferences')

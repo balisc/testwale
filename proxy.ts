@@ -48,7 +48,8 @@ function usesStrictDynamicCsp(pathname: string) {
     pathname === '/onboarding' ||
     pathname.startsWith('/profile') ||
     pathname.startsWith('/ssc-cgl') ||
-    pathname.startsWith('/ssc-chsl')
+    pathname.startsWith('/ssc-chsl') ||
+    pathname.startsWith('/mock-tests')
   );
 }
 
@@ -101,6 +102,7 @@ function notFoundResponse(): NextResponse {
 function isReservedTopLevelSegment(segment: string): boolean {
   const reserved = new Set([
     'subjects',
+    'exams',
     'about_us',
     'content-standards',
     'contact',
@@ -129,6 +131,7 @@ function isReservedTopLevelSegment(segment: string): boolean {
     'sitemaps',
     'ssc-cgl',
     'ssc-chsl',
+    'mock-tests',
     'robots.txt',
     'sitemap.xml',
     'manifest.webmanifest',

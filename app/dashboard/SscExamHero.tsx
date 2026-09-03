@@ -13,7 +13,7 @@ export function isSscFamilyExam(code: string, name: string): boolean {
 function coverageValue(code: string, language: 'en' | 'hi'): string {
   const normalized = code.toUpperCase();
   if (/(?:^|_)CGL(?:_|$)|(?:^|_)CHSL(?:_|$)|(?:^|_)CPO(?:_|$)/.test(normalized)) {
-    return language === 'hi' ? 'टियर I और टियर II' : 'Tier I & Tier II';
+    return language === 'hi' ? 'टियर 1 और टियर 2' : 'Tier 1 & Tier 2';
   }
   if (/(?:^|_)MTS(?:_|$)/.test(normalized)) {
     return language === 'hi' ? 'सेशन I और सेशन II' : 'Session I & II';
