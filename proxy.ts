@@ -58,6 +58,8 @@ export function buildStrictDynamicCsp(nonce: string) {
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://accounts.google.com${isDevelopment ? " 'unsafe-eval'" : ''}`,
+    //line add after no profile page load 
+    `script-src-elem 'self' 'nonce-${nonce}' https://accounts.google.com`,
     "script-src-attr 'none'",
     // React style props and the current Google widget require style attributes.
     "style-src 'self' 'unsafe-inline' https://accounts.google.com",
